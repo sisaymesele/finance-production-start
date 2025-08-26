@@ -1,0 +1,21 @@
+
+
+
+{% extends "dashboard.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid my-4">
+
+    <!-- Page Title -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Combined Monthly Payroll Overview</h2>
+    </div>
+
+    <!-- Graph -->
+    <div class="card shadow-sm p-3 mb-4">
+        {{ graph_div|safe }}
+    </div>
+
+</div>
+{% endblock %}

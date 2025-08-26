@@ -1,0 +1,22 @@
+{% extends "dashboard.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container my-4">
+    <h2 class="mb-4 text-center">Payroll Months</h2>
+
+    {% if payroll_months %}
+        <ul class="list-group mx-auto" style="max-width: 600px;">
+            {% for month in payroll_months %}
+                <li class="list-group-item">
+                    <a href="{% url 'regular_payroll_list' month.payroll_month__slug %}" class="text-decoration-none">
+                        {{ month.payroll_month__payroll_month }} &mdash; click here to make payroll by months
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-center text-muted">No payroll months available.</p>
+    {% endif %}
+</div>
+{% endblock %}
