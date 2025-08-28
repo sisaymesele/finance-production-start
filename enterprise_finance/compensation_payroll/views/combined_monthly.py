@@ -29,18 +29,6 @@ def monthly_combined_summary(request):
     return render(request, 'combined_payroll/monthly_summary.html', context)
 
 
-@login_required
-def monthly_combined_adjustment_journal(request):
-    context = get_combined_monthly_detail(request)
-    return render(request, 'combined_payroll/monthly_adjustment_journal.html', context)
-
-@login_required
-def monthly_combined_adjustment_summary(request):
-    context = get_combined_monthly_detail(request)
-    return render(request, 'combined_payroll/monthly_adjustment_summary.html', context)
-
-
-
 
 @login_required
 def export_combined_monthly_detail_to_excel(request):

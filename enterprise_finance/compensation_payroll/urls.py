@@ -90,8 +90,6 @@ urlpatterns = [
     #combined monthly and yearly
     path('combined-monthly-detail/', views.monthly_combined_detail, name='combined_monthly_detail'),
     path('combined-monthly-summary/', views.monthly_combined_summary, name='combined_monthly_summary'),
-    path('combined-monthly-adjustment-journal/', views.monthly_combined_adjustment_journal, name='monthly_combined_adjustment_journal'),
-    path('monthly-combined-adjustment-summary/', views.monthly_combined_adjustment_summary, name='monthly_combined_adjustment_summary'),
 
     #yearly
     path('combined-yearly-detail/', views.yearly_combined_detail_view, name='combined_yearly_detail'),

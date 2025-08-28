@@ -39,8 +39,8 @@ from .combined_personnel import get_combined_personnel_payroll_context, combined
     combined_personnel_detail, export_combined_personnel_detail
 
 from .combined_monthly import get_combined_monthly_detail, monthly_combined_detail, \
-    monthly_combined_adjustment_journal, monthly_combined_adjustment_summary, export_combined_monthly_detail_to_excel, \
-    combined_monthly_graph_view, monthly_combined_summary, export_combined_monthly_summary_to_excel
+    export_combined_monthly_detail_to_excel, combined_monthly_graph_view, \
+    monthly_combined_summary, export_combined_monthly_summary_to_excel
 
 from .combined_yearly import get_combined_yearly_detail, yearly_combined_detail_view, \
     export_combined_yearly_detail_to_excel, yearly_combined_summary_view, export_combined_yearly_summary_to_excel
