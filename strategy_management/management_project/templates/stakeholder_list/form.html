@@ -1,0 +1,74 @@
+{% extends "dashboard.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'stakeholder_list' %}"
+       class="btn btn-secondary"
+       hx-get="{% url 'stakeholder_list' %}"
+       hx-target="#full-page-container"
+       hx-swap="innerHTML"
+       hx-push-url="true">
+        &larr; Back to Stakeholder List
+    </a>
+</div>
+
+<div class="p-4 border rounded shadow-sm" id="form-container">
+    <h4 class="mb-3 text-muted">Each Information Has Strategic Impact</h4>
+
+    <h3 class="mb-4">
+        {% if edit_mode %}
+        Update Stakeholder: {{ editing_stakeholder.stakeholder_name }}
+        {% else %}
+        Create Stakeholder
+        {% endif %}
+    </h3>
+
+    <form method="POST"
+          {% if edit_mode %}
+          hx-post="{% url 'update_stakeholder' form.instance.pk %}"
+          {% else %}
+          hx-post="{% url 'create_stakeholder' %}?next={{ request.GET.next|default:''|urlencode }}"
+          {% endif %}
+          hx-target="#full-page-container"
+          hx-swap="innerHTML"
+          hx-push-url="true">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            <ul>
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Responsive Grid Layout for Fields -->
+        <div class="row g-3">
+            {% for field in form %}
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="mb-2">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {% if field.errors %}
+                    <div class="text-danger small">
+                        {% for error in field.errors %}
+                        <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-4">
+            <button class="btn btn-dark" type="submit">
+                {{ submit_button_text|default:"Submit" }}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock content %}

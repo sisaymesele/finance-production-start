@@ -1,0 +1,45 @@
+{% extends "dashboard.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Stakeholder Report</h2>
+
+    {% comment %} Role-wise Stakeholders {% endcomment %}
+    {% if plot_html_role %}
+    <div class="mb-4">
+        <h4 class="mb-2">Stakeholders by Role</h4>
+        <div class="card shadow-sm p-3">
+            {{ plot_html_role|safe }}
+        </div>
+    </div>
+    {% endif %}
+
+    {% comment %} Department-wise Stakeholders {% endcomment %}
+    {% if plot_html_department %}
+    <div class="mb-4">
+        <h4 class="mb-2">Stakeholders by Department</h4>
+        <div class="card shadow-sm p-3">
+            {{ plot_html_department|safe }}
+        </div>
+    </div>
+    {% endif %}
+
+    {% comment %} Stakeholder Type Pie Chart {% endcomment %}
+    {% if plot_html_type %}
+    <div class="mb-4">
+        <h4 class="mb-2">Stakeholders by Type</h4>
+        <div class="card shadow-sm p-3">
+            {{ plot_html_type|safe }}
+        </div>
+    </div>
+    {% endif %}
+
+    {% comment %} Fallback if no data {% endcomment %}
+    {% if not plot_html_role and not plot_html_department and not plot_html_type %}
+    <div class="alert alert-warning" role="alert">
+        No stakeholder data available to display charts.
+    </div>
+    {% endif %}
+</div>
+{% endblock content %}
