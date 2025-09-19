@@ -43,7 +43,7 @@
                     <div class="col-md-8 pe-md-4">
                         <!-- REGULAR PAYROLL SECTION -->
                         <div class="mb-2">
-                            <h5 class="text-success border-bottom pb-2 mb-3">Regular Payroll</h5>
+                            <h5 class="text-success border-bottom pb-2 mb-3">Strategic Action Plan</h5>
 
                             <!-- Regular Components -->
                             <div class="table-responsive mb-2">
@@ -97,7 +97,7 @@
                         <!-- EARNING ADJUSTMENTS SECTION -->
                         {% if year.show_earning %}
                         <div class="mb-2">
-                            <h5 class="text-warning border-bottom pb-2 mb-3">Earning Adjustments</h5>
+                            <h5 class="text-warning border-bottom pb-2 mb-3">Strategic Reports</h5>
 
                             <!-- Earning Components -->
                             <div class="table-responsive mb-2">
@@ -145,8 +145,8 @@
                                 </table>
                             </div>
 
-                            <!-- Earning Adjustment Summary -->
-                            <h5>Earning Adjustment Summary</h5>
+                            <!-- Strategic Report Summary -->
+                            <h5>Strategic Report Summary</h5>
                             <div class="table-responsive">
                                 <table class="table table-sm table-bordered">
                                     <thead class="table-warning">
@@ -181,8 +181,8 @@
                                             {% if adj.employment_income_tax|default_if_none:0|add:0 != 0 %}
                                                 <tr><td>Employment Income Tax</td><td class="text-end">{{ adj.employment_income_tax|floatformat:2|intcomma }}</td></tr>
                                             {% endif %}
-                                            {% if adj.earning_adjustment_deduction|default_if_none:0|add:0 != 0 %}
-                                                <tr><td>Earning Adjustment Deduction</td><td class="text-end">{{ adj.earning_adjustment_deduction|floatformat:2|intcomma }}</td></tr>
+                                            {% if adj.strategic_report_deduction|default_if_none:0|add:0 != 0 %}
+                                                <tr><td>Strategic Report Deduction</td><td class="text-end">{{ adj.strategic_report_deduction|floatformat:2|intcomma }}</td></tr>
                                             {% endif %}
                                             {% if adj.expense|default_if_none:0|add:0 != 0 %}
                                                 <tr><td>Expense</td><td class="text-end">{{ adj.expense|floatformat:2|intcomma }}</td></tr>
@@ -282,8 +282,8 @@
                                             {% if adj.employment_income_tax|default_if_none:0|add:0 != 0 %}
                                                 <tr><td>Employment Income Tax</td><td class="text-end">{{ adj.employment_income_tax|floatformat:2|intcomma }}</td></tr>
                                             {% endif %}
-                                            {% if adj.earning_adjustment_deduction|default_if_none:0|add:0 != 0 %}
-                                                <tr><td>Earning Adjustment Deduction</td><td class="text-end">{{ adj.earning_adjustment_deduction|floatformat:2|intcomma }}</td></tr>
+                                            {% if adj.strategic_report_deduction|default_if_none:0|add:0 != 0 %}
+                                                <tr><td>Strategic Report Deduction</td><td class="text-end">{{ adj.strategic_report_deduction|floatformat:2|intcomma }}</td></tr>
                                             {% endif %}
                                             {% if adj.individual_adjustment_deduction|default_if_none:0|add:0 != 0 %}
                                                 <tr><td>Individual Adjustment Deduction</td><td class="text-end">{{ adj.individual_adjustment_deduction|floatformat:2|intcomma }}</td></tr>

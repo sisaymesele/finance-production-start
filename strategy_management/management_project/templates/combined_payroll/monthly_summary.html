@@ -110,8 +110,8 @@
                                             {% if adj.employment_income_tax|default_if_none:0|add:0 != 0 %}
                                                 <tr><td>Employment Income Tax</td><td class="text-end">{{ adj.employment_income_tax|floatformat:2|intcomma }}</td></tr>
                                             {% endif %}
-                                            {% if adj.earning_adjustment_deduction|default_if_none:0|add:0 != 0 %}
-                                                <tr><td>Earning Adjustment Deduction</td><td class="text-end">{{ adj.earning_adjustment_deduction|floatformat:2|intcomma }}</td></tr>
+                                            {% if adj.strategic_report_deduction|default_if_none:0|add:0 != 0 %}
+                                                <tr><td>Strategic Report Deduction</td><td class="text-end">{{ adj.strategic_report_deduction|floatformat:2|intcomma }}</td></tr>
                                             {% endif %}
                                             {% if adj.individual_adjustment_deduction|default_if_none:0|add:0 != 0 %}
                                                 <tr><td>Individual Adjustment Deduction</td><td class="text-end">{{ adj.individual_adjustment_deduction|floatformat:2|intcomma }}</td></tr>

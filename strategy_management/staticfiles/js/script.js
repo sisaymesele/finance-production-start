@@ -100,16 +100,16 @@ function printContent(contentId, title, customStyles = "") {
 
 // Usage examples:
 function printPayrollPayslip() { printContent(); }
-function printPayrollMonthSummary(yearMonth) { printContent("regular-payroll-summary-" + yearMonth, "Regular Payroll Summary"); }
+function printPayrollMonthSummary(yearMonth) { printContent("strategic-action-plan-summary-" + yearMonth, "Strategic Action Plan Summary"); }
 function printPayrollYearSummary(year) { printContent("yearly-payroll-summary-" + year, "Yearly Payroll Summary"); }
-//function printRegularPayrollJournalEntry() { printContent("", "Payroll Journal Entry"); }
+//function printStrategicActionPlanJournalEntry() { printContent("", "Payroll Journal Entry"); }
 
 function printMultiMonthBonusDetail() { printContent("", "Multi-Month Bonus Detail"); }
 function printAnnualLeavePayDetail() { printContent(); }
 function printSeverancePayDetail() { printContent(); }
 
 //monthly journal entry
-function printRegularPayrollJournalEntry(elementId, title) {
+function printStrategicActionPlanJournalEntry(elementId, title) {
     const printContent = document.getElementById(elementId).innerHTML;
     const printWindow = window.open('', '_blank', 'width=800,height=600');
 

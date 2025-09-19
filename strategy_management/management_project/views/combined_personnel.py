@@ -89,11 +89,11 @@ def export_combined_personnel_detail(request):
         header_cell.alignment = Alignment(horizontal="center")
         row_num += 2
 
-        # Regular Payroll Section
-        ws.cell(row=row_num, column=1, value="Regular Payroll").font = Font(bold=True, color="0070C0")
+        # Strategic Action Plan Section
+        ws.cell(row=row_num, column=1, value="Strategic Action Plan").font = Font(bold=True, color="0070C0")
         row_num += 1
 
-        # Regular Payroll Headers
+        # Strategic Action Plan Headers
         headers = ["Component", "Amount"]
         for col_num, header in enumerate(headers, 1):
             cell = ws.cell(row=row_num, column=col_num, value=header)
@@ -103,7 +103,7 @@ def export_combined_personnel_detail(request):
             cell.border = border
         row_num += 1
 
-        # Regular Payroll Data
+        # Strategic Action Plan Data
         for component, amount in item['regular_item_by_component'].items():
             if amount:
                 ws.cell(row=row_num, column=1, value=component)
@@ -113,12 +113,12 @@ def export_combined_personnel_detail(request):
 
         row_num += 1
 
-        # Earning Adjustment Section (if exists)
+        # Strategic Report Section (if exists)
         if item['show_earning']:
-            ws.cell(row=row_num, column=1, value="Earning Adjustment").font = Font(bold=True, color="00B050")
+            ws.cell(row=row_num, column=1, value="Strategic Report").font = Font(bold=True, color="00B050")
             row_num += 1
 
-            # Earning Adjustment Headers
+            # Strategic Report Headers
             headers = ["Component", "Total", "Taxable", "Non-Taxable",
                        "Employee Pension", "Employer Pension", "Total Pension Contribution"]
             for col_num, header in enumerate(headers, 1):
@@ -129,7 +129,7 @@ def export_combined_personnel_detail(request):
                 cell.border = border
             row_num += 1
 
-            # Earning Adjustment Data
+            # Strategic Report Data
             for component, amounts in item['earning_adj_by_component'].items():
                 if amounts['earning_amount']:
                     ws.cell(row=row_num, column=1, value=component)
@@ -146,11 +146,11 @@ def export_combined_personnel_detail(request):
             row_num += 1
 
             # Individual Adjustment Summary (like in HTML)
-            ws.cell(row=row_num, column=1, value="Earning Adjustment Income tax").font = Font(bold=True, color="7030A0")
+            ws.cell(row=row_num, column=1, value="Strategic Report Income tax").font = Font(bold=True, color="7030A0")
             row_num += 1
 
             adjustment_summary = [
-                ("Employment Income Tax", item['earning_adjustment_item']['employment_income_tax']),
+                ("Employment Income Tax", item['strategic_report_item']['employment_income_tax']),
             ]
 
             for label, value in adjustment_summary:
@@ -317,11 +317,11 @@ def export_combined_personnel_list(request):
         payroll = row.get('payroll')
         p = payroll.personnel_full_name if payroll else None
         r = row.get('regular_totals', {})
-        a = row.get('earning_adjustment_item', {})
+        a = row.get('strategic_report_item', {})
         c = row.get('combined_adjustment', {})
         t = row.get('totals', {})
 
-        payroll_month = str(getattr(getattr(payroll, 'payroll_month', None), 'payroll_month', '')) if payroll else ''
+        payroll_month = str(getattr(getattr(payroll, 'strategy_by_cycle', None), 'strategy_by_cycle', '')) if payroll else ''
 
         # Merge Month and Personnel columns
         for col in range(1, 6):
@@ -434,7 +434,7 @@ def export_personnel_total_adjustment(request):
         "Taxable Gross", "Non-Taxable Gross", "Gross Pay",
         "Adjusted Pensionable", "Employee Pension", "Employer Pension",
         "Total Pension Contribution", "Employment Income Tax",
-        "Earning Adjustment Deduction", "Other Adjustment Deduction",
+        "Strategic Report Deduction", "Other Adjustment Deduction",
         "Total Adjustment Deduction", "Net Adjustment Pay", "Adjustment Expense"
     ]
 
@@ -460,14 +460,14 @@ def export_personnel_total_adjustment(request):
 
     for item in data:
         payroll = item.get('payroll')
-        earning = item.get('earning_adjustment_item', {})
+        earning = item.get('strategic_report_item', {})
         combined_adj = item.get('combined_adjustment', {})
         deduction_adj = item.get('deduction_adjustment')
 
         personnel = safe_getattr(payroll, 'personnel_full_name', None)
 
         # Payroll Month as string
-        payroll_month = str(getattr(getattr(payroll, 'payroll_month', None), 'payroll_month', '')) if payroll else ''
+        payroll_month = str(getattr(getattr(payroll, 'strategy_by_cycle', None), 'strategy_by_cycle', '')) if payroll else ''
 
         # Total deduction from deduction adjustment
         deduction_total = safe_getattr(deduction_adj, 'recorded_month_total_deduction', Decimal('0.00'))
@@ -475,7 +475,7 @@ def export_personnel_total_adjustment(request):
         # Write Regular component row
         ws.append([
             payroll_month,
-            "Regular Payroll",
+            "Strategic Action Plan",
             "Regular",
             safe_getattr(personnel, 'personnel_id', ''),
             safe_getattr(personnel, 'first_name', ''),
@@ -489,7 +489,7 @@ def export_personnel_total_adjustment(request):
             earning.get('employer_pension', Decimal('0.00')),
             earning.get('total_pension', Decimal('0.00')),
             earning.get('employment_income_tax', Decimal('0.00')),
-            earning.get('earning_adjustment_deduction', Decimal('0.00')),
+            earning.get('strategic_report_deduction', Decimal('0.00')),
             deduction_total,
             combined_adj.get('total_adjustment_deduction', Decimal('0.00')),
             combined_adj.get('net_monthly_adjustment', Decimal('0.00')),
@@ -513,7 +513,7 @@ def export_personnel_total_adjustment(request):
             earning.get('employer_pension', Decimal('0.00')),
             earning.get('total_pension', Decimal('0.00')),
             earning.get('employment_income_tax', Decimal('0.00')),
-            earning.get('earning_adjustment_deduction', Decimal('0.00')),
+            earning.get('strategic_report_deduction', Decimal('0.00')),
             deduction_total,
             combined_adj.get('total_adjustment_deduction', Decimal('0.00')),
             combined_adj.get('net_monthly_adjustment', Decimal('0.00')),
@@ -539,7 +539,7 @@ def export_personnel_total_adjustment(request):
                 severance.get('employer_pension', Decimal('0.00')),
                 severance.get('total_pension', Decimal('0.00')),
                 severance.get('employment_income_tax', Decimal('0.00')),
-                severance.get('earning_adjustment_deduction', Decimal('0.00')),
+                severance.get('strategic_report_deduction', Decimal('0.00')),
                 severance.get('other_adjustment_deduction', Decimal('0.00')),
                 severance.get('total_adjustment_deduction', Decimal('0.00')),
                 severance.get('net_monthly_adjustment', Decimal('0.00')),
@@ -621,11 +621,11 @@ def export_combined_personnel_total(request):
     for item in payroll_data:
         payroll = item.get('payroll')
         personnel = safe_getattr(payroll, 'personnel_full_name', None)
-        payroll_month_obj = safe_getattr(payroll, 'payroll_month', None)
+        payroll_month_obj = safe_getattr(payroll, 'strategy_by_cycle', None)
         totals = item.get('totals', {})
 
-        # Convert payroll_month to string (avoid Excel errors)
-        payroll_month = str(getattr(getattr(payroll, 'payroll_month', None), 'payroll_month', '')) if payroll else ''
+        # Convert strategy_by_cycle to string (avoid Excel errors)
+        payroll_month = str(getattr(getattr(payroll, 'strategy_by_cycle', None), 'strategy_by_cycle', '')) if payroll else ''
 
         row = [
             payroll_month,
@@ -710,8 +710,8 @@ def export_combined_personnel_expense(request):
         p = getattr(item.get('payroll'), 'personnel_full_name', None)
         t = item.get('totals', {})
 
-        # Convert payroll_month to string if it's an object
-        payroll_month = str(getattr(getattr(payroll, 'payroll_month', None), 'payroll_month', '')) if payroll else ''
+        # Convert strategy_by_cycle to string if it's an object
+        payroll_month = str(getattr(getattr(payroll, 'strategy_by_cycle', None), 'strategy_by_cycle', '')) if payroll else ''
 
         ws.append([
             payroll_month,
@@ -788,7 +788,7 @@ def export_combined_personnel_net_income(request):
         payroll = item.get('payroll')
         personnel = safe_getattr(payroll, 'personnel_full_name', None)
 
-        payroll_month = str(getattr(getattr(payroll, 'payroll_month', None), 'payroll_month', '')) if payroll else ''
+        payroll_month = str(getattr(getattr(payroll, 'strategy_by_cycle', None), 'strategy_by_cycle', '')) if payroll else ''
 
         totals = item.get('totals', {})
 
@@ -870,7 +870,7 @@ def export_combined_personnel_employment_tax(request):
         payroll = item.get('payroll')
         personnel = safe_getattr(payroll, 'personnel_full_name', None)
 
-        payroll_month = str(getattr(getattr(payroll, 'payroll_month', None), 'payroll_month', '')) if payroll else ''
+        payroll_month = str(getattr(getattr(payroll, 'strategy_by_cycle', None), 'strategy_by_cycle', '')) if payroll else ''
 
         totals = item.get('totals', {})
 
@@ -961,7 +961,7 @@ def export_combined_personnel_pension(request):
         totals = item.get('totals', {})
         personnel = getattr(payroll, 'personnel_full_name', None)
 
-        payroll_month = str(getattr(getattr(payroll, 'payroll_month', None), 'payroll_month', '')) if payroll else ''
+        payroll_month = str(getattr(getattr(payroll, 'strategy_by_cycle', None), 'strategy_by_cycle', '')) if payroll else ''
 
         if not personnel:
             continue

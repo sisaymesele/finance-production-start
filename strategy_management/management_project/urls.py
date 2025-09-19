@@ -30,26 +30,24 @@ urlpatterns = [
     path('payroll-period/delete/<int:pk>/', views.delete_payroll_period, name='delete_payroll_period'),
 
     # payroll month component
-    path('payroll-month-and-component/', views.payroll_month_and_component_list, name='payroll_month_and_component_list'),
-    path('payroll-month-and-component/create/', views.create_payroll_month_and_component, name='create_payroll_month_and_component'),
-    path('payroll-month-and-component/update/<int:pk>/', views.update_payroll_month_and_component, name='update_payroll_month_and_component'),
-    path('payroll-month-and-component/delete/<int:pk>/', views.delete_payroll_month_and_component, name='delete_payroll_month_and_component'),
+    path('strategic-cycle/', views.strategic_cycle_list, name='strategic_cycle_list'),
+    path('strategic-cycle/create/', views.create_strategic_cycle, name='create_strategic_cycle'),
+    path('strategic-cycle/update/<int:pk>/', views.update_strategic_cycle, name='update_strategic_cycle'),
+    path('strategic-cycle/delete/<int:pk>/', views.delete_strategic_cycle, name='delete_strategic_cycle'),
 
-    # urls.py for EarningAdjustment
-    path('earning-adjustment/list', views.earning_object_list, name='earning_adjustment_list'),
-    path('earning-adjustment/', views.earnings_object_detail, name='earning_adjustment_detail'),
-    path('earning-adjustment/per-adjusted-month/', views.earning_per_adjusted_month, name='earning_per_adjusted_month'),
-    path('earning-adjustment/monthly-earning-adjustment/', views.monthly_earning_adjustment, name='monthly_earning_adjustment'),
-    path('earning-adjustment/create/', views.create_earning_adjustment, name='create_earning_adjustment'),
-    path('earning-adjustment/update/<int:pk>/', views.update_earning_adjustment, name='update_earning_adjustment'),
-    path('earning-adjustment/delete/<int:pk>/', views.delete_earning_adjustment, name='delete_earning_adjustment'),
+    ## Strategic Report URLs
+    path('strategic-reports/', views.strategic_report_list, name='strategic_report_list'),
+    path('strategic-reports/create/', views.create_strategic_report, name='create_strategic_report'),
+    path('strategic-reports/<int:pk>/update/', views.update_strategic_report, name='update_strategic_report'),
+    path('strategic-reports/<int:pk>/delete/', views.delete_strategic_report, name='delete_strategic_report'),
+    path('strategic-reports/chart/', views.strategic_report_chart, name='strategic_report_chart'),
+    path(
+        'strategic-reports/export/',
+        views.export_strategic_report_to_excel,
+        name='export_strategic_report_to_excel'
+    ),
+
     #total
-    path('monthly-earning-adjustment-total', views.monthly_earning_adjustment_total, name='monthly_earning_adjustment_total'),
-    # exel
-    path('export/earning-adjustment-list/', views.export_earning_adjustment_list_to_excel, name='export_earning_adjustment_list_to_excel'),
-    path('export/earning-per-adjusted-month/', views.export_earning_per_adjusted_month_to_excel, name='export_earning_per_adjusted_month_to_excel'),
-    path('export/monthly-earning-adjustment/', views.export_monthly_earning_adjustment_to_excel, name='export_monthly_earning_adjustment_to_excel'),
-    path('export_monthly_earning_adjustment_aggregate', views.export_monthly_earning_adjustment_aggregate, name='export_monthly_earning_adjustment_aggregate'),
 
     #
 
@@ -132,28 +130,51 @@ urlpatterns = [
     path('mission/update/<int:pk>/', views.update_mission, name='update_mission'),
     path('mission/delete/<int:pk>/', views.delete_mission, name='delete_mission'),
 
+    # Values
+    path('values/', views.values_list, name='values_list'),
+    path('values/create/', views.create_values, name='create_values'),
+    path('values/update/<int:pk>/', views.update_values, name='update_values'),
+    path('values/delete/<int:pk>/', views.delete_values, name='delete_values'),
 
-    # payroll - process
-    path('payroll-month/', views.payroll_month_list, name='payroll_month_list'),
-    path('regular-payroll/<slug:payroll_month_slug>/', views.regular_payroll_list, name='regular_payroll_list'),
-    path('regular-payroll/<slug:payroll_month_slug>/<int:regular_payroll_pk>/', views.regular_payroll_detail, name='regular_payroll_detail'),
-    path('regular-payroll/<slug:payroll_month_slug>/create/', views.create_regular_payroll, name='create_regular_payroll'),
-    path('regular-payroll/<slug:payroll_month_slug>/update/<int:pk>/', views.update_regular_payroll, name='update_regular_payroll'),
-    path('regular-payroll/<slug:payroll_month_slug>/delete/<int:pk>/', views.delete_regular_payroll, name='delete_regular_payroll'),
+    # SWOT
+    path('swot/', views.swot_list, name='swot_list'),
+    path('swot/create/', views.create_swot, name='create_swot'),
+    path('swot/update/<int:pk>/', views.update_swot, name='update_swot'),
+    path('swot/delete/<int:pk>/', views.delete_swot, name='delete_swot'),
 
-    # export regular payroll
-    path('export-regular-payroll/<slug:payroll_month_slug>/export-payments/', views.export_regular_payroll_to_excel, name='export_regular_payroll_to_excel'),
+    # Strategy Map URLs
+    path('strategy-map/', views.strategy_map_list, name='strategy_map_list'),
+    path('strategy-map/create/', views.create_strategy_map, name='create_strategy_map'),
+    path('strategy-map/<int:pk>/update/', views.update_strategy_map, name='update_strategy_map'),
+    path('strategy-map/<int:pk>/delete/', views.delete_strategy_map, name='delete_strategy_map'),
 
-    # analysis
-    path('payroll-month-for-summary-report/', views.payroll_month_for_summary_report, name='payroll_month_for_summary_report'),
-    path('payroll-month-for-journal-entry/', views.payroll_month_for_journal_entry_report, name='payroll_month_for_journal_entry'),
-    path('payroll-by-month-journal-entry-report/<slug:payroll_month_slug>/', views.regular_payroll_journal_entry, name='payroll_by_month_journal_entry'),
-    path('payroll-summary-by-month/<slug:payroll_month_slug>/', views.regular_payroll_summary, name='payroll_by_month_summary_report'),
-    path('payroll-summary-by-year/', views.payroll_by_year_summary_report, name='payroll_by_year_summary_report'),
+    #action plan
+    # Strategic Action Plan Chart
+    path(
+        'strategic-action-plan/chart/',
+        views.strategic_action_plan_chart,
+        name='strategic_action_plan_chart'
+    ),
+    path('strategy-by-cycle/', views.strategy_by_cycle_list, name='strategy_by_cycle_list'),
+    path('strategic-action-plan/<slug:cycle_slug>/', views.strategic_action_plan_list, name='strategic_action_plan_list'),
+    path(
+        "strategic-action-plan/<slug:slug>/",
+        views.strategic_action_plan_detail,
+        name="strategic_action_plan_detail"
+    ),
 
-    # cost share pay
-    path('university-cost-sharing', views.university_cost_sharing_view, name='university_cost-sharing_list'),
+    path(
+        "management-project/strategic-action-plan/<slug:cycle_slug>/<int:pk>/",
+        views.strategic_action_plan_detail,
+        name="strategic_action_plan_detail"
+    ),
 
-    # graph
-    path('regular-payroll-graph/', views.payroll_processing_graphs, name='regular_payroll_graph'),
+
+    # path('strategic-action-plan/<slug:cycle_slug>/<int:pk>/', views.strategic_action_plan_detail, name='strategic_action_plan_detail'),
+    path('strategic-action-plan/<slug:cycle_slug>/create/', views.create_strategic_action_plan, name='create_strategic_action_plan'),
+    path('strategic-action-plan/<slug:cycle_slug>/update/<int:pk>/', views.update_strategic_action_plan, name='update_strategic_action_plan'),
+    path('strategic-action-plan/<slug:cycle_slug>/delete/<int:pk>/', views.delete_strategic_action_plan, name='delete_strategic_action_plan'),
+    path('strategic-action-plan/<slug:cycle_slug>/export/', views.export_strategic_action_plan_to_excel, name='export_strategic_action_plan_to_excel'),
+
+
 ]

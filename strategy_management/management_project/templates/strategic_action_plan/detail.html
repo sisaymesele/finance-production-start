@@ -1,0 +1,97 @@
+{% extends "dashboard.html" %}
+{% load humanize %}
+{% block content %}
+
+<div class="d-flex justify-content-between flex-wrap mb-3 gap-2">
+    <!-- Back Button -->
+    <a class="btn btn-danger"
+       href="{% url 'strategic_action_plan_list' cycle_slug=strategy_by_cycle.slug %}"
+       hx-get="{% url 'strategic_action_plan_list' cycle_slug=strategy_by_cycle.slug %}"
+       hx-target="#full-page-container"
+       hx-swap="innerHTML"
+       hx-push-url="true">
+        ← Back to Strategic Action Plans
+    </a>
+
+    <!-- Export Button -->
+    <a class="btn btn-success"
+       href="{% url 'export_strategic_action_plan_to_excel' cycle_slug=strategy_by_cycle.slug %}">
+        <i class="bi bi-file-earmark-excel"></i>
+        Export Strategic Action Plan
+    </a>
+</div>
+
+<h2 class="mb-4">Strategic Action Plan Detail for {{ strategy_by_cycle.name }}</h2>
+
+<div class="card mb-3">
+    <div class="card-header bg-primary text-white">
+        {{ strategic_action_plan.strategy_map.kpi }}
+    </div>
+    <div class="card-body">
+        <div class="row mb-2">
+            <div class="col-md-4"><strong>Perspective:</strong> {{ strategic_action_plan.strategy_map.strategic_perspective }}</div>
+            <div class="col-md-4"><strong>Pillar:</strong> {{ strategic_action_plan.strategy_map.strategic_pillar }}</div>
+            <div class="col-md-4"><strong>Objective:</strong> {{ strategic_action_plan.strategy_map.objective }}</div>
+        </div>
+
+        <div class="row mb-2">
+            <div class="col-md-4"><strong>KPI:</strong> {{ strategic_action_plan.strategy_map.kpi }}</div>
+            <div class="col-md-4"><strong>Formula:</strong> {{ strategic_action_plan.strategy_map.formula }}</div>
+            <div class="col-md-4"><strong>Indicator Type:</strong> {{ strategic_action_plan.get_indicator_type_display }}</div>
+        </div>
+
+        <div class="row mb-2">
+            <div class="col-md-4"><strong>Direction:</strong> {{ strategic_action_plan.get_direction_of_change_display }}</div>
+            <div class="col-md-4"><strong>Baseline:</strong> {{ strategic_action_plan.baseline|floatformat:2|intcomma }}</div>
+            <div class="col-md-4"><strong>Target:</strong> {{ strategic_action_plan.target|floatformat:2|intcomma }}</div>
+        </div>
+
+        <div class="row mb-2">
+            <div class="col-md-4"><strong>Improvement Needed:</strong> {{ strategic_action_plan.improvement_needed|default:"0.00"|floatformat:2|intcomma }}</div>
+            <div class="col-md-4"><strong>Time Horizon:</strong> {{ strategic_action_plan.strategic_cycle.time_horizon }}</div>
+            <div class="col-md-4"><strong>Time Horizon Type:</strong> {{ strategic_action_plan.strategic_cycle.time_horizon_type }}</div>
+        </div>
+
+        <div class="row mb-2">
+            <div class="col-md-4"><strong>Start Date:</strong> {{ strategic_action_plan.strategic_cycle.start_date }}</div>
+            <div class="col-md-4"><strong>End Date:</strong> {{ strategic_action_plan.strategic_cycle.end_date }}</div>
+            <div class="col-md-4"><strong>Duration (Days):</strong> {{ strategic_action_plan.strategic_cycle.duration_days|default:"-" }}</div>
+        </div>
+
+        <div class="row mb-2">
+            <div class="col-md-12">
+                <strong>Responsible Bodies:</strong>
+                {% for body in strategic_action_plan.responsible_bodies.all %}
+                    {{ body.stakeholder_name }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="row mb-2">
+            <div class="col-md-12">
+                <strong>Status:</strong> {{ strategic_action_plan.get_status_display|default:"Pending" }}
+            </div>
+        </div>
+    </div>
+
+    <div class="card-footer d-flex gap-2">
+        <a class="btn btn-warning"
+           href="{% url 'update_strategic_action_plan' cycle_slug=strategy_by_cycle.slug pk=strategic_action_plan.pk %}"
+           hx-get="{% url 'update_strategic_action_plan' cycle_slug=strategy_by_cycle.slug pk=strategic_action_plan.pk %}"
+           hx-target="#full-page-container"
+           hx-swap="innerHTML"
+           hx-push-url="true">
+            Update
+        </a>
+        <a class="btn btn-danger"
+           href="{% url 'delete_strategic_action_plan' cycle_slug=strategy_by_cycle.slug pk=strategic_action_plan.pk %}"
+           hx-get="{% url 'delete_strategic_action_plan' cycle_slug=strategy_by_cycle.slug pk=strategic_action_plan.pk %}"
+           hx-target="#full-page-container"
+           hx-swap="innerHTML"
+           hx-push-url="true">
+            Delete
+        </a>
+    </div>
+</div>
+
+{% endblock %}

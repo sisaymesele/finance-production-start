@@ -3,28 +3,16 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from management_project.models import Vision
 from management_project.forms import VisionForm
-from django.core.paginator import Paginator
 
 # -------------------- VISION LIST --------------------
 @login_required
 def vision_list(request):
-    """
-    List all visions for the logged-in user's organization.
-    Superusers see all visions.
-    """
-    if request.user.is_superuser:
-        visions = Vision.objects.all().order_by('-id')
-    else:
-        visions = Vision.objects.filter(organization_name=request.user.organization_name)
-
-    paginator = Paginator(visions, 10)  # 10 visions per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    visions = Vision.objects.filter(organization_name=request.user.organization_name).order_by('-id')
 
     form = VisionForm()  # Empty form for creating new visions
 
     context = {
-        'page_obj': page_obj,
+        'visions': visions,
         'form': form,
     }
     return render(request, 'vision/list.html', context)

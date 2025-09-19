@@ -10,20 +10,16 @@ from .organization import organizational_profile, create_organizational_profile,
 from .payroll_period import payroll_period_list, create_payroll_period, \
     update_payroll_period, delete_payroll_period
 
-from .payroll_month_and_component import payroll_month_and_component_list, create_payroll_month_and_component, \
-    update_payroll_month_and_component, delete_payroll_month_and_component
+from .strategic_cycle import strategic_cycle_list, create_strategic_cycle, \
+    update_strategic_cycle, delete_strategic_cycle
 
-from .regular_payroll import payroll_month_list, regular_payroll_list, regular_payroll_detail, create_regular_payroll, \
-    update_regular_payroll, \
-    delete_regular_payroll, export_regular_payroll_to_excel, payroll_processing_graphs, get_regular_payroll_by_month_report, \
-    payroll_month_for_summary_report, payroll_month_for_journal_entry_report, \
-    regular_payroll_summary, payroll_by_year_summary_report, regular_payroll_journal_entry, university_cost_sharing_view
+from .strategic_action_plan import strategy_by_cycle_list, strategic_action_plan_list, strategic_action_plan_detail, \
+    create_strategic_action_plan, update_strategic_action_plan, delete_strategic_action_plan, \
+    export_strategic_action_plan_to_excel, strategic_action_plan_chart
 
-from .earning_adjustment import earning_object_list, earnings_object_detail, \
-    create_earning_adjustment, update_earning_adjustment, delete_earning_adjustment, earning_per_adjusted_month, \
-    monthly_earning_adjustment, monthly_earning_adjustment_total, export_earning_adjustment_list_to_excel, \
-    export_earning_per_adjusted_month_to_excel, export_monthly_earning_adjustment_to_excel, \
-    export_monthly_earning_adjustment_aggregate
+from .strategic_report import strategic_report_list, \
+    create_strategic_report, update_strategic_report, delete_strategic_report, \
+    export_strategic_report_to_excel, strategic_report_chart
 
 from .deduction_adjustment import deduction_object_list, deduction_object_detail, \
     create_deduction_adjustment, update_deduction_adjustment, delete_deduction_adjustment, deduction_per_adjusted_month, \
@@ -50,4 +46,6 @@ from .severance_pay import severance_pay_list,  severance_pay_detail, create_sev
 
 from .vision import vision_list, create_vision, update_vision, delete_vision
 from .mission import mission_list, create_mission, update_mission, delete_mission
-
+from .values import values_list, create_values, update_values, delete_values
+from .swot import swot_list, create_swot, update_swot, delete_swot
+from .strategy_map import strategy_map_list, create_strategy_map, update_strategy_map, delete_strategy_map

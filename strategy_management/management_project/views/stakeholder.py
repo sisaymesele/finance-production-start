@@ -10,6 +10,12 @@ from datetime import datetime
 from management_project.models import Stakeholder, OrganizationalProfile
 from management_project.forms import StakeholderForm
 
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill
+from openpyxl.utils import get_column_letter
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+
 import plotly.graph_objs as go
 from openpyxl.utils import get_column_letter
 from openpyxl import Workbook
@@ -110,6 +116,7 @@ def delete_stakeholder(request, pk):
     return render(request, 'stakeholder_list/delete_confirm.html', {'stakeholder': stakeholder})
 
 
+
 @login_required
 def export_stakeholders_to_excel(request):
     wb = Workbook()
@@ -123,19 +130,32 @@ def export_stakeholders_to_excel(request):
     ]
 
     headers = [field.replace('_', ' ').title() for field in field_names]
-    ws.append(headers)
 
-    # Header styling
+    # 🔹 Title Row (Merged across all columns)
+    title = f"Stakeholder List"
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
+    title_cell = ws.cell(row=1, column=1, value=title)
+    title_cell.font = Font(size=14, bold=True, color="FFFFFFFF")
+    title_cell.alignment = Alignment(horizontal="center", vertical="center")
+    title_cell.fill = PatternFill(start_color="FF305496", end_color="FF305496", fill_type="solid")
+
+    # 🔹 Header Row
+    ws.append(headers)
+    header_row_idx = 2
     header_fill = PatternFill(start_color="FF0070C0", end_color="FF0070C0", fill_type="solid")
     header_font = Font(bold=True, color="FFFFFFFF")
     header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-    for cell in ws[1]:
+
+    for cell in ws[header_row_idx]:
         cell.fill = header_fill
         cell.font = header_font
         cell.alignment = header_alignment
 
-    # Fetch stakeholders
-    stakeholders = Stakeholder.objects.filter(organization_name=request.user.organization_name).values_list(*field_names)
+    # 🔹 Fetch stakeholders
+    stakeholders = Stakeholder.objects.filter(
+        organization_name=request.user.organization_name
+    ).values_list(*field_names)
+
     for s in stakeholders:
         row = []
         for value in s:
@@ -145,15 +165,23 @@ def export_stakeholders_to_excel(request):
                 row.append(value)
         ws.append(row)
 
-    # Auto column width
+    # 🔹 Auto column width
     for i, column_cells in enumerate(ws.columns, 1):
-        max_length = max(len(str(cell.value)) for cell in column_cells if cell.value) + 2
-        ws.column_dimensions[get_column_letter(i)].width = max(max_length, 10)
+        max_length = max((len(str(cell.value)) for cell in column_cells if cell.value), default=0) + 2
+        ws.column_dimensions[get_column_letter(i)].width = max(max_length, 12)
 
-    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    # 🔹 Adjust row heights (title + header)
+    ws.row_dimensions[1].height = 25
+    ws.row_dimensions[2].height = 20
+
+    # 🔹 Response
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
     response["Content-Disposition"] = 'attachment; filename=stakeholders.xlsx'
     wb.save(response)
     return response
+
 
 
 @login_required

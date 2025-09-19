@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import OrganizationalProfile, Stakeholder, PayrollPeriod, PayrollMonthComponent, RegularPayroll, EarningAdjustment, \
+from .models import OrganizationalProfile, Stakeholder, PayrollPeriod, StrategicCycle, StrategicActionPlan, StrategicReport, \
     SeverancePay, Vision
 from .forms import *
 from django.http import HttpResponseRedirect
@@ -65,194 +65,134 @@ class StakeholderAdmin(admin.ModelAdmin):
         return qs.none()
 
 
-@admin.register(PayrollPeriod)
-class PayrollPeriodAdmin(admin.ModelAdmin):
 
+@admin.register(StrategicCycle)
+class StrategicCycleAdmin(admin.ModelAdmin):
+    form = StrategicCycleForm
+
+    # Display model fields
     list_display = [
-        'organization_name', 'year', 'month', 'payroll_month',
+        'organization_name', 'time_horizon', 'time_horizon_type',
+        'start_date', 'end_date', 'duration_days', 'slug'
     ]
-    list_filter = ['year', 'month']
+
+    # Filters based on model fields
+    list_filter = ['organization_name', 'time_horizon_type', 'time_horizon']
 
     # Explicitly get the form to ensure custom widgets are used
     def get_form(self, request, obj=None, **kwargs):
-        kwargs['form'] = PayrollPeriodForm
+        kwargs['form'] = StrategicCycleForm
         return super().get_form(request, obj, **kwargs)
 
+    # Restrict foreign key based on user's organization
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if not request.user.is_superuser and hasattr(request.user, 'organization_name'):
             org = request.user.organization_name
             if db_field.name == 'organization_name':
-                kwargs["queryset"] = OrganizationalProfile.objects.filter(organization_name=org)
-
+                kwargs["queryset"] = OrganizationalProfile.objects.filter(pk=org.pk)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+    # Pass request to form
     def get_form_kwargs(self, request, obj=None, **kwargs):
-        # This method is new in Django 5+ and allows passing custom kwargs to the form
         form_kwargs = super().get_form_kwargs(request, obj, **kwargs)
         form_kwargs["request"] = request
         return form_kwargs
 
+    # Restrict queryset to user's organization
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
             return qs
         if hasattr(request.user, 'organization_name') and request.user.organization_name:
-            return qs.filter(
-                organization_name=request.user.organization_name
-            )
+            return qs.filter(organization_name=request.user.organization_name)
         return qs.none()
-
-
-
-@admin.register(PayrollMonthComponent)
-class PayrollMonthComponentAdmin(admin.ModelAdmin):
-    # form = PayrollMonthComponentForm
-    list_display = [
-        'organization_name', 'payroll_month',
-        'use_basic_salary', 'use_overtime', 'use_housing_allowance', 'use_position_allowance',
-        'use_commission', 'use_telephone_allowance', 'use_one_time_bonus', 'use_causal_labor_wage',
-        # partial taxable
-        'use_transport_home_to_office', 'use_transport_for_work', 'use_fuel_home_to_office',
-        'use_fuel_for_work', 'use_per_diem', 'use_hardship_allowance', 'use_public_cash_award',
-        'use_incidental_operation_allowance', 'use_medical_allowance',
-        'use_cash_gift', 'use_tuition_fees', 'use_personal_injury',
-        'use_child_support_payment',
-        # deduction
-        'use_charitable_donation', 'use_saving_plan',
-        'use_loan_payment', 'use_court_order', 'use_workers_association', 'use_personnel_insurance_saving',
-        'use_university_cost_share_pay', 'use_red_cross', 'use_party_contribution', 'use_other_deduction', 'slug',
-    ]
-    list_filter = ['payroll_month']
-
-    # Group fields by their categories for better organization
-    fieldsets = (
-        ('Payroll Month', {
-            'fields': ('organization_name', 'payroll_month')
-        }),
-        ('Fully Taxable Components', {
-            'fields': (
-                'use_basic_salary', 'use_overtime',
-                'use_housing_allowance', 'use_position_allowance',
-                'use_commission', 'use_telephone_allowance',
-                'use_one_time_bonus', 'use_causal_labor_wage'
-            )
-        }),
-        ('Partially Taxable Components', {
-            'fields': (
-                'use_transport_home_to_office', 'use_transport_for_work',
-                'use_fuel_home_to_office', 'use_fuel_for_work',
-                'use_per_diem', 'use_hardship_allowance'
-            )
-        }),
-        ('Fully Non-Taxable Compensation', {
-            'fields': (
-                'use_public_cash_award', 'use_incidental_operation_allowance',
-                'use_medical_allowance', 'use_cash_gift', 'use_tuition_fees',
-                'use_personal_injury', 'use_child_support_payment',
-            )
-        }),
-        ('Deductions', {
-            'fields': (
-                'use_charitable_donation', 'use_saving_plan', 'use_loan_payment',
-                'use_court_order', 'use_workers_association',
-                'use_personnel_insurance_saving', 'use_university_cost_share_pay',
-                'use_red_cross', 'use_party_contribution', 'use_other_deduction'
-            )
-        }),
-    )
-
-    # Explicitly get the form to ensure custom widgets are used
-    def get_form(self, request, obj=None, **kwargs):
-        kwargs['form'] = PayrollMonthComponentForm
-        return super().get_form(request, obj, **kwargs)
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if not request.user.is_superuser and hasattr(request.user, 'organization_name'):
-            org = request.user.organization_name
-            if db_field.name == 'organization_name':
-                kwargs["queryset"] = OrganizationalProfile.objects.filter(organization_name=org)
-
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-    def get_form_kwargs(self, request, obj=None, **kwargs):
-        # This method is new in Django 5+ and allows passing custom kwargs to the form
-        form_kwargs = super().get_form_kwargs(request, obj, **kwargs)
-        form_kwargs["request"] = request
-        return form_kwargs
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        if hasattr(request.user, 'organization_name') and request.user.organization_name:
-            return qs.filter(
-                organization_name=request.user.organization_name
-            )
-        return qs.none()
-
 
 # #
-@admin.register(RegularPayroll)
-class RegularPayrollAdmin(admin.ModelAdmin):
-    list_display = [
-        'organization_name', 'get_personnel_id', 'get_first_name', 'get_father_name', 'get_last_name',
-        #
-        'payroll_month', 'basic_salary',
-        'overtime', 'housing_allowance', 'position_allowance', 'commission', 'telephone_allowance',
-        'one_time_bonus', 'causal_labor_wage',
-        #
-        'transport_home_to_office', 'transport_home_to_office_taxable', 'transport_home_to_office_non_taxable',
-        'fuel_home_to_office', 'fuel_home_to_office_taxable', 'fuel_home_to_office_non_taxable',
-        'transport_for_work', 'transport_for_work_taxable', 'transport_for_work_non_taxable',
-        'fuel_for_work', 'fuel_for_work_taxable', 'fuel_for_work_non_taxable',
-        'per_diem', 'per_diem_taxable', 'per_diem_non_taxable', 'per_diem', 'per_diem_taxable',
-        'per_diem_non_taxable', 'hardship_allowance', 'hardship_allowance_taxable', 'hardship_allowance_non_taxable',
-        #
-        'public_cash_award', 'incidental_operation_allowance', 'medical_allowance', 'cash_gift', 'tuition_fees',
-        'personal_injury', 'child_support_payment',
-        # deduction
-        # conditional deduction
-        'charitable_donation', 'saving_plan', 'loan_payment', 'court_order', 'workers_association',
-        'personnel_insurance_saving', 'cost_share_percent_to_basic_salary', 'university_cost_share_pay',
-        'red_cross', 'party_contribution', 'other_deduction',
-        # auto deduction
-        'employment_income_tax', 'employee_pension_contribution',
-        'employer_pension_contribution', 'total_pension_contribution',
-        # summary
-        'total_payroll_deduction', 'gross_pay', 'gross_taxable_pay',
-        'gross_non_taxable_pay', 'net_pay', 'expense',
+@admin.register(StrategicActionPlan)
+class StrategicActionPlanAdmin(admin.ModelAdmin):
+    list_display = ['organization_name', 'get_perspective', 'get_pillar', 'get_objective', 'get_kpi', 'get_formula',
+                    'indicator_type', 'direction_of_change', 'baseline', 'target', 'improvement_needed', 'get_time_horizon',
+                    'get_time_horizon_type', 'get_start_date', 'get_end_date', 'get_duration_days',
+                    'get_responsible_bodies', 'status', 'weight']
+
+    # Custom display methods
+    def get_perspective(self, obj):
+        return obj.strategy_map.strategic_perspective
+
+    get_perspective.short_description = "Perspective"
+
+    def get_pillar(self, obj):
+        return obj.strategy_map.strategic_pillar
+
+    get_pillar.short_description = "Pillar"
+
+    def get_objective(self, obj):
+        return obj.strategy_map.objective
+
+    get_objective.short_description = "Objective"
+
+    def get_kpi(self, obj):
+        return obj.strategy_map.kpi
+
+    get_kpi.short_description = "KPI"
+
+    def get_formula(self, obj):
+        return obj.strategy_map.formula
+
+    get_formula.short_description = "Formula"
+
+    def get_time_horizon(self, obj):
+        return obj.strategic_cycle.time_horizon
+
+    get_time_horizon.short_description = "Time Horizon"
+
+    def get_time_horizon_type(self, obj):
+        return obj.strategic_cycle.time_horizon_type
+
+    get_time_horizon_type.short_description = "Horizon Type"
+
+    def get_start_date(self, obj):
+        return obj.strategic_cycle.start_date
+
+    get_start_date.short_description = "Start Date"
+
+    def get_end_date(self, obj):
+        return obj.strategic_cycle.end_date
+
+    get_end_date.short_description = "End Date"
+
+    def get_duration_days(self, obj):
+        return obj.strategic_cycle.duration_days
+
+    get_duration_days.short_description = "Duration (Days)"
+
+    def get_responsible_bodies(self, obj):
+        return ", ".join([body.stakeholder_name for body in obj.responsible_bodies.all()])
+
+    get_responsible_bodies.short_description = "Responsible Bodies"
+
+    list_filter = ['organization_name', 'strategic_cycle', 'strategy_map', 'indicator_type', 'direction_of_change']
+
+    search_fields = [
+        'key_performance_indicator',
+        'strategy_map__objective',
+        'strategy_map__kpi'
     ]
-    list_filter = ['payroll_month__payroll_month__month', 'payroll_month__payroll_month__year', 'organization_name']
 
-    @admin.display(ordering='personnel_full_name__personnel_id', description='Personnel ID')
-    def get_personnel_id(self, obj):
-        return obj.personnel_full_name.personnel_id
-
-    @admin.display(ordering='personnel_full_name__first_name', description='First Name')
-    def get_first_name(self, obj):
-        return obj.personnel_full_name.first_name
-
-    @admin.display(ordering='personnel_full_name__father_name', description='Father Name')
-    def get_father_name(self, obj):
-        return obj.personnel_full_name.father_name
-
-    @admin.display(ordering='personnel_full_name__last_name', description='Last Name')
-    def get_last_name(self, obj):
-        return obj.personnel_full_name.last_name
+    filter_horizontal = ('responsible_bodies',)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if not request.user.is_superuser and hasattr(request.user, 'organization_name'):
             org = request.user.organization_name
             if db_field.name == 'organization_name':
                 kwargs["queryset"] = OrganizationalProfile.objects.filter(organization_name=org)
-            if db_field.name == 'personnel_full_name':
-                kwargs["queryset"] = Stakeholder.objects.filter(organization_name=org)
-            if db_field.name == 'payroll_month':
-                kwargs["queryset"] = PayrollMonthComponent.objects.filter(organization_name=org)
+            if db_field.name == 'strategic_cycle':
+                kwargs["queryset"] = StrategicCycle.objects.filter(organization_name=org)
+            if db_field.name == 'strategy_map':
+                kwargs["queryset"] = StrategyMap.objects.filter(organization_name=org)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_form_kwargs(self, request, obj=None, **kwargs):
-        # This method is new in Django 5+ and allows passing custom kwargs to the form
         form_kwargs = super().get_form_kwargs(request, obj, **kwargs)
         form_kwargs["request"] = request
         return form_kwargs
@@ -262,99 +202,50 @@ class RegularPayrollAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         if hasattr(request.user, 'organization_name') and request.user.organization_name:
-            return qs.filter(
-                organization_name=request.user.organization_name
-            )
+            return qs.filter(organization_name=request.user.organization_name)
         return qs.none()
 
-
-# # earning adjustment admin
-@admin.register(EarningAdjustment)
-class EarningAdjustmentAdmin(admin.ModelAdmin):
+@admin.register(StrategicReport)
+class StrategicReportAdmin(admin.ModelAdmin):
     list_display = (
-        'organization_name', 'get_personnel_id', 'get_first_name', 'get_father_name', 'get_last_name',
-        'case', 'component', 'earning_amount', 'period_start', 'period_end', 'months_covered',
-        'taxable', 'non_taxable', 'adjusted_month_total_earning_deduction',
-        #
-        'adjusted_month_employee_pension_contribution',
-        'adjusted_month_employer_pension_contribution',
-        'adjusted_month_total_pension',
-        #
-        'recorded_month_taxable_gross_pay', 'recorded_month_non_taxable_gross_pay',
-        'recorded_month_gross_pay', 'recorded_month_total_taxable_pay',
-        'recorded_month_employment_income_tax_total', 'recorded_month_employment_income_tax',
-        #
-        'recorded_month_employee_pension_contribution',
-        'recorded_month_employer_pension_contribution',
-        'recorded_month_total_pension_contribution',
-        #
-        'recorded_month_total_earning_deduction', 'recorded_month_expense'
-
+        'organization_name', 'action_plan', 'achievement', 'percent_achieved', 'variance', 'weighted_score',
+        'data_source', 'data_collector', 'progress_summary', 'performance_summary', 'status', 'created_at', 'updated_at',
     )
 
-    list_filter = ('component', 'payroll_to_record', 'payroll_needing_adjustment',)
-    search_fields = ('component', 'payroll_to_record', 'payroll_needing_adjustment',)
+    list_filter = ('action_plan', 'organization_name',)
+    search_fields = ('action_plan__strategy_map__key_performance_indicator', 'responsible_body', 'organization_name__organization_name')
     ordering = ('-created_at',)
 
     readonly_fields = (
-        'taxable', 'non_taxable', 'adjusted_month_gross_taxable_pay',
-        'adjusted_month_gross_non_taxable_pay', 'adjusted_month_gross_pay',
-        'adjusted_month_total_taxable_pay', 'adjusted_month_employment_income_tax_total',
-        'adjusted_month_employment_income_tax', 'adjusted_month_total_earning_deduction',
-        'adjusted_month_expense', 'recorded_month_taxable_gross_pay',
-        'recorded_month_non_taxable_gross_pay', 'recorded_month_gross_pay',
-        'recorded_month_total_taxable_pay', 'recorded_month_employment_income_tax_total',
-        'recorded_month_employment_income_tax', 'recorded_month_total_earning_deduction',
-        'recorded_month_expense', 'created_at', 'updated_at',
+        'percent_achieved',
+        'variance',
+        'weighted_score',
+        'created_at',
+        'updated_at',
     )
 
-    # Group fields into logical sections
-
-    @admin.display(ordering='payroll_to_record__personnel_full_name__personnel_id', description='Personnel ID')
-    def get_personnel_id(self, obj):
-        return obj.payroll_to_record.personnel_full_name.personnel_id
-
-    @admin.display(ordering='payroll_to_record__personnel_full_name__first_name', description='First Name')
-    def get_first_name(self, obj):
-        return obj.payroll_to_record.personnel_full_name.first_name
-
-    @admin.display(ordering='payroll_to_record__personnel_full_name__father_name', description='Father Name')
-    def get_father_name(self, obj):
-        return obj.payroll_to_record.personnel_full_name.father_name
-
-    @admin.display(ordering='payroll_to_record__personnel_full_name__last_name', description='Last Name')
-    def get_last_name(self, obj):
-        return obj.payroll_to_record.personnel_full_name.last_name
-
+    # Filter foreign keys based on user organization
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if not request.user.is_superuser and hasattr(request.user, 'organization_name'):
             org = request.user.organization_name
             if db_field.name == 'organization_name':
-                kwargs["queryset"] = OrganizationalProfile.objects.filter(organization_name=org)
-            if db_field.name == 'payroll_to_record':
-                kwargs["queryset"] = RegularPayroll.objects.filter(organization_name=org)
-            if db_field.name == 'payroll_needing_adjustment':
-                kwargs["queryset"] = RegularPayroll.objects.filter(organization_name=org)
+                kwargs["queryset"] = OrganizationalProfile.objects.filter(id=org.id)
+            if db_field.name == 'action_plan':
+                kwargs["queryset"] = StrategicActionPlan.objects.filter(organization_name=org)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_form_kwargs(self, request, obj=None, **kwargs):
-        # This method is new in Django 5+ and allows passing custom kwargs to the form
         form_kwargs = super().get_form_kwargs(request, obj, **kwargs)
         form_kwargs["request"] = request
         return form_kwargs
 
-    #
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
             return qs
         if hasattr(request.user, 'organization_name') and request.user.organization_name:
-            return qs.filter(
-                organization_name=request.user.organization_name
-            )
+            return qs.filter(organization_name=request.user.organization_name)
         return qs.none()
-    #
-
 
 # deduction adjustment
 @admin.register(DeductionAdjustment)
@@ -393,9 +284,9 @@ class DeductionAdjustmentAdmin(admin.ModelAdmin):
             if db_field.name == 'organization_name':
                 kwargs["queryset"] = OrganizationalProfile.objects.filter(organization_name=org)
             if db_field.name == 'payroll_to_record':
-                kwargs["queryset"] = RegularPayroll.objects.filter(organization_name=org)
+                kwargs["queryset"] = StrategicActionPlan.objects.filter(organization_name=org)
             if db_field.name == 'payroll_needing_adjustment':
-                kwargs["queryset"] = RegularPayroll.objects.filter(organization_name=org)
+                kwargs["queryset"] = StrategicActionPlan.objects.filter(organization_name=org)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_form_kwargs(self, request, obj=None, **kwargs):
@@ -485,6 +376,89 @@ class VisionAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     # Filter the queryset in the admin list view
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        if hasattr(request.user, 'organization_name') and request.user.organization_name:
+            return qs.filter(organization_name=request.user.organization_name)
+        return qs.none()
+
+
+@admin.register(Values)
+class ValuesAdmin(admin.ModelAdmin):
+    form = ValuesForm
+
+    # Display these fields in the list view
+    list_display = ('organization_name', 'values', 'get_category')
+
+    # Filter foreign key based on user (non-superuser sees only their organization)
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'organization_name' and not request.user.is_superuser:
+            if hasattr(request.user, 'organization_name'):
+                kwargs["queryset"] = OrganizationalProfile.objects.filter(
+                    pk=request.user.organization_name.pk
+                )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    # Filter the queryset in the admin list view
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        if hasattr(request.user, 'organization_name') and request.user.organization_name:
+            return qs.filter(organization_name=request.user.organization_name)
+        return qs.none()
+
+@admin.register(SwotAnalysis)
+class SwotAnalysisAdmin(admin.ModelAdmin):
+    form = SwotAnalysisForm  
+    list_display = (
+        'organization_name', 'swot_type', 'swot_pillar', 'swot_factor', 'priority',
+        'impact', 'likelihood', 'created_at',
+    )
+    list_filter = ('swot_type', 'priority', 'impact', 'likelihood', 'organization_name')
+    search_fields = ('swot_pillar', 'swot_factor', 'description')
+
+    # Restrict foreign key choices based on logged-in user
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'organization_name' and not request.user.is_superuser:
+            if hasattr(request.user, 'organization_name'):
+                kwargs['queryset'] = OrganizationalProfile.objects.filter(
+                    pk=request.user.organization_name.pk
+                )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    # Restrict queryset so non-superusers only see their org's data
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        if hasattr(request.user, 'organization_name') and request.user.organization_name:
+            return qs.filter(organization_name=request.user.organization_name)
+        return qs.none()
+
+
+@admin.register(StrategyMap)
+class StrategyMapAdmin(admin.ModelAdmin):
+    form = StrategyMapForm
+
+    list_display = (
+        'organization_name', 'strategic_perspective', 'strategic_pillar', 'objective', 'kpi', 'formula',
+    )
+    list_filter = ('strategic_perspective', 'strategic_pillar', 'organization_name')
+    search_fields = ('objective', 'kpi', 'formula')
+
+    # Restrict foreign key choices based on logged-in user
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'organization_name' and not request.user.is_superuser:
+            if hasattr(request.user, 'organization_name'):
+                kwargs['queryset'] = OrganizationalProfile.objects.filter(
+                    pk=request.user.organization_name.pk
+                )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    # Restrict queryset so non-superusers only see their org's data
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:

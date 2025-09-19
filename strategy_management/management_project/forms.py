@@ -2,7 +2,9 @@ from django import forms
 from .models import *
 from management_project.services.vision import VisionService
 from management_project.services.mission import MissionService
-
+from management_project.services.swot import SwotChoicesService
+from .services.swot import SwotChoicesService
+from .services.strategy_map import StrategyMapChoicesService
 
 class OrganizationalProfileForm(forms.ModelForm):
 
@@ -47,11 +49,10 @@ class StakeholderForm(forms.ModelForm):
         model = Stakeholder
         # Exclude automatically set or relationship fields
         exclude = [
-            'priority', 'contribution_score', 'depends_on',
+            'organization_name',
         ]
 
         widgets = {
-            'organization_name': forms.Select(attrs={'class': 'form-control'}),
             'stakeholder_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Stakeholder Name'}),
             'stakeholder_type': forms.Select(attrs={'class': 'form-control'}),
             'role': forms.Select(attrs={'class': 'form-control'}),
@@ -61,8 +62,14 @@ class StakeholderForm(forms.ModelForm):
             'interest_level': forms.Select(attrs={'class': 'form-control'}),
             'engagement_strategy': forms.Select(attrs={'class': 'form-control'}),
             'influence_score': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Influence Score'}),
+            'priority': forms.Select(
+                attrs={ 'class': 'form-select',  'id': 'priority',}
+            ),
             'satisfaction_level': forms.Select(attrs={'class': 'form-control'}),
             'risk_level': forms.Select(attrs={'class': 'form-control'}),
+            'contribution_score': forms.Select(
+                attrs={ 'class': 'form-select', 'id': 'contribution_score',}
+            ),
             'contact_info': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Email, Phone, or Contact'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Additional notes'}),
         }
@@ -115,151 +122,49 @@ class PayrollPeriodForm(forms.ModelForm):
                 field.help_text = f'<span style="color: blue; font-style: italic;">{field.help_text}</span>'
 
 
-
-class PayrollMonthComponentForm(forms.ModelForm):
-
+class StrategicCycleForm(forms.ModelForm):
     class Meta:
-        model = PayrollMonthComponent
+        model = StrategicCycle
         fields = [
-            'payroll_month',
-            'use_basic_salary', 'use_overtime', 'use_housing_allowance', 'use_position_allowance',
-            'use_commission', 'use_telephone_allowance', 'use_one_time_bonus', 'use_causal_labor_wage',
-            'use_transport_home_to_office', 'use_transport_for_work', 'use_fuel_home_to_office',
-            'use_fuel_for_work', 'use_per_diem', 'use_hardship_allowance', 'use_public_cash_award',
-            'use_incidental_operation_allowance', 'use_medical_allowance',
-            'use_cash_gift', 'use_tuition_fees', 'use_personal_injury',
-            'use_child_support_payment', 'use_charitable_donation', 'use_saving_plan', 'use_loan_payment',
-            'use_court_order', 'use_workers_association', 'use_personnel_insurance_saving',
-            'use_university_cost_share_pay', 'use_red_cross', 'use_party_contribution', 'use_other_deduction'
+            'time_horizon',
+            'time_horizon_type',
+            'start_date',
+            'end_date',
         ]
         widgets = {
-            'payroll_month': forms.Select(attrs={'class': 'form-control'}),
-             #
-            **{field.name: forms.CheckboxInput(attrs={'class': 'form-check-input'})
-               for field in model._meta.get_fields()
-               if isinstance(field, models.BooleanField)}
+            'time_horizon': forms.Select(attrs={'class': 'form-select'}),
+            'time_horizon_type': forms.Select(attrs={'class': 'form-select'}),
+            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-
-        # Adding the Bootstrap 'form-select' class to the year and month select fields
-        self.fields['payroll_month'].widget.attrs.update({'class': 'form-select'})
-
-        # Add inline CSS to the help text
-        for field in self.fields.values():
+        # Optional: style help text
+        for field_name, field in self.fields.items():
             if field.help_text:
                 field.help_text = f'<span style="color: blue; font-style: italic;">{field.help_text}</span>'
 
 
-class RegularPayrollForm(forms.ModelForm):
-    processing_date = forms.DateField(initial=datetime.date.today, widget=forms.DateInput(attrs={'type': 'date'}))
+class StrategicActionPlanForm(forms.ModelForm):
 
     class Meta:
-        model = RegularPayroll
-        exclude = [
-
-            'organization_name', 'personnel_id', 'first_name', 'father_name', 'last_name', 'employment_type', 'phone_number', 'city', 'pension_number',
-            'position_name', 'working_area', 'personnel_tin', 'working_environment', 'overtime', 'transport_home_to_office_taxable',
-            'transport_home_to_office_non_taxable', 'fuel_home_to_office_taxable', 'fuel_home_to_office_non_taxable',
-            'transport_for_work_taxable', 'transport_for_work_non_taxable', 'fuel_for_work_taxable',
-            'fuel_for_work_non_taxable',
-            'per_diem_taxable', 'per_diem_non_taxable',
-            'hardship_allowance_taxable', 'hardship_allowance_non_taxable', 'employee_pension_contribution',
-            'employer_pension_contribution', 'total_pension_contribution', 'employment_income_tax',
-            #cost share
-            'university_cost_share_pay',
-            # Totals
-            'total_payroll_deduction', 'gross_pay', 'gross_taxable_pay', 'gross_non_taxable_pay', 'net_pay',
-            'total_payroll_deduction', 'expense',
-            #
-
-            'bank_name', 'bank_account_id', 'bank_account_type'
-        ]
-
+        model = StrategicActionPlan
+        exclude = ['organization_name', 'improvement_needed',]
         widgets = {
-            'personnel_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter stakeholder_list ID'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter first name'}),
-            'father_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter father name'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter last name'}),
-            'personnel_full_name': forms.Select(attrs={'class': 'form-control'}),
+            # Foreign keys
+            'strategic_cycle': forms.Select(attrs={'class': 'form-control'}),
+            'strategy_map': forms.Select(attrs={'class': 'form-control'}),
+            'responsible_bodies': forms.SelectMultiple(attrs={'class': 'form-control'}),
 
-            'employment_type': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter employment type'}),
-            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter phone number'}),
-            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter city'}),
-            'position_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter position name'}),
-            'working_area': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter position type'}),
-            'pension_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter pension number'}),
-            'personnel_tin': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter stakeholder_list TIN'}),
-            'working_environment': forms.TextInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter working environment'}),
-            'payroll_month': forms.Select(attrs={'class': 'form-control'}),
-            'basic_salary': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter basic salary'}),
-            'overtime_hours_from_six_pm_to_four_pm': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter overtime'}),
-            'overtime_hours_from_four_pm_to_six_am': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter overtime'}),
-            'overtime_hours_in_weekly_rest_day': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter overtime'}),
-            'overtime_hours_in_public_holiday': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter overtime'}),
-
-            'housing_allowance': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter housing allowance'}),
-            'position_allowance': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter position allowance'}),
-            'commission': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter commission'}),
-            'telephone_allowance': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter telephone allowance'}),
-            'one_time_bonus': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter one-time bonus'}),
-            'causal_labor_wage': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter causal labor wage'}),
-            'transport_home_to_office': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter transport allowance for home to office'}),
-            'fuel_home_to_office': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter fuel allowance for home to office'}),
-            'transport_for_work': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter transport allowance for work'}),
-            'fuel_for_work': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter fuel allowance for work'}),
-            'per_diem': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter total per diem with in a month'}),
-            'hardship_allowance': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter hardship allowance'}),
-            'public_cash_award': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter public cash award'}),
-            'incidental_operation_allowance': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter incidental operation allowance'}),
-            'medical_allowance': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter medical allowance'}),
-            'cash_gift': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter cash gift'}),
-            'tuition_fees': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter tuition fees'}),
-            'personal_injury': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter personal injury'}),
-            'child_support_payment': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter child support payment'}),
-            #
-            #
-            'charitable_donation': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter charitable donation'}),
-            'saving_plan': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter saving plan'}),
-            'loan_payment': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter loan payment'}),
-            'court_order': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter court order'}),
-            'workers_association': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter workers association'}),
-            'personnel_insurance_saving': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter stakeholder_list insurance saving'}),
-            'cost_share_percent_to_basic_salary': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter cost share percent to basic salary'}),
-            'university_cost_share_pay': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter university cost share pay'}),
-            'red_cross': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter red cross'}),
-            'party_contribution': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter party contribution'}),
-            'other_deduction': forms.NumberInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter other deduction'}),
-             #
-            'bank_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter bank name'}),
-            'bank_account_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter bank account ID'}),
-            'bank_account_type': forms.TextInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter bank account type'}),
-            'processing_date': forms.DateInput(
-                attrs={'class': 'form-control', 'placeholder': 'Select pay day', 'type': 'date'}),
+            # KPI & Measurement
+            'indicator_type': forms.Select(attrs={'class': 'form-control'}),
+            'direction_of_change': forms.Select(attrs={'class': 'form-control'}),
+            'baseline': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter baseline value'}),
+            'target': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter target value'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'weight': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Weight'}),
 
         }
 
@@ -267,216 +172,134 @@ class RegularPayrollForm(forms.ModelForm):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
 
-
-        # Filter personnels by current user
+        # Organization-specific filtering
         if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
-            self.fields['personnel_full_name'].queryset = Stakeholder.objects.filter(
-                organization_name=self.request.user.organization_name)
-            self.fields['payroll_month'].queryset = PayrollMonthComponent.objects.filter(
-                organization_name=self.request.user.organization_name)
-
+            org = self.request.user.organization_name
+            self.fields['strategic_cycle'].queryset = StrategicCycle.objects.filter(organization_name=org)
+            self.fields['strategy_map'].queryset = StrategyMap.objects.filter(organization_name=org)
+            self.fields['responsible_bodies'].queryset = Stakeholder.objects.filter(organization_name=org)
         else:
-            self.fields['personnel_full_name'].queryset = Stakeholder.objects.none()
-            self.fields['payroll_month'].queryset = PayrollMonthComponent.objects.none()
+            self.fields['strategic_cycle'].queryset = StrategicCycle.objects.none()
+            self.fields['strategy_map'].queryset = StrategyMap.objects.none()
+            self.fields['responsible_bodies'].queryset = Stakeholder.objects.none()
 
-
-        # Get payroll_month from initial data or instance
-        payroll_month = self.initial.get('payroll_month') or self.instance.payroll_month
-        
-        if isinstance(payroll_month, int):
-            try:
-                payroll_month = PayrollMonthComponent.objects.get(id=payroll_month)
-            except PayrollMonthComponent.DoesNotExist:
-                payroll_month = None
-
-        # Conditionally hide fields based on payroll_month options
-        if payroll_month:
-            if not payroll_month.use_basic_salary:
-                self.fields['basic_salary'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_overtime:
-                self.fields['overtime_hours_from_six_pm_to_four_pm'].widget = forms.HiddenInput()
-                self.fields['overtime_hours_from_four_pm_to_six_am'].widget = forms.HiddenInput()
-                self.fields['overtime_hours_in_weekly_rest_day'].widget = forms.HiddenInput()
-                self.fields['overtime_hours_in_public_holiday'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_transport_home_to_office:
-                self.fields['transport_home_to_office'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_fuel_home_to_office:
-                self.fields['fuel_home_to_office'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_transport_for_work:
-                self.fields['transport_for_work'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_fuel_for_work:
-                self.fields['fuel_for_work'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_per_diem:
-                self.fields['per_diem'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_hardship_allowance:
-                self.fields['hardship_allowance'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_housing_allowance:
-                self.fields['housing_allowance'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_position_allowance:
-                self.fields['position_allowance'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_commission:
-                self.fields['commission'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_telephone_allowance:
-                self.fields['telephone_allowance'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_one_time_bonus:
-                self.fields['one_time_bonus'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_causal_labor_wage:
-                self.fields['causal_labor_wage'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_public_cash_award:
-                self.fields['public_cash_award'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_incidental_operation_allowance:
-                self.fields['incidental_operation_allowance'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_medical_allowance:
-                self.fields['medical_allowance'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_cash_gift:
-                self.fields['cash_gift'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_tuition_fees:
-                self.fields['tuition_fees'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_personal_injury:
-                self.fields['personal_injury'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_child_support_payment:
-                self.fields['child_support_payment'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_charitable_donation:
-                self.fields['charitable_donation'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_saving_plan:
-                self.fields['saving_plan'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_loan_payment:
-                self.fields['loan_payment'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_court_order:
-                self.fields['court_order'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_workers_association:
-                self.fields['workers_association'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_personnel_insurance_saving:
-                self.fields['personnel_insurance_saving'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_university_cost_share_pay:
-                # self.fields['university_cost_share_pay'].widget = forms.HiddenInput()
-                self.fields['cost_share_percent_to_basic_salary'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_red_cross:
-                self.fields['red_cross'].widget = forms.HiddenInput()
-
-            if not payroll_month.use_party_contribution:
-                self.fields['party_contribution'].widget = forms.HiddenInput()
-                
-            if not payroll_month.use_other_deduction:
-                self.fields['other_deduction'].widget = forms.HiddenInput()
-                # Set default widget attributes like placeholders for fields that remain visible
-
-        # Add inline CSS to the help text
-        for field in self.fields.values():
-            if field.help_text:
-                field.help_text = f'<span style="color: blue; font-style: italic;">{field.help_text}</span>'
-        # Add 'is-invalid' color class to fields with errors
+        # Add invalid bootstrap styling for error fields
         for field_name, field in self.fields.items():
+            css_classes = field.widget.attrs.get('class', 'form-control')
             if field_name in self.errors:
-                field.widget.attrs.update({'class': 'form-control is-invalid'})
-        # Automatically apply the CSS class to fields with errors
+                css_classes += ' is-invalid'
+            field.widget.attrs['class'] = css_classes
 
     error_css_class = 'text-danger'
     required_css_class = 'font-weight-bold'
 
 
+#strategy report
 
-
-#earning adjustment
-class EarningAdjustmentForm(forms.ModelForm):
-
-    payroll_to_record = forms.ModelChoiceField(
-        queryset=RegularPayroll.objects.all(),
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})  # Add Bootstrap class here
+class StrategicReportForm(forms.ModelForm):
+    action_plan = forms.ModelChoiceField(
+        queryset=StrategicActionPlan.objects.none(),  # initially empty
+        label="Action Plan",
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'title': '',  # optional, will set via __init__
+        }),
+        empty_label="Select Action Plan"
     )
-    payroll_needing_adjustment = forms.ModelChoiceField(
-        queryset=RegularPayroll.objects.all(),
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})  # Add Bootstrap class here
-    )
+
     class Meta:
-
-        model = EarningAdjustment
-
+        model = StrategicReport
         fields = [
-            'payroll_to_record', 'payroll_needing_adjustment', 'case', 'component', 'earning_amount',
-            'period_start', 'period_end', 'months_covered',
+            'action_plan', 'achievement', 'data_source',
+            'data_collector', 'progress_summary', 'performance_summary', 'status'
         ]
-
         widgets = {
-            'payroll_to_record': forms.Select(attrs={'class': 'form-control'}),
-            'payroll_needing_adjustment': forms.Select(attrs={'class': 'form-control', 'Placeholder': 'Processing Month'}),
-            'case': forms.Select(attrs={'class': 'form-control'}),
-            'component': forms.Select(attrs={'class': 'form-control'}),
-            'earning_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'period_start': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'period_end': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'months_covered': forms.NumberInput(attrs={'class': 'form-control'}),
+            'achievement': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'data_source': forms.TextInput(attrs={'class': 'form-control'}),
+            'data_collector': forms.TextInput(attrs={'class': 'form-control'}),
+            'progress_summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'performance_summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+
         }
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
 
-        self.fields['payroll_to_record'].help_text = "The current payroll month where you're recording the adjustment."
-        self.fields[
-            'payroll_needing_adjustment'].help_text = "The past payroll month that had an issue, missed pay, or error."
-        #
-        # Check if the request exists, the user is authenticated, and the user has an organization assigned
-
-        if (
-                self.request
-                and self.request.user.is_authenticated
-                and hasattr(self.request.user, 'organization_name')
-                and self.request.user.organization_name
-        ):
+        # Filter by user organization
+        if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
             org = self.request.user.organization_name
-            self.fields['payroll_needing_adjustment'].queryset = RegularPayroll.objects.filter(
-                organization_name=org
-            )
-            self.fields['payroll_to_record'].queryset = RegularPayroll.objects.filter(
-                organization_name=org
-            )
+            qs = StrategicActionPlan.objects.filter(organization_name=org)
         else:
-            self.fields['payroll_needing_adjustment'].queryset = RegularPayroll.objects.none()
-            self.fields['payroll_to_record'].queryset = RegularPayroll.objects.none()
+            qs = StrategicActionPlan.objects.none()
 
+        # # If editing, ensure current instance is included
+        # if getattr(self.instance, 'action_plan', None):
+        #     qs = qs | StrategicActionPlan.objects.filter(pk=self.instance.action_plan.pk)
+        #
+        # self.fields['action_plan'].queryset = qs
+        #
+        # # Set tooltip for each option
+        # for plan in qs:
+        #     self.fields['action_plan'].widget.attrs['title'] = plan.get_full_label()
+
+        # If we're editing and the instance has an action_plan, ensure it's included
+        instance_plan = getattr(self.instance, 'action_plan', None)
+        if instance_plan:
+            qs = (qs | StrategicActionPlan.objects.filter(pk=instance_plan.pk)).distinct()
+
+        self.fields['action_plan'].queryset = qs
+
+
+
+
+# class StrategicReportForm(forms.ModelForm):
+#     class Meta:
+#         model = StrategicReport
+#         fields = [
+#             'action_plan',
+#             'achievement',
+#             'data_source',
+#             'data_collector',
+#             'progress_summary',
+#             'performance_summary',
+#         ]
+#         widgets = {
+#             'action_plan': forms.Select(attrs={
+#                 'class': 'form-control',
+#                 'style': 'height: auto; min-height: 100px;'  # Make dropdown taller
+#             }),
+#             # 'action_plan': forms.Select(attrs={'class': 'form-control'}),
+#             'achievement': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+#             'data_source': forms.TextInput(attrs={'class': 'form-control'}),
+#             'data_collector': forms.TextInput(attrs={'class': 'form-control'}),
+#             'progress_summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+#             'performance_summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+#         }
+#
+#     def __init__(self, *args, **kwargs):
+#         self.request = kwargs.pop('request', None)
+#         super().__init__(*args, **kwargs)
+#
+#         # Filter action plans by user organization
+#         if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
+#             org = self.request.user.organization_name
+#             self.fields['action_plan'].queryset = StrategicActionPlan.objects.filter(organization_name=org)
+#         else:
+#             self.fields['action_plan'].queryset = StrategicActionPlan.objects.none()
 
 
 #deduction adjustment
 
 class DeductionAdjustmentForm(forms.ModelForm):
     payroll_to_record = forms.ModelChoiceField(
-        queryset=RegularPayroll.objects.all(),
+        queryset=StrategicActionPlan.objects.all(),
         required=False,
         widget=forms.Select(attrs={'class': 'form-control'})  # Add Bootstrap class here
     )
     payroll_needing_adjustment = forms.ModelChoiceField(
-        queryset=RegularPayroll.objects.all(),
+        queryset=StrategicActionPlan.objects.all(),
         required=False,
         widget=forms.Select(attrs={'class': 'form-control'})  # Add Bootstrap class here
     )
@@ -520,15 +343,15 @@ class DeductionAdjustmentForm(forms.ModelForm):
                 and self.request.user.organization_name
         ):
             org = self.request.user.organization_name
-            self.fields['payroll_needing_adjustment'].queryset = RegularPayroll.objects.filter(
+            self.fields['payroll_needing_adjustment'].queryset = StrategicActionPlan.objects.filter(
                 organization_name=org
             )
-            self.fields['payroll_to_record'].queryset = RegularPayroll.objects.filter(
+            self.fields['payroll_to_record'].queryset = StrategicActionPlan.objects.filter(
                 organization_name=org
             )
         else:
-            self.fields['payroll_needing_adjustment'].queryset = RegularPayroll.objects.none()
-            self.fields['payroll_to_record'].queryset = RegularPayroll.objects.none()
+            self.fields['payroll_needing_adjustment'].queryset = StrategicActionPlan.objects.none()
+            self.fields['payroll_to_record'].queryset = StrategicActionPlan.objects.none()
 
 
 #severance pay
@@ -691,3 +514,126 @@ class MissionForm(forms.ModelForm):
             except ValueError as e:
                 self.add_error('mission_statement', str(e))
         return cleaned_data
+
+
+
+class ValuesForm(forms.ModelForm):
+    class Meta:
+        model = Values
+        fields = ['values']
+        widgets = {
+            'values': forms.Select(
+                attrs={'class': 'form-control'},
+                choices=ValuesService.VALUE_CHOICES
+            )
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ensure choices always follow grouped <optgroup> style
+        self.fields['values'].choices = ValuesService.VALUE_CHOICES
+
+
+
+class SwotAnalysisForm(forms.ModelForm):
+    class Meta:
+        model = SwotAnalysis
+        fields = [
+            'swot_type', 'swot_pillar', 'swot_factor',
+            'priority', 'impact', 'likelihood', 'description'
+        ]
+        widgets = {
+            'swot_type': forms.Select(attrs={'class': 'form-control'}),
+            'swot_pillar': forms.Select(attrs={'class': 'form-control'}),
+            'swot_factor': forms.Select(attrs={'class': 'form-control'}),
+            'priority': forms.Select(attrs={'class': 'form-control'}),
+            'impact': forms.Select(attrs={'class': 'form-control'}),
+            'likelihood': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        swot_type = self.data.get('swot_type') or getattr(self.instance, 'swot_type', None)
+        pillar = self.data.get('swot_pillar') or getattr(self.instance, 'swot_pillar', None)
+
+        # Level 1: SWOT Type
+        self.fields['swot_type'].choices = [('', '--- Select SWOT Type ---')] + SwotChoicesService.get_swot_type_choices()
+
+        # Level 2: Pillar
+        if swot_type:
+            self.fields['swot_pillar'].choices = [('', '--- Select Pillar ---')] + SwotChoicesService.get_pillar_choices(swot_type)
+            self.fields['swot_pillar'].widget.attrs.pop('disabled', None)
+        else:
+            self.fields['swot_pillar'].choices = [('', '--- Select Type First ---')]
+            self.fields['swot_pillar'].widget.attrs['disabled'] = True
+
+        # Level 3: Factor
+        if swot_type and pillar:
+            self.fields['swot_factor'].choices = [('', '--- Select Factor ---')] + SwotChoicesService.get_factor_choices(swot_type, pillar)
+            self.fields['swot_factor'].widget.attrs.pop('disabled', None)
+        else:
+            self.fields['swot_factor'].choices = [('', '--- Select Pillar First ---')]
+            self.fields['swot_factor'].widget.attrs['disabled'] = True
+
+
+class StrategyMapForm(forms.ModelForm):
+    # Include formula in the form explicitly
+    formula = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'readonly': 'readonly',
+            'rows': 3,
+            'class': 'form-control',
+            'placeholder': 'Select KPI to see formula'
+        }),
+        label="KPI Formula"
+    )
+
+    class Meta:
+        model = StrategyMap
+        # Include formula in fields so it is rendered
+        fields = ['strategic_perspective', 'strategic_pillar', 'objective', 'kpi', 'formula',]
+        widgets = {
+            'strategic_perspective': forms.Select(attrs={'class': 'form-control'}),
+            'strategic_pillar': forms.Select(attrs={'class': 'form-control'}),
+            'objective': forms.Select(attrs={'class': 'form-control'}),
+            'kpi': forms.Select(attrs={'class': 'form-control'}),
+
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Load current selections
+        perspective = self.data.get('strategic_perspective') or getattr(self.instance, 'strategic_perspective', None)
+        pillar = self.data.get('strategic_pillar') or getattr(self.instance, 'strategic_pillar', None)
+        objective = self.data.get('objective') or getattr(self.instance, 'objective', None)
+        kpi = self.data.get('kpi') or getattr(self.instance, 'kpi', None)
+
+        # Populate dropdowns dynamically
+        self.fields['strategic_perspective'].choices = [('', '--- Select Perspective ---')] + StrategyMapChoicesService.get_perspective_choices()
+
+        if perspective:
+            self.fields['strategic_pillar'].choices = [('', '--- Select Pillar ---')] + StrategyMapChoicesService.get_pillar_choices(perspective)
+        else:
+            self.fields['strategic_pillar'].choices = [('', '--- Select Perspective First ---')]
+            self.fields['strategic_pillar'].widget.attrs['disabled'] = True
+
+        if perspective and pillar:
+            self.fields['objective'].choices = [('', '--- Select Objective ---')] + StrategyMapChoicesService.get_objective_choices(perspective, pillar)
+        else:
+            self.fields['objective'].choices = [('', '--- Select Pillar First ---')]
+            self.fields['objective'].widget.attrs['disabled'] = True
+
+        if perspective and pillar and objective:
+            self.fields['kpi'].choices = [('', '--- Select KPI ---')] + StrategyMapChoicesService.get_kpi_choices(perspective, pillar, objective)
+        else:
+            self.fields['kpi'].choices = [('', '--- Select Objective First ---')]
+            self.fields['kpi'].widget.attrs['disabled'] = True
+
+        # Auto-fill formula
+        if perspective and pillar and objective and kpi:
+            self.fields['formula'].initial = StrategyMapChoicesService.get_formula(perspective, pillar, objective, kpi)
+        else:
+            self.fields['formula'].initial = "Select a KPI to see the formula"

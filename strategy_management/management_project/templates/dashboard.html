@@ -20,9 +20,9 @@
     <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
 
     <!--            htmx-->
-    <script src="https://unpkg.com/htmx.org@2.0.4"
-            integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
-            crossorigin="anonymous"></script>
+<!--    <script src="https://unpkg.com/htmx.org@2.0.4"-->
+<!--            integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"-->
+<!--            crossorigin="anonymous"></script>-->
 
     <link rel="stylesheet" href="{% static 'management_project/css/style.css' %}">
 
@@ -105,14 +105,14 @@
 
 
                 <li class="nav-item bg-primary">
-                    <a hx-get="{% url 'payroll_month_and_component_list' %}"
+                    <a hx-get="{% url 'strategic_cycle_list' %}"
                        hx-target="#full-page-container"
                        hx-swap="innerHTML"
                        hx-trigger="click"
-                       hx-push-url="{% url 'payroll_month_and_component_list' %}"
-                       href="{% url 'payroll_month_and_component_list' %}"
+                       hx-push-url="{% url 'strategic_cycle_list' %}"
+                       href="{% url 'strategic_cycle_list' %}"
                        class="nav-link text-white">
-                        <i class="bi bi-calendar3"></i> Payroll Month and Component
+                        <i class="bi bi-calendar3"></i> Strategic Cycle
                     </a>
                 </li>
 
@@ -121,7 +121,7 @@
                     <a class="nav-link text-white bg-primary" data-bs-toggle="collapse" href="#payrollMenu"
                        role="button"
                        aria-expanded="false" aria-controls="payrollMenu" onclick="event.preventDefault();">
-                        <i class="bi bi-file-spreadsheet"></i> Regular Payroll
+                        <i class="bi bi-file-spreadsheet"></i> Strategic Action Plan
                     </a>
 
                     <!-- Collapsible Submenu -->
@@ -129,62 +129,26 @@
                         <ul class="nav flex-column ms-3">
                             <!-- Existing Menu Items (Unchanged) -->
                             <li class="nav-item">
-                                <a hx-get="{% url 'payroll_month_list' %}"
+                                <a hx-get="{% url 'strategy_by_cycle_list' %}"
                                    hx-target="#full-page-container"
                                    hx-swap="innerHTML"
                                    hx-trigger="click"
-                                   hx-push-url="{% url 'payroll_month_list' %}"
-                                   href="{% url 'payroll_month_list' %}"
+                                   hx-push-url="{% url 'strategy_by_cycle_list' %}"
+                                   href="{% url 'strategy_by_cycle_list' %}"
                                    class="nav-link text-white">
-                                    <i class="bi bi-file-spreadsheet"></i> Manage Payroll by Month
+                                    <i class="bi bi-file-spreadsheet"></i> Manage Strategy Action Plan By Cycle
                                 </a>
                             </li>
 
                             <li class="nav-item">
-                                <a hx-get="{% url 'payroll_month_for_summary_report' %}"
+                                <a hx-get="{% url 'strategic_action_plan_chart' %}"
                                    hx-target="#full-page-container"
                                    hx-swap="innerHTML"
                                    hx-trigger="click"
-                                   hx-push-url="{% url 'payroll_month_for_summary_report' %}"
-                                   href="{% url 'payroll_month_for_summary_report' %}"
+                                   hx-push-url="{% url 'strategic_action_plan_chart' %}"
+                                   href="{% url 'strategic_action_plan_chart' %}"
                                    class="nav-link text-white">
-                                    <i class="bi bi-file-spreadsheet"></i> Regular Payroll Monthly Summary Report
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a hx-get="{% url 'payroll_month_for_journal_entry' %}"
-                                   hx-target="#full-page-container"
-                                   hx-swap="innerHTML"
-                                   hx-trigger="click"
-                                   hx-push-url="{% url 'payroll_month_for_journal_entry' %}"
-                                   href="{% url 'payroll_month_for_journal_entry' %}"
-                                   class="nav-link text-white">
-                                    <i class="bi bi-cash-stack"></i> Regular Payroll Journal Entry
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a hx-get="{% url 'payroll_by_year_summary_report' %}"
-                                   hx-target="#full-page-container"
-                                   hx-swap="innerHTML"
-                                   hx-trigger="click"
-                                   hx-push-url="{% url 'payroll_by_year_summary_report' %}"
-                                   href="{% url 'payroll_by_year_summary_report' %}"
-                                   class="nav-link text-white">
-                                    <i class="bi bi-file-text"></i> Regular Payroll Yearly Summary Report
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a hx-get="{% url 'regular_payroll_graph' %}"
-                                   hx-target="#full-page-container"
-                                   hx-swap="innerHTML"
-                                   hx-trigger="click"
-                                   hx-push-url="{% url 'regular_payroll_graph' %}"
-                                   href="{% url 'regular_payroll_graph' %}"
-                                   class="nav-link text-white">
-                                    <i class="bi bi-bar-chart-line"></i> Regular Payroll Graphical Report
+                                    <i class="bi bi-file-spreadsheet"></i> Strategy Action Plan Chart
                                 </a>
                             </li>
                         </ul>
@@ -199,68 +163,22 @@
                        role="button"
                        aria-expanded="false" aria-controls="earningAdjustmentCollapse"
                        onclick="event.preventDefault();">
-                        <i class="bi bi-pencil-square"></i> Earning Adjustment
+                        <i class="bi bi-pencil-square"></i> Strategic Report
                     </a>
 
                     <!-- Collapsible Content -->
                     <ul class="collapse list-unstyled ps-3" id="earningAdjustmentCollapse">
                         <li>
-                            <a hx-get="{% url 'earning_adjustment_list' %}"
+                            <a hx-get="{% url 'strategic_report_list' %}"
                                hx-target="#full-page-container"
                                hx-swap="innerHTML"
                                hx-trigger="click"
-                               hx-push-url="{% url 'earning_adjustment_list' %}"
-                               href="{% url 'earning_adjustment_list' %}"
+                               hx-push-url="{% url 'strategic_report_list' %}"
+                               href="{% url 'strategic_report_list' %}"
                                class="nav-link text-white">
-                                <i class="bi bi-list"></i> Manage Earning Adjustment List
+                                <i class="bi bi-list"></i> Manage Strategic Report List
                             </a>
                         </li>
-                        <li>
-                            <a hx-get="{% url 'earning_adjustment_detail' %}"
-                               hx-target="#full-page-container"
-                               hx-swap="innerHTML"
-                               hx-trigger="click"
-                               hx-push-url="{% url 'earning_adjustment_detail' %}"
-                               href="{% url 'earning_adjustment_detail' %}"
-                               class="nav-link text-white">
-                                <i class="bi bi-list"></i> Manage Earning Adjustment Detail
-                            </a>
-                        </li>
-                        <li>
-                            <a hx-get="{% url 'earning_per_adjusted_month' %}"
-                               hx-target="#full-page-container"
-                               hx-swap="innerHTML"
-                               hx-trigger="click"
-                               hx-push-url="{% url 'earning_per_adjusted_month' %}"
-                               href="{% url 'earning_per_adjusted_month' %}"
-                               class="nav-link text-white">
-                                <i class="bi bi-file-earmark"></i>Earning Adjustment By Adjusted Month
-                            </a>
-                        </li>
-                        <li>
-                            <a hx-get="{% url 'monthly_earning_adjustment' %}"
-                               hx-target="#full-page-container"
-                               hx-swap="innerHTML"
-                               hx-trigger="click"
-                               hx-push-url="{% url 'monthly_earning_adjustment' %}"
-                               href="{% url 'monthly_earning_adjustment' %}"
-                               class="nav-link text-white">
-                                <i class="bi bi-journal-text"></i> Monthly Earning Adjustment
-                            </a>
-                        </li>
-
-                        <li>
-                            <a hx-get="{% url 'monthly_earning_adjustment_total' %}"
-                               hx-target="#full-page-container"
-                               hx-swap="innerHTML"
-                               hx-trigger="click"
-                               hx-push-url="{% url 'monthly_earning_adjustment_total' %}"
-                               href="{% url 'monthly_earning_adjustment_total' %}"
-                               class="nav-link text-white">
-                                <i class="bi bi-journal-text"></i> Monthly Earning Adjustment Summary
-                            </a>
-                        </li>
-
                     </ul>
                 </li>
 
@@ -594,19 +512,41 @@
                     </a>
                 </li>
 
-
                 <li class="nav-item">
-                    <a hx-get="{% url 'university_cost-sharing_list' %}"
+                    <a hx-get="{% url 'values_list' %}"
                        hx-target="#full-page-container"
                        hx-swap="innerHTML"
                        hx-trigger="click"
-                       hx-push-url="{% url 'university_cost-sharing_list' %}"
-                       href="{% url 'university_cost-sharing_list' %}"
+                       hx-push-url="{% url 'values_list' %}"
+                       href="{% url 'values_list' %}"
                        class="nav-link text-white">
-                        <i class="bi bi-bag"></i> University Cost Sharing
+                        <i class="bi bi-eye"></i> Values
                     </a>
                 </li>
 
+                <li class="nav-item">
+                    <a hx-get="{% url 'swot_list' %}"
+                       hx-target="#full-page-container"
+                       hx-swap="innerHTML"
+                       hx-trigger="click"
+                       hx-push-url="{% url 'swot_list' %}"
+                       href="{% url 'swot_list' %}"
+                       class="nav-link text-white">
+                        <i class="bi bi-list-check"></i> SWOT Analysis
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a hx-get="{% url 'strategy_map_list' %}"
+                       hx-target="#full-page-container"
+                       hx-swap="innerHTML"
+                       hx-trigger="click"
+                       hx-push-url="{% url 'strategy_map_list' %}"
+                       href="{% url 'strategy_map_list' %}"
+                       class="nav-link text-white">
+                        <i class="bi bi-list-check"></i> Strategy Map
+                    </a>
+                </li>
 
                 <li class="nav-item">
                     <a href="#" class="nav-link text-white">

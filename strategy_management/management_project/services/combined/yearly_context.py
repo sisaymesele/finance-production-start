@@ -2,7 +2,7 @@ from decimal import Decimal
 from collections import defaultdict
 from django.core.paginator import Paginator
 from django.db.models import Sum
-from management_project.models import RegularPayroll, SeverancePay
+from management_project.models import StrategicActionPlan, SeverancePay
 
 def get_combined_yearly_detail(request):
     def safe_dec(value):
@@ -18,10 +18,10 @@ def get_combined_yearly_detail(request):
         return any(v != Decimal('0.00') for v in deduction_adj_by_component.values())
 
     # Fetch payrolls
-    payrolls = RegularPayroll.objects.filter(
+    payrolls = StrategicActionPlan.objects.filter(
         organization_name=request.user.organization_name
-    ).select_related('payroll_month') \
-     .prefetch_related('earning_adjustments', 'deduction_adjustments') \
+    ).select_related('strategy_by_cycle') \
+     .prefetch_related('strategic_reports', 'deduction_adjustments') \
      .order_by('-payroll_month__payroll_month__year', '-payroll_month__payroll_month__month')
 
     # Yearly summary dict
@@ -50,12 +50,12 @@ def get_combined_yearly_detail(request):
             'total_pension': Decimal('0.00'),
             'employment_income_tax': Decimal('0.00'),
             'net_yearly_adjustment': Decimal('0.00'),
-            'earning_adjustment_deduction': Decimal('0.00'),
+            'strategic_report_deduction': Decimal('0.00'),
             'expense': Decimal('0.00'),
             'earning_adj_by_component': {
                 'taxable': defaultdict(lambda: Decimal('0.00')),
                 'non_taxable': defaultdict(lambda: Decimal('0.00')),
-                'total_earning_adjustment': defaultdict(lambda: Decimal('0.00')),
+                'total_strategic_report': defaultdict(lambda: Decimal('0.00')),
                 'employee_pension_contribution': defaultdict(lambda: Decimal('0.00')),
                 'employer_pension_contribution': defaultdict(lambda: Decimal('0.00')),
                 'total_pension': defaultdict(lambda: Decimal('0.00')),
@@ -151,20 +151,20 @@ def get_combined_yearly_detail(request):
         year_data['regular']['expense'] += safe_dec(payroll.expense)
 
         # Earning adjustments
-        pensionable_sum = payroll.earning_adjustments.filter(component='basic_salary').aggregate(
+        pensionable_sum = payroll.strategic_reports.filter(component='basic_salary').aggregate(
             total=Sum('earning_amount'))['total'] or Decimal('0.00')
         year_data['adjustment']['adjusted_pensionable'] += safe_dec(pensionable_sum)
 
-        for ea in payroll.earning_adjustments.all():
+        for ea in payroll.strategic_reports.all():
             c = ea.component
             year_data['adjustment']['earning_adj_by_component']['taxable'][c] += safe_dec(ea.taxable)
             year_data['adjustment']['earning_adj_by_component']['non_taxable'][c] += safe_dec(ea.non_taxable)
-            year_data['adjustment']['earning_adj_by_component']['total_earning_adjustment'][c] += safe_dec(ea.earning_amount)
+            year_data['adjustment']['earning_adj_by_component']['total_strategic_report'][c] += safe_dec(ea.earning_amount)
             year_data['adjustment']['earning_adj_by_component']['employee_pension_contribution'][c] += safe_dec(ea.employee_pension_contribution)
             year_data['adjustment']['earning_adj_by_component']['employer_pension_contribution'][c] += safe_dec(ea.employer_pension_contribution)
             year_data['adjustment']['earning_adj_by_component']['total_pension'][c] += safe_dec(ea.total_pension)
 
-        earning_adj_first = payroll.earning_adjustments.first() or type('Empty', (), {})()
+        earning_adj_first = payroll.strategic_reports.first() or type('Empty', (), {})()
         year_data['adjustment']['taxable_gross'] += safe_dec(getattr(earning_adj_first, 'recorded_month_taxable_gross_pay', 0))
         year_data['adjustment']['non_taxable_gross'] += safe_dec(getattr(earning_adj_first, 'recorded_month_non_taxable_gross_pay', 0))
         year_data['adjustment']['gross'] += safe_dec(getattr(earning_adj_first, 'recorded_month_gross_pay', 0))
@@ -172,7 +172,7 @@ def get_combined_yearly_detail(request):
         year_data['adjustment']['employer_pension'] += safe_dec(getattr(earning_adj_first, 'recorded_month_employer_pension_contribution', 0))
         year_data['adjustment']['total_pension'] += safe_dec(getattr(earning_adj_first, 'recorded_month_total_pension_contribution', 0))
         year_data['adjustment']['employment_income_tax'] += safe_dec(getattr(earning_adj_first, 'recorded_month_employment_income_tax', 0))
-        year_data['adjustment']['earning_adjustment_deduction'] += safe_dec(getattr(earning_adj_first, 'recorded_month_total_earning_deduction', 0))
+        year_data['adjustment']['strategic_report_deduction'] += safe_dec(getattr(earning_adj_first, 'recorded_month_total_earning_deduction', 0))
         year_data['adjustment']['expense'] += safe_dec(getattr(earning_adj_first, 'recorded_month_expense', 0))
 
         # Deduction adjustments
@@ -201,7 +201,7 @@ def get_combined_yearly_detail(request):
     # Calculate totals per year
     for data in yearly_summary.values():
         data['adjustment']['total_yearly_adjustment_deduction'] = (
-            data['adjustment']['earning_adjustment_deduction'] + data['adjustment']['individual_adjustment_deduction']
+            data['adjustment']['strategic_report_deduction'] + data['adjustment']['individual_adjustment_deduction']
         )
         data['adjustment']['net_yearly_adjustment'] = (
             data['adjustment']['gross'] - data['adjustment']['total_yearly_adjustment_deduction']
@@ -228,12 +228,12 @@ def get_combined_yearly_detail(request):
             format_key(comp): {
                 'taxable': data['adjustment']['earning_adj_by_component']['taxable'][comp],
                 'non_taxable': data['adjustment']['earning_adj_by_component']['non_taxable'][comp],
-                'earning_amount': data['adjustment']['earning_adj_by_component']['total_earning_adjustment'][comp],
+                'earning_amount': data['adjustment']['earning_adj_by_component']['total_strategic_report'][comp],
                 'employee_pension_contribution': data['adjustment']['earning_adj_by_component']['employee_pension_contribution'][comp],
                 'employer_pension_contribution': data['adjustment']['earning_adj_by_component']['employer_pension_contribution'][comp],
                 'total_pension': data['adjustment']['earning_adj_by_component']['total_pension'][comp],
             }
-            for comp in data['adjustment']['earning_adj_by_component']['total_earning_adjustment']
+            for comp in data['adjustment']['earning_adj_by_component']['total_strategic_report']
         }
         deduction_adj_comp_fmt = {format_key(k): v for k, v in data['adjustment']['deduction_adj_by_component'].items()}
 

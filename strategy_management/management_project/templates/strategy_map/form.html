@@ -1,0 +1,99 @@
+{% extends 'dashboard.html' %}
+
+{% block content %}
+<form method="post"
+      hx-post="{% if form.instance.pk %}{% url 'update_strategy_map' form.instance.pk %}{% else %}{% url 'create_strategy_map' %}{% endif %}"
+      hx-target="#full-page-container"
+      hx-swap="innerHTML"
+      hx-push-url="true"
+      class="row g-3">
+    {% csrf_token %}
+
+    <!-- Strategic Perspective -->
+    <div class="col-md-3">
+        <label>Perspective</label>
+        <select name="strategic_perspective"
+                class="form-select"
+                hx-post="{% if form.instance.pk %}{% url 'update_strategy_map' form.instance.pk %}{% else %}{% url 'create_strategy_map' %}{% endif %}"
+                hx-target="#full-page-container"
+                hx-swap="innerHTML"
+                hx-trigger="change">
+            {% for value, label in form.fields.strategic_perspective.choices %}
+                <option value="{{ value }}" {% if value == form.data.strategic_perspective|default:form.instance.strategic_perspective %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Strategic Pillar -->
+    <div class="col-md-3">
+        <label>Pillar</label>
+        <select name="strategic_pillar"
+                class="form-select"
+                hx-post="{% if form.instance.pk %}{% url 'update_strategy_map' form.instance.pk %}{% else %}{% url 'create_strategy_map' %}{% endif %}"
+                hx-target="#full-page-container"
+                hx-swap="innerHTML"
+                hx-trigger="change">
+            {% for value, label in form.fields.strategic_pillar.choices %}
+                <option value="{{ value }}" {% if value == form.data.strategic_pillar|default:form.instance.strategic_pillar %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Objective -->
+    <div class="col-md-3">
+        <label>Objective</label>
+        <select name="objective"
+                class="form-select"
+                hx-post="{% if form.instance.pk %}{% url 'update_strategy_map' form.instance.pk %}{% else %}{% url 'create_strategy_map' %}{% endif %}"
+                hx-target="#full-page-container"
+                hx-swap="innerHTML"
+                hx-trigger="change">
+            {% for value, label in form.fields.objective.choices %}
+                <option value="{{ value }}" {% if value == form.data.objective|default:form.instance.objective %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- KPI -->
+    <div class="col-md-3">
+        <label>KPI</label>
+        <select name="kpi"
+                class="form-select"
+                hx-post="{% if form.instance.pk %}{% url 'update_strategy_map' form.instance.pk %}{% else %}{% url 'create_strategy_map' %}{% endif %}"
+                hx-target="#full-page-container"
+                hx-swap="innerHTML"
+                hx-trigger="change">
+            {% for value, label in form.fields.kpi.choices %}
+                <option value="{{ value }}" {% if value == form.data.kpi|default:form.instance.kpi %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Formula (Auto-filled) -->
+    <div class="col-12 mt-3">
+        <label>Formula</label>
+        <textarea name="formula" class="form-control" rows="3" readonly>{{ form.fields.formula.initial }}</textarea>
+    </div>
+
+    <!-- Actions -->
+    <div class="col-12 mt-3">
+        <button type="submit" name="save" class="btn btn-success">Save</button>
+        <a class="btn btn-secondary"
+           hx-get="{% url 'strategy_map_list' %}"
+           hx-target="#full-page-container"
+           hx-swap="innerHTML"
+           hx-push-url="true"
+           href="{% url 'strategy_map_list' %}">
+            Cancel
+        </a>
+    </div>
+</form>
+{% endblock %}

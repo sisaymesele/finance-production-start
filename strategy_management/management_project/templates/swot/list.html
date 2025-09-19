@@ -1,0 +1,99 @@
+{% extends "dashboard.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid" id="swot-container">
+    <!-- Display Messages -->
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <a href="{% url 'create_swot' %}"
+               class="btn btn-primary"
+               hx-get="{% url 'create_swot' %}"
+               hx-trigger="click"
+               hx-target="#full-page-container"
+               hx-swap="innerHTML"
+               hx-push-url="true">
+                Create SWOT Entry
+            </a>
+        </div>
+        <div class="col-md-6">
+            <form method="get"
+                  action="{% url 'swot_list' %}"
+                  class="d-flex justify-content-end"
+                  hx-get="{% url 'swot_list' %}"
+                  hx-target="#full-page-container"
+                  hx-trigger="keyup changed delay:800ms from:input[name='search']">
+                <input type="text"
+                       name="search"
+                       class="form-control me-2"
+                       placeholder="Search SWOT..."
+                       value="{{ search_query|default_if_none:'' }}">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive" style="max-height: 70vh; overflow-y: auto;">
+        <table class="table table-bordered table-striped table-sm">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>SWOT Type</th>
+                <th>Pillar</th>
+                <th>Factor</th>
+                <th>Description</th>
+                <th>Priority</th>
+                <th>Impact</th>
+                <th>Likelihood</th>
+                <th>Update</th>
+                <th>Delete</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for s in swots %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ s.swot_type }}</td>
+                    <td>{{ s.swot_pillar }}</td>
+                    <td>{{ s.swot_factor }}</td>
+                    <td>{{ s.description|default:"-" }}</td>
+                    <td>{{ s.priority }}</td>
+                    <td>{{ s.impact }}</td>
+                    <td>{{ s.likelihood|default:"-" }}</td>
+                    <td>
+                        <a class="btn btn-warning"
+                           hx-get="{% url 'update_swot' s.pk %}"
+                           hx-trigger="click"
+                           hx-target="#full-page-container"
+                           hx-swap="innerHTML"
+                           hx-push-url="true">
+                            Update
+                        </a>
+                    </td>
+                    <td>
+                        <a class="btn btn-danger"
+                           hx-get="{% url 'delete_swot' s.pk %}"
+                           hx-trigger="click"
+                           hx-target="#full-page-container"
+                           hx-swap="innerHTML"
+                           hx-push-url="true">
+                            Delete
+                        </a>
+                    </td>
+
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="10" class="text-center">No SWOT entries found.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock content %}

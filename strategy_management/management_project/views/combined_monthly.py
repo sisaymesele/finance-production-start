@@ -53,8 +53,8 @@ def export_combined_monthly_detail_to_excel(request):
     # Colors (matching HTML template)
     color_palette = {
         'primary': '4472C4',  # Blue (card header)
-        'success': '70AD47',  # Green (regular payroll)
-        'warning': 'FFC000',  # Yellow (earning adjustments)
+        'success': '70AD47',  # Green (strategic action plan)
+        'warning': 'FFC000',  # Yellow (strategic reports)
         'danger': 'ED7D31',  # Orange (deduction adjustments)
         'info': '5B9BD5',  # Light blue (adjustment summary)
         'purple': '7030A0',  # Purple (severance)
@@ -135,7 +135,7 @@ def export_combined_monthly_detail_to_excel(request):
                 row_num += 1
 
             # Regular Summary
-            headers = ["Regular Payroll Summary Item", "Amount"]
+            headers = ["Strategic Action Plan Summary Item", "Amount"]
             for col_num, header in enumerate(headers, 1):
                 cell = ws.cell(row=row_num, column=col_num, value=header)
                 cell.font = header_font
@@ -225,7 +225,7 @@ def export_combined_monthly_detail_to_excel(request):
                 row_num += 1
 
             # Earning Summary
-            headers = ["Earning Adjustment Summary Item", "Amount"]
+            headers = ["Strategic Report Summary Item", "Amount"]
             for col_num, header in enumerate(headers, 1):
                 cell = ws.cell(row=row_num, column=col_num, value=header)
                 cell.font = header_font
@@ -243,7 +243,7 @@ def export_combined_monthly_detail_to_excel(request):
                 ("Employer Pension", item['adjustment'].get('employer_pension')),
                 ("Total Pension", item['adjustment'].get('total_pension')),
                 ("Employment Income Tax", item['adjustment'].get('employment_income_tax')),
-                ("Earning Adjustment Deduction", item['adjustment'].get('earning_adjustment_deduction')),
+                ("Strategic Report Deduction", item['adjustment'].get('strategic_report_deduction')),
                 ("Expense", item['adjustment'].get('expense')),
             ]
 
@@ -362,7 +362,7 @@ def export_combined_monthly_detail_to_excel(request):
                 ("Employer Pension", item['adjustment'].get('employer_pension')),
                 ("Total Pension", item['adjustment'].get('total_pension')),
                 ("Employment Income Tax", item['adjustment'].get('employment_income_tax')),
-                ("Earning Adjustment Deduction", item['adjustment'].get('earning_adjustment_deduction')),
+                ("Strategic Report Deduction", item['adjustment'].get('strategic_report_deduction')),
                 ("Individual Adjustment Deduction", item['adjustment'].get('individual_adjustment_deduction')),
                 ("Total Monthly Adjustment Deduction", item['adjustment'].get('total_monthly_adjustment_deduction'),
                  'primary'),
@@ -690,7 +690,7 @@ def export_combined_monthly_summary_to_excel(request):
                 ("employer_pension", item['adjustment'].get('employer_pension'), 'neutral'),
                 ("total_pension", item['adjustment'].get('total_pension'), 'neutral'),
                 ("employment_income_tax", item['adjustment'].get('employment_income_tax'), 'neutral'),
-                ("earning_adjustment_deduction", item['adjustment'].get('earning_adjustment_deduction'), 'neutral'),
+                ("strategic_report_deduction", item['adjustment'].get('strategic_report_deduction'), 'neutral'),
                 ("individual_adjustment_deduction", item['adjustment'].get('individual_adjustment_deduction'),
                  'neutral'),
                 ("total_monthly_adjustment_deduction", item['adjustment'].get('total_monthly_adjustment_deduction'),

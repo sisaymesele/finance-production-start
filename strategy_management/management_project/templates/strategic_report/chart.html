@@ -1,0 +1,124 @@
+{% extends "dashboard.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">📊 Strategic Report Dashboard</h2>
+        <span class="text-muted">Last updated: {{ current_date|date:"M d, Y" }}</span>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <label class="form-label">Strategic Cycle</label>
+            <select class="form-select" name="strategic_cycle" onchange="this.form.submit()">
+                <option value="all" {% if selected_cycle == "all" %}selected{% endif %}>All</option>
+                {% for cycle in strategic_cycles %}
+                <option value="{{ cycle.id }}" {% if selected_cycle|add:'' == cycle.id|add:'' %}selected{% endif %}>
+                    {{ cycle.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Responsible Body</label>
+            <select class="form-select" name="responsible_body" onchange="this.form.submit()">
+                <option value="all" {% if selected_body == "all" %}selected{% endif %}>All</option>
+                {% for body in responsible_bodies %}
+                <option value="{{ body }}" {% if selected_body == body %}selected{% endif %}>
+                    {{ body }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Time Horizon</label>
+            <select class="form-select" name="time_horizon" onchange="this.form.submit()">
+                <option value="all" {% if selected_horizon == "all" %}selected{% endif %}>All</option>
+                {% for horizon in time_horizons %}
+                <option value="{{ horizon }}" {% if selected_horizon == horizon %}selected{% endif %}>
+                    {{ horizon }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Total Reports</h5>
+                    <h3 class="fw-bold">{{ total_reports }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Avg % Achieved</h5>
+                    <h3 class="fw-bold text-success">{{ avg_percent_achieved|floatformat:2 }}%</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Avg Variance</h5>
+                    <h3 class="fw-bold text-warning">{{ avg_variance|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Avg Weighted Score</h5>
+                    <h3 class="fw-bold text-primary">{{ avg_weighted_score|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title">Status Distribution</h5>
+                    {{ status_plot|safe }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title">Cycle-Level Averages</h5>
+                    {{ cycle_plot|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Performance by Responsible Body & Cycle</h5>
+            {{ body_plot|safe }}
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h5 class="card-title">KPI Achievement Trend</h5>
+            {{ kpi_plot|safe }}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

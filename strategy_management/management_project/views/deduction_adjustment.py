@@ -166,17 +166,17 @@ def export_deduction_adjustment_list_to_excel(request):
     def safe_getattr(obj, attr, default=""):
         return getattr(obj, attr, default) if obj else default
 
-    # Manually 3-level safe getattr for payroll_month fields
+    # Manually 3-level safe getattr for strategy_by_cycle fields
     for d in deductions:
         # Record Month nested 3 levels
-        rec_month_obj = safe_getattr(d.payroll_to_record, 'payroll_month', None)
-        rec_month_lvl2 = safe_getattr(rec_month_obj, 'payroll_month', None)
-        rec_month_final = safe_getattr(rec_month_lvl2, 'payroll_month', "")
+        rec_month_obj = safe_getattr(d.payroll_to_record, 'strategy_by_cycle', None)
+        rec_month_lvl2 = safe_getattr(rec_month_obj, 'strategy_by_cycle', None)
+        rec_month_final = safe_getattr(rec_month_lvl2, 'strategy_by_cycle', "")
 
         # Adjusted Month nested 3 levels
-        adj_month_obj = safe_getattr(d.payroll_needing_adjustment, 'payroll_month', None)
-        adj_month_lvl2 = safe_getattr(adj_month_obj, 'payroll_month', None)
-        adj_month_final = safe_getattr(adj_month_lvl2, 'payroll_month', "")
+        adj_month_obj = safe_getattr(d.payroll_needing_adjustment, 'strategy_by_cycle', None)
+        adj_month_lvl2 = safe_getattr(adj_month_obj, 'strategy_by_cycle', None)
+        adj_month_final = safe_getattr(adj_month_lvl2, 'strategy_by_cycle', "")
 
         ws.append([
             rec_month_final,

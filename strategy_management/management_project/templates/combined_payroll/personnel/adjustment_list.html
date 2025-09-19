@@ -56,7 +56,7 @@
                 <th>Adjusted Employer Pension</th>
                 <th>Adjusted Total Pension Contribution</th>
                 <th>Adjusted Employment Income Tax</th>
-                <th>Earning Adjustment Deduction</th>
+                <th>Strategic Report Deduction</th>
                 <th>Other Adjustment Deduction</th>
                 <th>Adjusted Total Deduction</th>
                 <th class="text-success">Adjusted Net Pay</th>
@@ -65,7 +65,7 @@
             </thead>
             <tbody>
             {% for row in payroll_data %}
-            {% with a=row.earning_adjustment_item combined=row.combined_adjustment %}
+            {% with a=row.strategic_report_item combined=row.combined_adjustment %}
             <tr>
                 <th scope="row">{{ forloop.counter }}</th>
                 <td>{{ row.payroll.payroll_month }}</td>
@@ -82,7 +82,7 @@
                 <td>{{ a.total_pension|default:"0.00"|floatformat:2|intcomma }}</td>
                 <td>{{ a.employment_income_tax|default:"0.00"|floatformat:2|intcomma }}</td>
 
-                <td>{{ a.earning_adjustment_deduction|default:"0.00"|floatformat:2|intcomma }}</td>
+                <td>{{ a.strategic_report_deduction|default:"0.00"|floatformat:2|intcomma }}</td>
                 <td>{{ a.adjusted_deduction|default:"0.00"|floatformat:2|intcomma }}</td>
 
                 <td>{{ combined.total_adjustment_deduction|default:"0.00"|floatformat:2|intcomma }}</td>

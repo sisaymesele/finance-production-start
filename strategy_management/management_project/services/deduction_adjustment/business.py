@@ -54,7 +54,7 @@ class DeductionAdjustmentBusinessService:
             payroll_to_record=payroll_to_record
         ).select_related('payroll_needing_adjustment')
 
-        # Use payroll_needing_adjustment.payroll_month to ensure one per adjusted month
+        # Use payroll_needing_adjustment.strategy_by_cycle to ensure one per adjusted month
         unique_deductions_by_month = {}
         for deduction in deductions:
             if deduction.payroll_needing_adjustment is None:

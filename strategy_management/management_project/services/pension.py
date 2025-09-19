@@ -6,10 +6,10 @@ from management_project.config.fetchers import PensionRateFetcher
 
 def calculate_pension_contributions(instance):
     """
-    Supports both RegularPayroll and EarningAdjustment instances.
+    Supports both StrategicActionPlan and StrategicReport instances.
     Uses:
-    - RegularPayroll.basic_salary
-    - EarningAdjustment.earning_amount if component is pensionable
+    - StrategicActionPlan.basic_salary
+    - StrategicReport.earning_amount if component is pensionable
     """
     salary = None
 
@@ -35,22 +35,22 @@ def calculate_pension_contributions(instance):
 
 # def calculate_pension_contributions(instance):
 #     """
-#     Supports both RegularPayroll and EarningAdjustment instances.
+#     Supports both StrategicActionPlan and StrategicReport instances.
 #     Uses:
-#     - RegularPayroll.basic_salary
-#     - EarningAdjustment.earning_amount if component is pensionable
+#     - StrategicActionPlan.basic_salary
+#     - StrategicReport.earning_amount if component is pensionable
 #     """
-#     from management_project.services.earning_adjustment import EarningAdjustmentService
+#     from management_project.services.strategic_report import StrategicReportService
 #
 #     salary = None
 #
 #     if hasattr(instance, 'basic_salary'):
-#         # RegularPayroll model
+#         # StrategicActionPlan model
 #         salary = instance.basic_salary
 #
 #     elif hasattr(instance, 'earning_amount') and hasattr(instance, 'component'):
-#         # EarningAdjustment model
-#         if instance.component in EarningAdjustmentService.PENSIONABLE:
+#         # StrategicReport model
+#         if instance.component in StrategicReportService.PENSIONABLE:
 #             salary = instance.earning_amount
 #
 #     if not salary:
@@ -70,7 +70,7 @@ def calculate_pension_contributions(instance):
 # def calculate_pension_contributions(instance):
 #     """
 #     Calculates personnel, employer, and total pension contributions
-#     for both RegularPayroll and EarningAdjustment instances,
+#     for both StrategicActionPlan and StrategicReport instances,
 #     using only the instance's own fields (e.g., basic_salary).
 #     """
 #     # Fetch basic salary directly from the instance
@@ -94,7 +94,7 @@ def calculate_pension_contributions(instance):
 # def calculate_pension_contributions(instance):
 #     """
 #     Calculates personnel, employer, and total pension contributions
-#     for both RegularPayroll and EarningAdjustment instances.
+#     for both StrategicActionPlan and StrategicReport instances.
 #     """
 #     employee_pension = employer_pension = total_pension_contribution = Decimal('0.00')
 #
@@ -102,7 +102,7 @@ def calculate_pension_contributions(instance):
 #     personnel = getattr(instance, 'personnel_full_name', None)
 #     organization = getattr(instance, 'organization_name', None)
 #
-#     # If not directly on the instance, try through payroll_to_record (used by EarningAdjustment)
+#     # If not directly on the instance, try through payroll_to_record (used by StrategicReport)
 #     if not personnel or not organization:
 #         payroll_record = getattr(instance, 'payroll_to_record', None)
 #         if payroll_record:

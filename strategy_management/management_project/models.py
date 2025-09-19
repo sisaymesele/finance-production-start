@@ -13,14 +13,16 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.core.validators import MinValueValidator
 # services
 
-from .services.regular_payroll import RegularPayrollService
-from .services.earning_adjustment.business import EarningAdjustmentBusinessService
-from .services.earning_adjustment.context import get_earning_adjustment_context
+from .services.strategic_action_plan import StrategicActionPlanService
+from .services.strategic_report.business import StrategicReportBusinessService
+from .services.strategic_report.context import get_strategic_report_context
 from .services.deduction_adjustment.business import DeductionAdjustmentBusinessService
 from .services.deduction_adjustment.context import get_deduction_adjustment_context
 from .services.severance_pay import SeverancePayService
 from .services.absence_deduction import VisionService
 from management_project.services.pension import calculate_pension_contributions
+from .services.values import ValuesService
+import calendar
 
 
 
@@ -100,8 +102,30 @@ class Stakeholder(models.Model):
         ('partner', 'Partner'),
         ('supplier', 'Supplier'),
         ('investor', 'Investor'),
+        ('funder', 'Funder'),
         ('regulator', 'Regulator'),
         ('community', 'Community'),
+        ('consultant', 'Consultant'),
+        ('advisor', 'Advisor'),
+        ('board_member', 'Board Member'),
+        ('volunteer', 'Volunteer'),
+        ('contractor', 'Contractor'),
+        ('researcher', 'Researcher'),
+        ('media', 'Media'),
+        ('government_official', 'Government Official'),
+        ('auditor', 'Auditor'),
+        ('legal', 'Legal Counsel'),
+        ('finance', 'Finance'),
+        ('hr', 'Human Resources'),
+        ('it', 'IT Support'),
+        ('operations', 'Operations'),
+        ('logistics', 'Logistics'),
+        ('product_owner', 'Product Owner'),
+        ('scrum_master', 'Scrum Master'),
+        ('analyst', 'Business Analyst'),
+        ('trainer', 'Trainer'),
+        ('mentor', 'Mentor'),
+        ('intern', 'Intern'),
         ('other', 'Other'),
     ]
 
@@ -138,6 +162,18 @@ class Stakeholder(models.Model):
         ('high', 'High'),
         ('critical', 'Critical'),
     ]
+    PRIORITY_CHOICES = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('critical', 'Critical'),
+    ]
+    CONTRIBUTION_CHOICES = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('very_high', 'Very High'),
+    ]
 
     # ------------------ Core Info ------------------
     organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
@@ -145,7 +181,6 @@ class Stakeholder(models.Model):
     stakeholder_type = models.CharField(max_length=20, choices=STAKEHOLDER_TYPE_CHOICES)
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)
     department = models.CharField(max_length=100, blank=True, null=True, help_text="Optional department or team")
-    description = models.TextField(blank=True, null=True, help_text="Brief description of the stakeholder")
 
     # ------------------ Analysis ------------------
     impact_level = models.CharField(max_length=20, choices=IMPACT_LEVEL_CHOICES, default='medium')
@@ -153,34 +188,32 @@ class Stakeholder(models.Model):
     engagement_strategy = models.CharField(max_length=20, choices=ENGAGEMENT_STRATEGY_CHOICES, default='inform')
     influence_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0,
                                           help_text="Quantitative measure of influence")
-    priority = models.PositiveIntegerField(default=0, help_text="Calculated from impact x interest x influence")
-
+    priority = models.CharField(
+        max_length=10,   choices=PRIORITY_CHOICES, default='medium',
+        help_text="Calculated from impact x interest x influence"
+    )
     satisfaction_level = models.CharField(max_length=20, choices=SATISFACTION_LEVEL_CHOICES, default='medium',
                                           help_text="Stakeholder satisfaction with the project or SaaS")
     risk_level = models.CharField(max_length=20, choices=RISK_LEVEL_CHOICES, default='medium',
                                   help_text="Potential risk if stakeholder is disengaged")
-    contribution_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0,
-                                             help_text="Estimated contribution to strategic objectives")
+    contribution_score = models.CharField( max_length=10,   choices=CONTRIBUTION_CHOICES, default='medium',
+        help_text="Estimated contribution to strategic objectives"
+    )
 
     # ------------------ Contact ------------------
     contact_info = models.CharField(max_length=200, blank=True, null=True,
                                     help_text="Email, phone, or other contact details")
     notes = models.TextField(blank=True, null=True, help_text="Additional observations or comments")
+    description = models.TextField(blank=True, null=True, help_text="Brief description of the stakeholder")
 
-    # ------------------ Relationships ------------------
-    depends_on = models.ManyToManyField(
-        "self",
-        symmetrical=False,
-        blank=True,
-        related_name="influences",
-        help_text="Other stakeholders this stakeholder depends on or influences"
-    )
+
+
 
     class Meta:
         ordering = ["-priority", "stakeholder_name"]
 
     def __str__(self):
-        return f"{self.name} ({self.get_role_display()})"
+        return f"{self.stakeholder_name} ({self.get_role_display()})"
 
     # ------------------ Business Logic ------------------
     def save(self, *args, **kwargs):
@@ -233,8 +266,8 @@ class PayrollPeriod(models.Model):
         return str(self.payroll_month)
 
     class Meta:
-        verbose_name = "              Payroll Month and Component"
-        verbose_name_plural = "              Payroll Month and Components"
+        verbose_name = "              Strategic Cycle"
+        verbose_name_plural = "              Strategic Cycles"
         ordering = ['-id']  # You can change the ordering field as needed
 
     def save(self, *args, **kwargs):
@@ -247,491 +280,259 @@ class PayrollPeriod(models.Model):
 
 
 
-class PayrollMonthComponent(models.Model):
-    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
-    payroll_month = models.ForeignKey(PayrollPeriod, on_delete=models.PROTECT, help_text='payroll processing month')
-    use_basic_salary = models.BooleanField(default=False)
-    use_overtime = models.BooleanField(default=False)
-    use_housing_allowance = models.BooleanField(default=False)
-    use_position_allowance = models.BooleanField(default=False)
-    use_commission = models.BooleanField(default=False)
-    use_telephone_allowance = models.BooleanField(default=False)
-    use_one_time_bonus = models.BooleanField(default=False)
-    use_causal_labor_wage = models.BooleanField(default=False)
-    # partially taxable
-    use_transport_home_to_office = models.BooleanField(default=False)
-    use_transport_for_work = models.BooleanField(default=False)
-    use_fuel_home_to_office = models.BooleanField(default=False)
-    use_fuel_for_work = models.BooleanField(default=False)
-    use_per_diem = models.BooleanField(default=False)
-    use_hardship_allowance = models.BooleanField(default=False)
-
-    # Fully non_taxable compensation
-    use_public_cash_award = models.BooleanField(default=False)
-    use_incidental_operation_allowance = models.BooleanField(default=False)
-    use_medical_allowance = models.BooleanField(default=False)
-    use_cash_gift = models.BooleanField(default=False)
-    use_tuition_fees = models.BooleanField(default=False)
-    use_personal_injury = models.BooleanField(default=False)
-    use_child_support_payment = models.BooleanField(default=False)
-
-    # Deductions
-    use_charitable_donation = models.BooleanField(default=False)
-    use_saving_plan = models.BooleanField(default=False)
-    use_loan_payment = models.BooleanField(default=False)
-    use_court_order = models.BooleanField(default=False)
-    use_workers_association = models.BooleanField(default=False)
-    use_personnel_insurance_saving = models.BooleanField(default=False)
-    use_university_cost_share_pay = models.BooleanField(default=False)
-    use_red_cross = models.BooleanField(default=False)
-    use_party_contribution = models.BooleanField(default=False)
-    use_other_deduction = models.BooleanField(default=False)
-    slug = models.SlugField(unique=True)  # Slug for payroll month
-
-    def __str__(self):
-        return str(self.payroll_month)
-
-    class Meta:
-        verbose_name = "              Payroll Month and Component"
-        verbose_name_plural = "              Payroll Month and Components"
-        ordering = ['-id']  # You can change the ordering field as needed
-
-    def save(self, *args, **kwargs):
-        if self.organization_name_id:
-            self.slug = f"{self.organization_name.id}-{self.payroll_month}"
-        else:
-            self.slug = self.payroll_month
-        super().save(*args, **kwargs)
-
-
-class RegularPayroll(models.Model):
-    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
-    # stakeholder_list information
-
-    personnel_full_name = models.ForeignKey(Stakeholder, on_delete=models.PROTECT, help_text='Please select personnel full name')
-
-    payroll_month = models.ForeignKey(PayrollMonthComponent, on_delete=models.PROTECT, help_text='Payroll processing month')
-    # fully taxable compensation
-    basic_salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                       validators=[MinValueValidator(Decimal('0.00'))],
-                                       help_text='Monthly pay for work done')
-    overtime_hours_from_six_pm_to_four_pm = models.IntegerField(blank=True, null=True,
-                                                                validators=[MinValueValidator(Decimal('0.00'))],
-                                                                help_text='Total over time hour from 6 pm to 4 pm with in a pay month')
-    overtime_hours_from_four_pm_to_six_am = models.IntegerField(blank=True, null=True,
-                                                                validators=[MinValueValidator(Decimal('0.00'))],
-                                                                help_text='Total over time hour from 4 pm to 6 am with in a pay month')
-    overtime_hours_in_weekly_rest_day = models.IntegerField(blank=True, null=True,
-                                                            validators=[MinValueValidator(Decimal('0.00'))],
-                                                            help_text='Total over time hour in weekly rest day - saturday and sunday with in a pay month')
-    overtime_hours_in_public_holiday = models.IntegerField(blank=True, null=True,
-                                                           validators=[MinValueValidator(Decimal('0.00'))],
-                                                           help_text='Total over time hour in public holiday with in a pay month')
-    overtime = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                   validators=[MinValueValidator(Decimal('0.00'))])
-    housing_allowance = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                            validators=[MinValueValidator(Decimal('0.00'))])
-    position_allowance = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                             validators=[MinValueValidator(Decimal('0.00'))])
-    commission = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                     validators=[MinValueValidator(Decimal('0.00'))])
-    telephone_allowance = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                              validators=[MinValueValidator(Decimal('0.00'))])
-    one_time_bonus = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                         validators=[MinValueValidator(Decimal('0.00'))])
-    causal_labor_wage = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                            validators=[MinValueValidator(Decimal('0.00'))])
-    # partially taxable compensation
-    #
-    transport_home_to_office = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                                   validators=[MinValueValidator(Decimal('0.00'))],
-                                                   help_text='Monthly transport allowance for home to office transport')
-    transport_home_to_office_taxable = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    transport_home_to_office_non_taxable = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    #
-    fuel_home_to_office = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                              validators=[MinValueValidator(Decimal('0.00'))],
-                                              help_text='Monthly fuel allowance for home to office transport')
-    fuel_home_to_office_taxable = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    fuel_home_to_office_non_taxable = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    #
-    transport_for_work = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                             validators=[MinValueValidator(Decimal('0.00'))],
-                                             help_text='Monthly transport allowance for work purposes')
-    transport_for_work_taxable = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    transport_for_work_non_taxable = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    #
-    fuel_for_work = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                        validators=[MinValueValidator(Decimal('0.00'))],
-                                        help_text='Monthly fuel allowance for work purposes')
-    fuel_for_work_taxable = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    fuel_for_work_non_taxable = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    #
-    per_diem = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                   validators=[MinValueValidator(Decimal('0.00'))],
-                                   help_text='Per diem per day or daily per diem')
-    per_diem_taxable = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    per_diem_non_taxable = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-
-    #
-    hardship_allowance = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                             validators=[MinValueValidator(Decimal('0.00'))],
-                                             help_text='Monthly allowance for working in unfavorable conditions')
-    hardship_allowance_taxable = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    hardship_allowance_non_taxable = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-
-    # full tax exempt compensation
-    public_cash_award = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                            validators=[MinValueValidator(Decimal('0.00'))])
-    incidental_operation_allowance = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                                         validators=[MinValueValidator(Decimal('0.00'))])
-    medical_allowance = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                            validators=[MinValueValidator(Decimal('0.00'))])
-    cash_gift = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                    validators=[MinValueValidator(Decimal('0.00'))])
-    tuition_fees = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                       validators=[MinValueValidator(Decimal('0.00'))])
-    personal_injury = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                          validators=[MinValueValidator(Decimal('0.00'))])
-    child_support_payment = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                                validators=[MinValueValidator(Decimal('0.00'))])
-
-    # deductions
-    # conditional deduction
-    charitable_donation = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                              validators=[MinValueValidator(Decimal('0.00'))])
-    saving_plan = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                      validators=[MinValueValidator(Decimal('0.00'))])
-    loan_payment = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                       validators=[MinValueValidator(Decimal('0.00'))])
-    court_order = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                      validators=[MinValueValidator(Decimal('0.00'))])
-    workers_association = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                              validators=[MinValueValidator(Decimal('0.00'))])
-    personnel_insurance_saving = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                                     validators=[MinValueValidator(Decimal('0.00'))])
-    cost_share_percent_to_basic_salary = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True,
-                                                             validators=[MinValueValidator(Decimal('0.00'))],
-                                                             help_text='Percent of cost share deduction from agreed basic salary with in a month')
-    university_cost_share_pay = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                                    validators=[MinValueValidator(Decimal('0.00'))])
-    red_cross = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                    validators=[MinValueValidator(Decimal('0.00'))])
-    party_contribution = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                             validators=[MinValueValidator(Decimal('0.00'))])
-    other_deduction = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
-                                          validators=[MinValueValidator(Decimal('0.00'))])
-    # summary
-    # auto deduction
-    # tax
-    employment_income_tax = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    # pension
-    employee_pension_contribution = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    employer_pension_contribution = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    total_pension_contribution = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    # gross
-    gross_pay = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    gross_non_taxable_pay = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    gross_taxable_pay = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    total_payroll_deduction = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    net_pay = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    expense = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
-
-    # bank information
-    bank_name = models.CharField(max_length=70, blank=True, null=True)
-    bank_account_id = models.CharField(max_length=70, blank=True, null=True)
-    bank_account_type = models.CharField(max_length=70, blank=True, null=True)
-    processing_date = models.DateField(null=True, blank=True, default=datetime.date.today)
-
-
-    def __str__(self):
-        try:
-            payroll = str(self.payroll_month)
-        except self.__class__.payroll_month.RelatedObjectDoesNotExist:
-            payroll = "No Payroll Month"
-
-        try:
-            personnel = str(self.personnel_full_name)  # or .name if you want only the name field
-        except self.__class__.personnel_full_name.RelatedObjectDoesNotExist:
-            personnel = "No Personnel"
-
-        return f"{payroll} - {personnel}"
-
-
-    class Meta:
-        verbose_name = "             Regular Payroll"
-        verbose_name_plural = "             Regular Payroll"
-        ordering = ['payroll_month', '-id']  # You can change the ordering field as needed
-
-    def clean(self):
-        if self.personnel_full_name:
-            # perdiem check
-            if self.per_diem and (
-                    (not self.personnel_full_name.daily_per_diem or self.personnel_full_name.daily_per_diem == Decimal(
-                        '0.00'))
-            ):
-                raise ValidationError({
-                    'per_diem': 'To process per diem you should add daily per diem amount in personnel list.'
-                })
-
-            # only one payroll per month for an personnel
-            if RegularPayroll.objects.exclude(pk=self.pk).filter(
-                    personnel_full_name=self.personnel_full_name,
-                    payroll_month=self.payroll_month
-            ).exists():
-                raise ValidationError({
-                    'payroll_month': 'An adjustment for this personnel and month already exists.'
-                })
-
-            # hardship check
-
-            allowed_environments = ['adverse', 'very_adverse', 'extremely_adverse']
-
-            if self.personnel_full_name.working_environment not in allowed_environments and self.hardship_allowance is not None:
-                if self.hardship_allowance > 0:
-                    raise ValidationError({
-                        'hardship_allowance': (
-                            'The condition should be either "adverse", "very_adverse", or "extremely_adverse" to process hardship allowance. '
-                            'Please appropriately select the working environment type in the personnel list list above.'
-                        )
-                    })
-                    # Validate university_cost_sharing_debt and cost_share_percent_to_basic_salary
-            if self.personnel_full_name.university_cost_sharing_debt == Decimal(
-                    0.00) or self.personnel_full_name.university_cost_sharing_debt is None:
-                if self.cost_share_percent_to_basic_salary:
-                    raise ValidationError({'cost_share_percent_to_basic_salary': (
-                        'To pay for university cost share, you should first record the cost share debt amount on above personnel list first')})
-
-            # validate cost share pay greater than debt Simple debt check
-
-            # Get the debt
-            debt = self.personnel_full_name.university_cost_sharing_debt or Decimal('0.00')
-
-            # Calculate what university_cost_share_pay will be
-            calculated_pay = Decimal('0.00')
-            if self.personnel_full_name.basic_salary and self.cost_share_percent_to_basic_salary:
-                calculated_pay = (
-                        self.personnel_full_name.basic_salary *
-                        (self.cost_share_percent_to_basic_salary / Decimal('100.00'))
-                )
-
-            # Sum all previous payments (excluding this one)
-            total_paid = RegularPayroll.objects.filter(
-                personnel_full_name=self.personnel_full_name
-            ).exclude(pk=self.pk).aggregate(
-                total=Sum('university_cost_share_pay')
-            )['total'] or Decimal('0.00')
-
-            # Final total if this one is added
-            total_after_this = total_paid + calculated_pay
-
-            # Validate
-            if total_after_this > debt:
-                raise ValidationError({
-                    'cost_share_percent_to_basic_salary': (
-                        f'Total cost share processed {total_after_this} exceeds the personnel\'s cost share debt {debt}. Adjust accordingly.'
-                    )
-                })
-
-        super().clean()
-
-
-
-    def save(self, *args, **kwargs):
-
-        RegularPayrollService(self).perform_calculations()
-
-        super().save(*args, **kwargs)
-
-
-# earning adjustment
-class EarningAdjustment(models.Model):
-    # Choices list for different payroll components
-    EARNING_ADJUSTMENT_COMPONENTS_CHOICES = [
-        ('Correction and Unpaid - Fully Taxable Components', [
-            ('basic_salary', 'Basic Salary'),
-            ('overtime', 'Overtime'),
-            ('housing_allowance', 'Housing Allowance'),
-            ('position_allowance', 'Position Allowance'),
-            ('commission', 'Commission'),
-            ('telephone_allowance', 'Telephone Allowance'),
-            ('one_time_bonus', 'One Time Bonus'),
-            ('casual_labor_wage', 'Casual Labor Wage'),
-        ]),
-
-        ('Correction and Unpaid - Partially Taxable Components', [
-            ('transport_home_to_office', 'Transport Home To Office'),
-            ('transport_for_work', 'Transport For Work'),
-            ('fuel_home_to_office', 'Fuel Home To Office'),
-            ('fuel_for_work', 'Fuel For Work'),
-            ('per_diem', 'Per Diem'),
-            ('hardship_allowance', 'Hardship Allowance'),
-        ]),
-
-        ('Correction and Unpaid - Non-Taxable Components', [
-            ('public_cash_award', 'Public Cash Award'),
-            ('incidental_operation_allowance', 'Incidental Operation Allowance'),
-            ('medical_allowance', 'Medical Allowance'),
-            ('cash_gift', 'Cash Gift'),
-            ('personal_injury', 'Personal Injury'),
-            ('child_support_payment', 'Child Support Payment'),
-            ('tuition_fees', 'Tuition Fees'),
-        ]),
-
-        ('DEFERRED_EARNINGS', [
-            ('leave_encashment', 'Leave Encashment'),
-            ('quarterly_bonus', 'Quarterly Bonus'),
-            ('semi_annual_bonus', 'Semi-Annual Bonus'),
-            ('annual_bonus', 'Annual Bonus'),
-            ('performance_based_bonuses', 'Performance-Based Bonuses'),
-            ('project_completion_bonuses', 'Project Completion Bonuses'),
-            ('holiday_bonus', 'Holiday Bonus'),
-            ('other_bonus', 'Other Type of Bonus'),
-        ]),
-
+class StrategicCycle(models.Model):
+    TIME_HORIZON_CHOICES = [
+        ('10 years', '10 years'),
+        ('5 years', '5 years'),
+        ('3 years', '3 years'),
+        ('2 years', '2 years'),
+        ('1 year', '1 year'),
+        ('6 months', '6 months'),
+        ('Quarterly', 'Quarterly'),
+        ('Monthly', 'Monthly'),
     ]
 
-    ADJUSTMENT_CASES_CHOICES = [
-        ('Financial Corrections', [
-            ('underpayment', 'Underpayment'),
-            ('overpayment', 'Overpayment'),
-            ('deduction_error', 'Deduction Error'),
-            ('correction', 'Correction'),
-        ]),
-        ('Retroactive Changes', [
-            ('salary_increment', 'Salary Increment'),
-            ('backpay', 'Backpay'),
-            ('contract_revision', 'Contract Revision'),
-        ]),
-        ('Absence or Delay', [
-            ('unpaid_leave_deduction', 'Unpaid Leave Deduction'),
-            ('late_payment', 'Late Payment'),
-        ]),
-        ('Benefit and Bonus Changes', [
-            ('allowance_addition', 'Allowance Addition'),
-            ('bonus_adjustment', 'Bonus Adjustment'),
-        ]),
-        ('Internal Movements', [
-            ('transfer_adjustment', 'Transfer Adjustment'),
-        ]),
-        ('Other', [
-            ('other', 'Other'),
-        ]),
+    TIME_HORIZON_TYPE_CHOICES = [
+        ('Long Term', 'Long Term'),
+        ('Medium Term', 'Medium Term'),
+        ('Short Term', 'Short Term'),
+    ]
+
+    organization_name = models.ForeignKey(
+        'OrganizationalProfile',
+        on_delete=models.PROTECT,
+        related_name='strategic_cycles'
+    )
+    name = models.CharField(max_length=100, help_text='Descriptive name for the strategic cycle')
+    time_horizon = models.CharField(max_length=20, choices=TIME_HORIZON_CHOICES)
+    time_horizon_type = models.CharField(max_length=20, choices=TIME_HORIZON_TYPE_CHOICES)
+    start_date = models.DateField(help_text='Exact start date of the strategic cycle')
+    end_date = models.DateField(help_text='Exact end date of the strategic cycle / report date')
+
+    # New fields to store calculated values
+
+    slug = models.SlugField(max_length=50, unique=True, blank=True)
+
+    class Meta:
+        verbose_name = "Strategic Cycle"
+        verbose_name_plural = "Strategic Cycles"
+        ordering = ['start_date', '-id']
+
+    @property
+    def duration_days(self):
+        return (self.end_date - self.start_date).days
+
+    @property
+    def start_month_name(self):
+        return calendar.month_name[self.start_date.month]
+
+    @property
+    def start_quarter(self):
+        return (self.start_date.month - 1) // 3 + 1
+
+    @property
+    def start_year(self):
+        return self.start_date.year
+
+    def save(self, *args, **kwargs):
+        # Auto-generate name based on org + time horizon + dates
+        self.name = f"{self.organization_name} - {self.time_horizon} ({self.start_date:%B %Y}–{self.end_date:%B %Y})"
+
+        if not self.slug:
+            # Build slug from multiple fields
+            base_slug = slugify(
+                f"{self.name}-"
+                f"{self.time_horizon}-{self.time_horizon_type}-"
+                f"{self.start_date}-{self.end_date}"
+            )
+            slug = base_slug
+            counter = 1
+            while StrategicCycle.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+
+        super().save(*args, **kwargs)
+
+
+
+    def __str__(self):
+        start_str = self.start_date.strftime("%Y-%m-%d") if self.start_date else "N/A"
+        end_str = self.end_date.strftime("%Y-%m-%d") if self.end_date else "N/A"
+        return f"{self.organization_name} - {self.name} ({self.time_horizon_type}, {start_str} → {end_str})"
+
+
+class StrategicActionPlan(models.Model):
+    # stakeholder_list information
+    INDICATOR_TYPE_CHOICES = [
+        ('Lead', 'Lead'),
+        ('Lagg', 'Lagg'),
+    ]
+
+    DIRECTION_OF_CHANGE_CHOICES = [
+        ('Increasing', 'Increasing'),
+        ('Decreasing', 'Decreasing'),
+    ]
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('on_hold', 'On Hold'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
+    # Parent references
+    strategic_cycle = models.ForeignKey(
+        'StrategicCycle',
+        on_delete=models.CASCADE,
+        related_name='action_plans'
+    )
+    strategy_map = models.ForeignKey(
+        'StrategyMap',
+        on_delete=models.CASCADE,
+        related_name='action_plans'
+    )
+    responsible_bodies = models.ManyToManyField(
+        'Stakeholder', blank=True, related_name='action_plans'
+    )
+
+    # KPI & Measurement
+    indicator_type = models.CharField(max_length=10, choices=INDICATOR_TYPE_CHOICES)
+    direction_of_change = models.CharField(max_length=10, choices=DIRECTION_OF_CHANGE_CHOICES)
+    baseline = models.DecimalField(max_digits=22, decimal_places=2)
+    target = models.DecimalField(max_digits=22, decimal_places=2)
+    improvement_needed = models.DecimalField(max_digits=22, decimal_places=2, blank=True, null=True)
+    status = models.CharField( max_length=20, choices=STATUS_CHOICES,
+        default='pending', help_text="Current status of the strategic plan"
+    )
+    weight = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        default=100,
+        help_text="Weight of this Action Plan KPI relative to other KPI per strategic cycle"
+    )
+
+
+    class Meta:
+        verbose_name = "Strategic Action Plan"
+        verbose_name_plural = "Strategic Action Plans"
+        ordering = ['strategic_cycle__start_date', '-id']
+
+
+
+    def save(self, *args, **kwargs):
+
+        # Calculate improvement_needed and duration
+        if self.baseline is not None and self.target is not None:
+            self.improvement_needed = self.target - self.baseline
+
+        super().save(*args, **kwargs)
+
+    def responsible_bodies_display(self):
+        return ", ".join([str(s) for s in self.responsible_bodies.all()])
+
+    def get_full_display(self):
+        """Full info for tooltip"""
+        cycle_name = (
+            f"{self.strategic_cycle.name} - {self.strategic_cycle.time_horizon} - "
+            f"{self.strategic_cycle.time_horizon_type} - {self.strategic_cycle.start_date} - "
+            f"{self.strategic_cycle.end_date}" if self.strategic_cycle else "N/A"
+        )
+        kpi = self.strategy_map.kpi if self.strategy_map else "N/A"
+        baseline = self.baseline or 0
+        target = self.target or 0
+        responsible = self.responsible_bodies_display() or "N/A"
+
+        return f"{cycle_name} | KPI: {kpi} | Baseline: {baseline} | Target: {target} | Responsible: {responsible}"
+
+    def __str__(self):
+        """Single-line label for dropdown"""
+        if self.strategic_cycle:
+            start = self.strategic_cycle.start_date.strftime("%B %d, %Y") if self.strategic_cycle.start_date else "N/A"
+            end = self.strategic_cycle.end_date.strftime("%B %d, %Y") if self.strategic_cycle.end_date else "N/A"
+            cycle_name = f"{self.strategic_cycle.name} - {self.strategic_cycle.time_horizon} - {self.strategic_cycle.time_horizon_type} - {start} - {end}"
+        else:
+            cycle_name = "N/A"
+
+        kpi = self.strategy_map.kpi if self.strategy_map else "N/A"
+        baseline = self.baseline or 0
+        target = self.target or 0
+        responsible = self.responsible_bodies_display() or "N/A"
+
+        return f"{cycle_name} | KPI: {kpi} | Baseline: {baseline} | Target: {target} | Responsible: {responsible}"
+
+
+    def dropdown_label_lines(self):
+        """Return tuple/list of lines for display in the radio label."""
+        if self.strategic_cycle:
+            start = self.strategic_cycle.start_date.strftime("%B %d, %Y") if self.strategic_cycle.start_date else "N/A"
+            end = self.strategic_cycle.end_date.strftime("%B %d, %Y") if self.strategic_cycle.end_date else "N/A"
+            cycle_line = f"{self.strategic_cycle.name} ({start} - {end})"
+        else:
+            cycle_line = "Cycle: N/A"
+
+        kpi = self.strategy_map.kpi if self.strategy_map else "N/A"
+        baseline = self.baseline or 0
+        target = self.target or 0
+        resp = self.responsible_bodies_display() or "N/A"
+
+        return [
+            cycle_line,
+            f"KPI: {kpi}",
+            f"Baseline: {baseline} | Target: {target}",
+            f"Responsible: {resp}",
+        ]
+
+
+# strategic report
+class StrategicReport(models.Model):
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('on_hold', 'On Hold'),
+        ('cancelled', 'Cancelled'),
     ]
 
     # Model fields as described
     organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
-    #
-    payroll_to_record = models.ForeignKey(RegularPayroll, on_delete=models.CASCADE, related_name='earning_adjustments')
-    payroll_needing_adjustment = models.ForeignKey(RegularPayroll, on_delete=models.CASCADE)
-    case = models.CharField(max_length=90, choices=ADJUSTMENT_CASES_CHOICES)
+    action_plan = models.ForeignKey(
+        StrategicActionPlan, on_delete=models.CASCADE, related_name="reports"
+    )
+    achievement = models.DecimalField(max_digits=22, decimal_places=2, default=0)
+    percent_achieved = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    variance = models.DecimalField(max_digits=22, decimal_places=2, default=0)
+    weighted_score = models.DecimalField(max_digits=22, decimal_places=2, default=0)
+    data_source = models.CharField(max_length=200, blank=True, null=True)
+    data_collector = models.CharField(max_length=200, blank=True, null=True)
+    progress_summary = models.TextField(blank=True, null=True)
+    performance_summary = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES,
+                              default='pending', help_text="Current status of the strategic plan"
+                              )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    component = models.CharField(max_length=90, choices=EARNING_ADJUSTMENT_COMPONENTS_CHOICES)
-    earning_amount = models.DecimalField(max_digits=12, decimal_places=2,
-                                         validators=[MinValueValidator(Decimal('0.00'))])
-    taxable = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
-    non_taxable = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
-
-    #
-    employee_pension_contribution = models.DecimalField(max_digits=15, decimal_places=2, null=True,
-                                                                            blank=True)
-    employer_pension_contribution = models.DecimalField(max_digits=15, decimal_places=2, null=True,
-                                                                           blank=True)
-    total_pension = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-
-    # grosses
-    adjusted_month_gross_taxable_pay = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    adjusted_month_gross_non_taxable_pay = models.DecimalField(max_digits=12, decimal_places=2, null=True,
-                                                                   blank=True)
-    adjusted_month_gross_pay = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-
-    # sum of adjustment taxable and regular payroll taxable
-    adjusted_month_total_taxable_pay = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    # tax
-    adjusted_month_employment_income_tax_total = models.DecimalField(max_digits=12, decimal_places=2, null=True,
-                                                                   blank=True)
-    adjusted_month_employment_income_tax = models.DecimalField(max_digits=12, decimal_places=2, null=True,
-                                                             blank=True)
-
-    # pension
-    adjusted_month_employee_pension_contribution = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    adjusted_month_employer_pension_contribution = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    adjusted_month_total_pension = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-
-    adjusted_month_total_earning_deduction = models.DecimalField(max_digits=12, decimal_places=2, null=True,
-                                                                    blank=True)
-    adjusted_month_expense = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-
-    # monthly
-    # pension
-    recorded_month_employee_pension_contribution = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    recorded_month_employer_pension_contribution = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    recorded_month_total_pension_contribution = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    #
-    recorded_month_taxable_gross_pay = models.DecimalField(max_digits=12, decimal_places=2,
-                                                                   default=Decimal('0.00'))
-    recorded_month_non_taxable_gross_pay = models.DecimalField(max_digits=12, decimal_places=2,
-                                                                       default=Decimal('0.00'))
-    recorded_month_gross_pay = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
-
-    recorded_month_total_taxable_pay = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
-    recorded_month_employment_income_tax_total = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
-
-    recorded_month_employment_income_tax = models.DecimalField(max_digits=12, decimal_places=2,
-                                                                      default=Decimal('0.00'))
-    recorded_month_total_earning_deduction = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
-    recorded_month_expense = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
-    #
-    period_start = models.DateField(default=datetime.date.today)
-    period_end = models.DateField(default=datetime.date.today)
-    months_covered = models.IntegerField()
-    created_at = models.DateField(default=datetime.date.today, blank=True,
-                                  help_text="Date when this record was created")
-    updated_at = models.DateField(default=datetime.date.today, help_text="Date when this record was last updated")
-
-
-    def clean(self):
-        # First, ensure both ForeignKeys are set
-        if not self.payroll_needing_adjustment_id or not self.payroll_to_record_id:
-            raise ValidationError("Both 'payroll needing adjustment' and 'record month' must be set.")
-
-        # Safely get related objects
-        payroll_adj = getattr(self, 'payroll_needing_adjustment', None)
-        payroll_to_record_obj = getattr(self, 'payroll_to_record', None)
-
-        if payroll_to_record_obj:
-            personnel = getattr(payroll_to_record_obj, 'personnel_full_name', None)
-            payroll_month = getattr(payroll_to_record_obj, 'payroll_month', None)
-
-            # Example check using personnel
-            if self.earning_amount and self.component == 'per_diem':
-                if not personnel or not getattr(personnel, 'daily_per_diem', None) or personnel.daily_per_diem == 0:
-                    raise ValidationError({
-                        'earning_amount': 'To process per diem you should add daily per diem amount in personnel list.'
-                    })
-
-            allowed_environments = ['adverse', 'very_adverse', 'extremely_adverse']
-            if personnel and payroll_month and self.earning_amount is not None:
-                working_env = getattr(personnel, 'working_environment', None)
-                if working_env not in allowed_environments and self.component == 'hardship_allowance' and self.earning_amount > 0:
-                    raise ValidationError({
-                        'earning_amount': (
-                            'The condition should be either "adverse", "very_adverse", or "extremely_adverse" '
-                            'to process hardship allowance. Please appropriately select the working environment '
-                            'type in the personnel list above.'
-                        )
-                    })
-
-        super().clean()
-
-
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Strategic Report"
+        verbose_name_plural = "Strategic Reports"
 
     def save(self, *args, **kwargs):
-        EarningAdjustmentBusinessService(self).perform_all_calculations()
+        plan = self.action_plan
+        # Ensure percent achieved and variance
+        baseline = plan.baseline or 0
+        target = plan.target or 0
+        actual = self.achievement
+        self.percent_achieved = ((actual - baseline) / (target - baseline) * 100) if target != baseline else 0
+        self.variance = target - actual
+        self.weighted_score = actual * (plan.weight / 100)
+        self.responsible_body = plan.responsible_bodies_display()
         super().save(*args, **kwargs)
 
-    # save method
-# end earning adjustment
+    def __str__(self):
+        return f"{self.action_plan.key_performance_indicator} | Achieved: {self.achievement} | {self.percent_achieved:.2f}%"
 
 # start deduction adjustment
 
@@ -765,8 +566,8 @@ class DeductionAdjustment(models.Model):
     # Model fields as described
     organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
     #
-    payroll_to_record = models.ForeignKey(RegularPayroll, on_delete=models.CASCADE, related_name='deduction_adjustments')
-    payroll_needing_adjustment = models.ForeignKey(RegularPayroll, on_delete=models.CASCADE)
+    payroll_to_record = models.ForeignKey(StrategicActionPlan, on_delete=models.CASCADE, related_name='deduction_adjustments')
+    payroll_needing_adjustment = models.ForeignKey(StrategicActionPlan, on_delete=models.CASCADE)
     case = models.CharField(max_length=90, choices=ADJUSTMENT_CASES_CHOICES)
 
     component = models.CharField(max_length=90, choices=DEDUCTION_ADJUSTMENT_COMPONENTS_CHOICES)
@@ -891,3 +692,83 @@ class Mission(models.Model):
     def display_mission_statement(self):
         from management_project.services.mission import MissionService
         return MissionService.get_display_statement(self.organization_name.organization_name, self.mission_statement)
+
+
+
+
+class Values(models.Model):
+    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
+
+    values = models.CharField(
+        max_length=50,
+        choices=[(key, label) for group in ValuesService.VALUE_CHOICES for key, label in group[1]],
+        unique=True
+    )
+
+    def get_category(self):
+        for group_name, group_values in ValuesService.VALUE_CHOICES:
+            for key, label in group_values:
+                if key == self.values:
+                    return group_name
+        return None
+
+    def __str__(self):
+        return self.get_values_display()
+
+
+
+class SwotAnalysis(models.Model):
+    SWOT_TYPES = [
+        ("Strength", "Strength"),
+        ("Weakness", "Weakness"),
+        ("Opportunity", "Opportunity"),
+        ("Threat", "Threat"),
+    ]
+    PRIORITY_CHOICES = [
+        ("High", "High"),
+        ("Medium", "Medium"),
+        ("Low", "Low"),
+    ]
+    IMPACT_CHOICES = [
+        ("High", "High"),
+        ("Medium", "Medium"),
+        ("Low", "Low"),
+    ]
+    LIKELIHOOD_CHOICES = [
+        ("High", "High"),
+        ("Medium", "Medium"),
+        ("Low", "Low"),
+    ]
+
+    organization_name = models.ForeignKey(
+        OrganizationalProfile, on_delete=models.PROTECT
+    )
+    swot_type = models.CharField(max_length=20, choices=SWOT_TYPES)
+    swot_pillar = models.CharField(max_length=100)
+    swot_factor = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default="Medium")
+    impact = models.CharField(max_length=10, choices=IMPACT_CHOICES, default="Medium")
+    likelihood = models.CharField(max_length=10, choices=LIKELIHOOD_CHOICES, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["swot_type", "priority", "-created_at"]
+
+    def __str__(self):
+        return f"{self.swot_type} → {self.swot_pillar} → {self.swot_factor[:50]}"
+
+
+class StrategyMap(models.Model):
+    organization_name = models.ForeignKey(
+        OrganizationalProfile, on_delete=models.PROTECT
+    )
+    strategic_perspective = models.CharField(max_length=100)
+    strategic_pillar = models.CharField(max_length=100)
+    objective = models.CharField(max_length=100)
+    kpi = models.CharField(max_length=100)
+    formula = models.CharField(max_length=100, blank=True)
+
+    def __str__(self):
+        return f"{self.strategic_perspective} → {self.strategic_pillar} → {self.objective} → {self.kpi}"
