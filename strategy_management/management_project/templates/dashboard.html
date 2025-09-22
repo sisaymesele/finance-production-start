@@ -20,9 +20,9 @@
     <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
 
     <!--            htmx-->
-<!--    <script src="https://unpkg.com/htmx.org@2.0.4"-->
-<!--            integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"-->
-<!--            crossorigin="anonymous"></script>-->
+        <script src="https://unpkg.com/htmx.org@2.0.4"
+                integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
+                crossorigin="anonymous"></script>
 
     <link rel="stylesheet" href="{% static 'management_project/css/style.css' %}">
 
@@ -118,14 +118,14 @@
 
                 <li class="nav-item">
                     <!-- Main Category Link (Collapsible Trigger) -->
-                    <a class="nav-link text-white bg-primary" data-bs-toggle="collapse" href="#payrollMenu"
+                    <a class="nav-link text-white bg-primary" data-bs-toggle="collapse" href="#strategicActionPlanMenu"
                        role="button"
-                       aria-expanded="false" aria-controls="payrollMenu" onclick="event.preventDefault();">
+                       aria-expanded="false" aria-controls="strategicActionPlanMenu" onclick="event.preventDefault();">
                         <i class="bi bi-file-spreadsheet"></i> Strategic Action Plan
                     </a>
 
                     <!-- Collapsible Submenu -->
-                    <div class="collapse" id="payrollMenu">
+                    <div class="collapse" id="strategicActionPlanMenu">
                         <ul class="nav flex-column ms-3">
                             <!-- Existing Menu Items (Unchanged) -->
                             <li class="nav-item">
@@ -155,31 +155,44 @@
                     </div>
                 </li>
 
-
+                <!-- Collapsible Submenu -->
                 <li class="nav-item">
-                    <!-- Collapsible Category -->
-                    <a class="nav-link text-white bg-primary" data-bs-toggle="collapse"
-                       href="#earningAdjustmentCollapse"
+                    <!-- Main Category Link (Collapsible Trigger) -->
+                    <a class="nav-link text-white bg-primary" data-bs-toggle="collapse" href="#strategicReportMenu"
                        role="button"
-                       aria-expanded="false" aria-controls="earningAdjustmentCollapse"
-                       onclick="event.preventDefault();">
-                        <i class="bi bi-pencil-square"></i> Strategic Report
+                       aria-expanded="false" aria-controls="strategicReportMenu" onclick="event.preventDefault();">
+                        <i class="bi bi-file-spreadsheet"></i> Strategic Report
                     </a>
 
-                    <!-- Collapsible Content -->
-                    <ul class="collapse list-unstyled ps-3" id="earningAdjustmentCollapse">
-                        <li>
-                            <a hx-get="{% url 'strategic_report_list' %}"
-                               hx-target="#full-page-container"
-                               hx-swap="innerHTML"
-                               hx-trigger="click"
-                               hx-push-url="{% url 'strategic_report_list' %}"
-                               href="{% url 'strategic_report_list' %}"
-                               class="nav-link text-white">
-                                <i class="bi bi-list"></i> Manage Strategic Report List
-                            </a>
-                        </li>
-                    </ul>
+                    <!-- Collapsible Submenu -->
+                    <div class="collapse" id="strategicReportMenu">
+                        <ul class="nav flex-column ms-3">
+                            <!-- Submenu Items -->
+                            <li class="nav-item">
+                                <a hx-get="{% url 'strategy_report_by_cycle_list' %}"
+                                   hx-target="#full-page-container"
+                                   hx-swap="innerHTML"
+                                   hx-trigger="click"
+                                   hx-push-url="{% url 'strategy_report_by_cycle_list' %}"
+                                   href="{% url 'strategy_report_by_cycle_list' %}"
+                                   class="nav-link text-white">
+                                    <i class="bi bi-file-spreadsheet"></i> Manage Strategic Reports By Cycle
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a hx-get="{% url 'strategic_report_chart' %}"
+                                   hx-target="#full-page-container"
+                                   hx-swap="innerHTML"
+                                   hx-trigger="click"
+                                   hx-push-url="{% url 'strategic_report_chart' %}"
+                                   href="{% url 'strategic_report_chart' %}"
+                                   class="nav-link text-white">
+                                    <i class="bi bi-bar-chart"></i> Strategic Report Chart
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
 
 

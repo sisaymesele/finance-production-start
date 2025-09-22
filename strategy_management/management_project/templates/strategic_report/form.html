@@ -4,9 +4,9 @@
 <!-- Back Button -->
 <div class="container mt-3">
     <div class="d-flex justify-content-start">
-        <a href="{% url 'strategic_report_list' %}"
+        <a href="{% url 'strategic_report_list' strategy_by_cycle.slug %}"
            class="btn btn-secondary"
-           hx-get="{% url 'strategic_report_list' %}"
+           hx-get="{% url 'strategic_report_list' strategy_by_cycle.slug %}"
            hx-target="#full-page-container"
            hx-swap="innerHTML"
            hx-push-url="true">

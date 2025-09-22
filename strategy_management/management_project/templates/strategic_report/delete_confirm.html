@@ -21,7 +21,7 @@
                     {% csrf_token %}
                     <button type="submit"
                             class="btn btn-danger me-3"
-                            hx-post="{% url 'delete_strategic_report' strategic_report.pk %}"
+                            hx-post="{% url 'delete_strategic_report' strategy_by_cycle.slug strategic_report.pk %}"
                             hx-target="#full-page-container"
                             hx-swap="innerHTML"
                             hx-push-url="true">
@@ -29,8 +29,8 @@
                     </button>
 
                     <a class="btn btn-secondary"
-                       href="{% url 'strategic_report_list' %}"
-                       hx-get="{% url 'strategic_report_list' %}"
+                       href="{% url 'strategic_report_list' strategy_by_cycle.slug %}"
+                       hx-get="{% url 'strategic_report_list' strategy_by_cycle.slug %}"
                        hx-target="#full-page-container"
                        hx-swap="innerHTML"
                        hx-push-url="true">

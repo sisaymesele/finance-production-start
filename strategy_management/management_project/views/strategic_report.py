@@ -1,169 +1,14 @@
-from django.shortcuts import render
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.urls import reverse
 from django.db.models import Q
+import calendar
+
 from django.contrib.auth.decorators import login_required
 from management_project.models import StrategicReport, StrategicActionPlan
 from management_project.forms import StrategicReportForm
-from management_project.models import StrategicActionPlan
 
-@login_required
-def strategic_report_list(request):
-    """
-    List all strategic reports for the logged-in user's organization,
-    with optional search, Strategic Cycle filter, Responsible Body filter,
-    and pagination. Works with or without HTMX.
-    """
-    org = request.user.organization_name
-    reports = StrategicReport.objects.filter(
-        organization_name=org
-    ).select_related('action_plan', 'action_plan__strategic_cycle').prefetch_related('action_plan__responsible_bodies')
-
-    # --- Dropdown filters ---
-    cycle_id = request.GET.get('cycle')
-    responsible_body = request.GET.get('responsible_body')
-
-    if cycle_id:
-        reports = reports.filter(action_plan__strategic_cycle_id=cycle_id)
-    if responsible_body:
-        reports = reports.filter(action_plan__responsible_bodies__stakeholder_name=responsible_body)
-
-    # --- Search filter ---
-    search_query = request.GET.get('search', '').strip()
-    if search_query:
-        reports = reports.filter(
-            Q(action_plan__strategy_map__kpi__icontains=search_query) |
-            Q(action_plan__strategy_map__objective__icontains=search_query) |
-            Q(action_plan__strategy_map__strategic_pillar__icontains=search_query) |
-            Q(action_plan__strategy_map__strategic_perspective__icontains=search_query)
-        )
-
-    # --- Remove duplicates from ManyToMany filtering ---
-    reports = reports.distinct()
-
-    # --- Pagination ---
-    paginator = Paginator(reports, 10)  # 10 reports per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    # --- Get dropdown options ---
-    cycles = StrategicCycle.objects.filter(organization_name=org)
-    responsible_bodies = set()
-    for report in reports:
-        responsible_bodies.update([b.stakeholder_name for b in report.action_plan.responsible_bodies.all()])
-    responsible_bodies = sorted(responsible_bodies)
-
-    context = {
-        'page_obj': page_obj,
-        'search_query': search_query,
-        'cycles': cycles,
-        'responsible_bodies': responsible_bodies,
-        'selected_cycle': int(cycle_id) if cycle_id else None,
-        'selected_body': responsible_body,
-    }
-
-    template_name = 'strategic_report/list.html'
-    if request.headers.get('HX-Request'):  # HTMX request
-        template_name = 'strategic_report/list_partial.html'
-
-    return render(request, template_name, context)
-
-
-# @login_required
-# def strategic_report_list(request):
-#     """
-#     List all strategic reports for the logged-in user's organization,
-#     with optional search and pagination.
-#     """
-#     org = request.user.organization_name
-#     reports = StrategicReport.objects.filter(organization_name=org).select_related('action_plan')
-#
-#     # Search filter
-#     search_query = request.GET.get('search', '').strip()
-#     if search_query:
-#         reports = reports.filter(
-#             Q(action_plan__strategy_map__kpi__icontains=search_query) |
-#             Q(action_plan__strategy_map__objective__icontains=search_query) |
-#             Q(action_plan__strategy_map__kpi__icontains=search_query) |
-#             Q(action_plan__strategy_map__strategic_pillar__icontains=search_query) |
-#             Q(action_plan__strategy_map__strategic_perspective__icontains=search_query) |
-#             Q(action_plan__responsible_body__icontains=search_query)
-#         )
-#
-#     # Pagination
-#     paginator = Paginator(reports, 10)  # 10 reports per page
-#     page_number = request.GET.get('page')
-#     page_obj = paginator.get_page(page_number)
-#
-#     context = {
-#         'page_obj': page_obj,
-#         'search_query': search_query,
-#     }
-#     return render(request, 'strategic_report/list.html', context)
-# #
-
-@login_required
-def create_strategic_report(request):
-    if request.method == 'POST':
-        form = StrategicReportForm(request.POST, request=request)
-        if form.is_valid():
-            strategic_report = form.save(commit=False)
-            strategic_report.organization_name = request.user.organization_name
-            strategic_report.save()
-            messages.success(request, "Strategic Report created successfully!")
-            return redirect('strategic_report_list')
-        else:
-            messages.error(request, "Error creating the strategic report. Check the form.")
-    else:
-        form = StrategicReportForm(request=request)
-
-    context = {
-        'form': form,
-        'form_title': 'Create Strategic Report',
-        'submit_button_text': 'Create Strategic Report',
-    }
-    return render(request, 'strategic_report/form.html', context)
-
-@login_required
-def update_strategic_report(request, pk):
-    strategic_report = get_object_or_404(
-        StrategicReport, pk=pk, organization_name=request.user.organization_name
-    )
-
-    if request.method == 'POST':
-        form = StrategicReportForm(request.POST, instance=strategic_report, request=request)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Strategic Report updated successfully!")
-            return redirect('strategic_report_list')
-        else:
-            messages.error(request, "Error updating the strategic report. Check the form.")
-    else:
-        form = StrategicReportForm(instance=strategic_report, request=request)
-
-    context = {
-        'form': form,
-        'form_title': 'Update Strategic Report',
-        'submit_button_text': 'Update Strategic Report',
-    }
-    return render(request, 'strategic_report/form.html', context)
-
-@login_required
-def delete_strategic_report(request, pk):
-    # Fetch the payroll entry to delete
-    strategic_report = get_object_or_404(StrategicReport, pk=pk, organization_name=request.user.organization_name)
-
-    if request.method == "POST":
-        strategic_report.delete()
-        messages.success(request, "Strategic Report deleted successfully!")
-        return redirect('strategic_report_list')
-
-    context = {'strategic_report': strategic_report}
-
-    return render(request, 'strategic_report/delete_confirm.html', context)
-
-#export
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from openpyxl import Workbook
@@ -171,7 +16,188 @@ from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
 from io import BytesIO
 from management_project.models import StrategicReport
+#chart
 
+from django.shortcuts import render
+from django.db.models import Avg, Count
+from management_project.models import StrategicReport, StrategicCycle
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+from plotly.offline import plot
+from collections import defaultdict
+from datetime import datetime
+from plotly.colors import qualitative
+
+
+@login_required
+def strategy_report_by_cycle_list(request):
+    """List distinct strategic cycles for the current organization with all info."""
+    cycles_qs = StrategicCycle.objects.filter(
+        organization_name=request.user.organization_name
+    ).order_by('-start_date')
+
+    # Build a list of dicts including calculated properties
+    cycles = []
+    for cycle in cycles_qs:
+        cycles.append({
+            'name': cycle.name,
+            'time_horizon': cycle.time_horizon,
+            'time_horizon_type': cycle.time_horizon_type,
+            'start_date': cycle.start_date,
+            'end_date': cycle.end_date,
+            'slug': cycle.slug,
+            'duration_days': (cycle.end_date - cycle.start_date).days if cycle.start_date and cycle.end_date else None,
+            'start_month_name': calendar.month_name[cycle.start_date.month] if cycle.start_date else None,
+            'start_quarter': (cycle.start_date.month - 1) // 3 + 1 if cycle.start_date else None,
+            'start_year': cycle.start_date.year if cycle.start_date else None,
+        })
+
+    return render(request, 'strategic_report/cycle_list.html', {
+        'strategic_cycles': cycles
+    })
+
+
+@login_required
+def strategic_report_list(request, cycle_slug):
+    """List all strategic reports by cycle, grouped by action plan."""
+    strategy_by_cycle = get_object_or_404(
+        StrategicCycle,
+        slug=cycle_slug,
+        organization_name=request.user.organization_name
+    )
+
+    # Base queryset
+    reports = StrategicReport.objects.filter(
+        action_plan__strategic_cycle=strategy_by_cycle,
+        organization_name=request.user.organization_name
+    ).select_related("action_plan").order_by("-id")
+
+    # Search query
+    search_query = request.GET.get("search", "").strip()
+    if search_query:
+        reports = reports.filter(
+            Q(action_plan__strategy_map__objective__icontains=search_query) |
+            Q(action_plan__strategy_map__kpi__icontains=search_query) |
+            Q(achievement__icontains=search_query) |
+            Q(progress_summary__icontains=search_query) |
+            Q(performance_summary__icontains=search_query) |
+            Q(status__icontains=search_query)
+        ).distinct()
+
+    # Pagination
+    paginator = Paginator(reports, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    # Form for creating new report
+    form = StrategicReportForm(request=request, cycle=strategy_by_cycle)
+
+    context = {
+        "strategy_by_cycle": strategy_by_cycle,
+        "page_obj": page_obj,
+        "form": form,
+        "search_query": search_query,
+    }
+    return render(request, "strategic_report/list_by_cycle.html", context)
+
+@login_required
+def strategic_report_detail(request, cycle_slug, pk):
+    # Get the strategic cycle by slug
+    strategy_by_cycle = get_object_or_404(StrategicCycle, slug=cycle_slug)
+
+    # Get the specific strategic report for this cycle and organization
+    strategic_report = get_object_or_404(
+        StrategicReport,
+        pk=pk,
+        action_plan__strategic_cycle=strategy_by_cycle,
+        organization_name=request.user.organization_name
+    )
+
+    return render(request, 'strategic_report/detail.html', {
+        'strategy_by_cycle': strategy_by_cycle,
+        'strategic_report': strategic_report
+    })
+
+
+@login_required
+def create_strategic_report(request, cycle_slug):
+    strategy_by_cycle = get_object_or_404(StrategicCycle, slug=cycle_slug)
+
+    if request.method == "POST":
+        form = StrategicReportForm(request.POST, request=request, cycle=strategy_by_cycle)
+        if form.is_valid():
+            report = form.save(commit=False)
+            report.organization_name = request.user.organization_name
+            report.save()
+            form.save_m2m()
+            messages.success(request, "Strategic report created successfully!")
+            return redirect("strategic_report_list", cycle_slug=strategy_by_cycle.slug)
+    else:
+        form = StrategicReportForm(request=request, cycle=strategy_by_cycle)
+
+    return render(request, "strategic_report/form.html", {
+        "form": form,
+        "form_title": f"Create Strategic Report for {strategy_by_cycle.name}",
+        "submit_button_text": "Create Strategic Report",
+        "back_url": reverse("strategic_report_list", kwargs={"cycle_slug": strategy_by_cycle.slug}),
+        "strategy_by_cycle": strategy_by_cycle,
+    })
+
+
+@login_required
+def update_strategic_report(request, cycle_slug, pk):
+    strategy_by_cycle = get_object_or_404(StrategicCycle, slug=cycle_slug)
+    report = get_object_or_404(
+        StrategicReport,
+        pk=pk,
+        action_plan__strategic_cycle=strategy_by_cycle,
+        organization_name=request.user.organization_name,
+    )
+
+    if request.method == "POST":
+        form = StrategicReportForm(request.POST, instance=report, request=request, cycle=strategy_by_cycle)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Strategic report updated successfully!")
+            return redirect("strategic_report_list", cycle_slug=strategy_by_cycle.slug)
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = StrategicReportForm(instance=report, request=request, cycle=strategy_by_cycle)
+
+    return render(request, "strategic_report/form.html", {
+        "form": form,
+        "form_title": f"Update Strategic Report for {strategy_by_cycle.name}",
+        "submit_button_text": "Update Strategic Report",
+        "back_url": reverse("strategic_report_list", kwargs={"cycle_slug": strategy_by_cycle.slug}),
+        "strategy_by_cycle": strategy_by_cycle,
+        "edit_strategic_report": report,
+    })
+
+
+@login_required
+def delete_strategic_report(request, cycle_slug, pk):
+    strategy_by_cycle = get_object_or_404(StrategicCycle, slug=cycle_slug)
+    report = get_object_or_404(
+        StrategicReport,
+        pk=pk,
+        action_plan__strategic_cycle=strategy_by_cycle,
+        organization_name=request.user.organization_name,
+    )
+
+    if request.method == "POST":
+        report.delete()
+        messages.success(request, "Strategic report deleted successfully!")
+        return redirect("strategic_report_list", cycle_slug=strategy_by_cycle.slug)
+
+    return render(request, "strategic_report/delete_confirm.html", {
+        "strategic_report": report,
+        "strategy_by_cycle": strategy_by_cycle,
+    })
+
+#
+
+#export
 def split_two_lines(text):
     """Split a long text roughly into two lines."""
     if not text:
@@ -180,20 +206,23 @@ def split_two_lines(text):
     mid = len(words) // 2
     return " ".join(words[:mid]) + "\n" + " ".join(words[mid:])
 
+
 @login_required
-def export_strategic_report_to_excel(request):
-    # Get all reports for the user's organization
+def export_strategic_report_to_excel(request, cycle_slug):
+    """Export strategic reports to Excel for a specific cycle."""
+    cycle = get_object_or_404(StrategicCycle, slug=cycle_slug, organization_name=request.user.organization_name)
     reports = StrategicReport.objects.filter(
+        action_plan__strategic_cycle=cycle,
         organization_name=request.user.organization_name
-    ).select_related('action_plan', 'action_plan__strategic_cycle')
+    ).select_related("action_plan", "action_plan__strategy_map", "action_plan__strategic_cycle")
 
     workbook = Workbook()
     sheet = workbook.active
-    sheet.title = "Strategic Reports"
+    sheet.title = f"Strategic Reports {cycle.name}"
 
     # Title row
-    title_text = "Strategic Reports"
-    sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=20)
+    title_text = f"Strategic Reports For: {cycle.name}"
+    sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=22)
     title_cell = sheet.cell(row=1, column=1, value=title_text)
     title_cell.font = Font(bold=True, size=14, color="FFFFFF")
     title_cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
@@ -207,11 +236,13 @@ def export_strategic_report_to_excel(request):
 
     # Column headers
     headers = [
-        "#", "Time Horizon", "Time Horizon Type", "Start Date", "End Date", "KPI",
-        "Baseline", "Target", "Achievement", "Percent Achieved", "Variance", "Weighted Score",
-        "Responsible Body", "Data Source", "Data Collector", "Progress Summary",
-        "Performance Summary", "Status", "Created At", "Updated At"
+        "#", "Perspective", "Pillar", "Objective", "KPI",
+        "Baseline", "Target", "Achievement", "Percent Achieved",
+        "Variance", "Weighted Score", "Responsible Bodies",
+        "Data Source", "Data Collector", "Progress Summary",
+        "Performance Summary", "Status", "Created At", "Update At"
     ]
+
     for col_num, header in enumerate(headers, start=1):
         cell = sheet.cell(row=2, column=col_num, value=header)
         cell.font = Font(bold=True, color="FFFFFF")
@@ -226,37 +257,41 @@ def export_strategic_report_to_excel(request):
 
     # Data rows
     for row_idx, report in enumerate(reports, start=3):
-        plan = report.action_plan
-        cycle_obj = plan.strategic_cycle
+        action_plan = report.action_plan
+        strategy_map = action_plan.strategy_map if action_plan else None
+        strategic_cycle = action_plan.strategic_cycle if action_plan else None
+
         data = [
             row_idx - 2,
-            cycle_obj.time_horizon if cycle_obj else "",
-            cycle_obj.time_horizon_type if cycle_obj else "",
-            cycle_obj.start_date.strftime('%B %d, %Y') if cycle_obj and cycle_obj.start_date else "",
-            cycle_obj.end_date.strftime('%B %d, %Y') if cycle_obj and cycle_obj.end_date else "",
-            split_two_lines(plan.strategy_map.kpi),
-            plan.baseline,
-            plan.target,
+            strategy_map.strategic_perspective if strategy_map else "",
+            split_two_lines(strategy_map.strategic_pillar if strategy_map else ""),
+            split_two_lines(strategy_map.objective if strategy_map else ""),
+            split_two_lines(strategy_map.kpi if strategy_map else ""),
+            action_plan.baseline if action_plan else 0,
+            action_plan.target if action_plan else 0,
             report.achievement,
             report.percent_achieved,
             report.variance,
             report.weighted_score,
-            ", ".join([b.stakeholder_name for b in plan.responsible_bodies.all()]),
+            ", ".join([body.stakeholder_name for body in action_plan.responsible_bodies.all()]) if action_plan else "",
             report.data_source or "",
             report.data_collector or "",
-            split_two_lines(report.progress_summary),
-            split_two_lines(report.performance_summary),
-            report.status,
-            report.created_at.strftime('%Y-%m-%d %H:%M'),
-            report.updated_at.strftime('%Y-%m-%d %H:%M')
+            split_two_lines(report.progress_summary or ""),
+            split_two_lines(report.performance_summary or ""),
+            report.get_status_display(),
+            report.created_at.strftime('%B %d, %Y %H:%M') if report.created_at else "",
+            report.updated_at.strftime('%B %d, %Y %H:%M') if report.updated_at else ""
+
         ]
 
         for col_num, value in enumerate(data, start=1):
             cell = sheet.cell(row=row_idx, column=col_num, value=value)
-            if col_num in [6, 13, 16, 17]:  # Wrap KPI, Responsible Body, Progress, Performance
+            # Wrap text for certain fields
+            if col_num in [3, 4, 5, 12, 15, 16]:  # Text-heavy columns
                 cell.alignment = Alignment(horizontal="center", vertical="top", wrap_text=True)
             else:
                 cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+            # Borders
             cell.border = Border(
                 left=Side(border_style="thin"),
                 right=Side(border_style="thin"),
@@ -264,7 +299,7 @@ def export_strategic_report_to_excel(request):
                 bottom=Side(border_style="thin")
             )
 
-    # Adjust column widths
+    # Column widths
     min_width = 10
     max_width = 25
     for col_idx in range(1, sheet.max_column + 1):
@@ -284,33 +319,26 @@ def export_strategic_report_to_excel(request):
         buffer,
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    response['Content-Disposition'] = 'attachment; filename="Strategic_Reports.xlsx"'
+    response['Content-Disposition'] = f'attachment; filename="Strategic_Reports_{cycle.name}.xlsx"'
     return response
-
-
 
 
 # views.py
 
-from django.shortcuts import render
-from django.db.models import Avg, Count
-from management_project.models import StrategicReport, StrategicCycle
-import plotly.graph_objects as go
-from plotly.offline import plot
-from plotly.subplots import make_subplots
-from datetime import datetime
-from collections import defaultdict
-
-
 def strategic_report_chart(request):
+    user = request.user  # logged-in user
+
     # ---------------- Filters ----------------
     cycle_filter = request.GET.get("strategic_cycle", "all")
     body_filter = request.GET.get("responsible_body", "all")
     horizon_filter = request.GET.get("time_horizon", "all")
 
+    # Filter reports for the logged-in user
     reports = StrategicReport.objects.select_related(
-        "action_plan", "action_plan__strategic_cycle", "organization_name"
-    ).prefetch_related("action_plan__responsible_bodies")
+        "action_plan",
+        "action_plan__strategic_cycle",
+        "organization_name"
+    ).prefetch_related("action_plan__responsible_bodies").filter(organization_name=request.user.organization_name)
 
     if cycle_filter != "all":
         reports = reports.filter(action_plan__strategic_cycle_id=cycle_filter)
@@ -319,7 +347,7 @@ def strategic_report_chart(request):
     if horizon_filter != "all":
         reports = reports.filter(action_plan__strategic_cycle__time_horizon_type=horizon_filter)
 
-    # ---------------- 1. Summary Stats (Box) ----------------
+    # ---------------- 1. Summary Stats ----------------
     total_reports = reports.count()
     avg_percent_achieved = reports.aggregate(avg=Avg("percent_achieved"))["avg"] or 0
     avg_variance = reports.aggregate(avg=Avg("variance"))["avg"] or 0
@@ -351,7 +379,7 @@ def strategic_report_chart(request):
     else:
         status_plot = "<div class='no-data'>No status data available</div>"
 
-    # ---------------- 4. Metrics by Responsible Body + Cycle ----------------
+    # ---------------- 3. Cycle-Level Metrics ----------------
     cycle_data = (
         reports.values("action_plan__strategic_cycle__end_date")
         .annotate(
@@ -361,51 +389,84 @@ def strategic_report_chart(request):
         )
         .order_by("action_plan__strategic_cycle__end_date")
     )
-
     cycle_dates = [
         c["action_plan__strategic_cycle__end_date"].strftime("%B %Y") if c["action_plan__strategic_cycle__end_date"] else "N/A"
         for c in cycle_data
     ]
     cycle_fig = go.Figure()
-    cycle_fig.add_trace(go.Bar(name="Percent Achieved", x=cycle_dates, y=[c["avg_percent_achieved"] or 0 for c in cycle_data], marker_color="#4BC0C0"))
-    cycle_fig.add_trace(go.Bar(name="Variance", x=cycle_dates, y=[c["avg_variance"] or 0 for c in cycle_data], marker_color="#FF6384"))
-    cycle_fig.add_trace(go.Bar(name="Weighted Score", x=cycle_dates, y=[c["avg_weighted_score"] or 0 for c in cycle_data], marker_color="#36A2EB"))
-    cycle_fig.update_layout(title="Cycle-Level Averages", barmode="group", xaxis_title="Cycle End Date", yaxis_title="Value", xaxis_tickangle=-45)
+    cycle_fig.add_trace(go.Bar(
+        name="Percent Achieved",
+        x=cycle_dates,
+        y=[c["avg_percent_achieved"] or 0 for c in cycle_data],
+        marker_color="#4BC0C0"
+    ))
+    cycle_fig.add_trace(go.Bar(
+        name="Variance",
+        x=cycle_dates,
+        y=[c["avg_variance"] or 0 for c in cycle_data],
+        marker_color="#FF6384"
+    ))
+    cycle_fig.add_trace(go.Bar(
+        name="Weighted Score",
+        x=cycle_dates,
+        y=[c["avg_weighted_score"] or 0 for c in cycle_data],
+        marker_color="#36A2EB"
+    ))
+    cycle_fig.update_layout(
+        title="Cycle-Level Averages",
+        barmode="group",
+        xaxis_title="Cycle Months",
+        yaxis_title="Value",
+        xaxis_tickangle=-45,
+        template="plotly_white"
+    )
     cycle_plot = plot(cycle_fig, output_type="div", config={"displayModeBar": False})
 
-    # ---------------- 4. Metrics by Responsible Body + Cycle ----------------
-    body_cycle_data = defaultdict(lambda: defaultdict(lambda: {"percent_achieved": [], "variance": [], "weighted_score": []}))
-    for r in reports:
-        date_label = r.action_plan.strategic_cycle.end_date.strftime("%B %Y") if r.action_plan.strategic_cycle and r.action_plan.strategic_cycle.end_date else "N/A"
-        for body in r.action_plan.responsible_bodies.all():
-            body_cycle_data[body.stakeholder_name][date_label]["percent_achieved"].append(r.percent_achieved or 0)
-            body_cycle_data[body.stakeholder_name][date_label]["variance"].append(r.variance or 0)
-            body_cycle_data[body.stakeholder_name][date_label]["weighted_score"].append(r.weighted_score or 0)
+    # ---------------- 4. Body + Cycle Metrics ----------------
 
-    all_dates = sorted({d for b in body_cycle_data.values() for d in b.keys()})
-    body_fig = make_subplots(rows=3, cols=1, subplot_titles=("Avg % Achieved", "Avg Variance", "Avg Weighted Score"), vertical_spacing=0.15)
-    palette = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]
+    kpi_data = reports.values(
+        "action_plan__strategy_map__kpi",
+        "action_plan__strategic_cycle__end_date",
+        "achievement"
+    ).order_by("action_plan__strategic_cycle__end_date")
 
-    for i, (body_name, date_data) in enumerate(body_cycle_data.items()):
-        color = palette[i % len(palette)]
-        body_fig.add_trace(go.Bar(name=body_name, x=all_dates, y=[(sum(date_data[d]["percent_achieved"]) / len(date_data[d]["percent_achieved"])) if date_data[d]["percent_achieved"] else 0 for d in all_dates], marker_color=color), row=1, col=1)
-        body_fig.add_trace(go.Bar(name=body_name, x=all_dates, y=[(sum(date_data[d]["variance"]) / len(date_data[d]["variance"])) if date_data[d]["variance"] else 0 for d in all_dates], marker_color=color, showlegend=False), row=2, col=1)
-        body_fig.add_trace(go.Bar(name=body_name, x=all_dates, y=[(sum(date_data[d]["weighted_score"]) / len(date_data[d]["weighted_score"])) if date_data[d]["weighted_score"] else 0 for d in all_dates], marker_color=color, showlegend=False), row=3, col=1)
+    kpi_names = sorted({r['action_plan__strategy_map__kpi'] for r in kpi_data if r['action_plan__strategy_map__kpi']})
+    cycle_dates_set = sorted({r['action_plan__strategic_cycle__end_date'] for r in kpi_data if r['action_plan__strategic_cycle__end_date']})
+    cycle_labels = [d.strftime("%b %Y") for d in cycle_dates_set]
 
-    body_fig.update_layout(height=900, title="Performance by Responsible Body & Cycle", barmode="group", xaxis_tickangle=-45)
-    body_plot = plot(body_fig, output_type="div", config={"displayModeBar": False})
+    kpi_matrix = defaultdict(lambda: {d: 0 for d in cycle_dates_set})
+    for r in kpi_data:
+        kpi = r['action_plan__strategy_map__kpi']
+        date = r['action_plan__strategic_cycle__end_date']
+        if kpi and date:
+            kpi_matrix[kpi][date] = r['achievement'] or 0
 
-    # ---------------- 5. KPI Trend Chart ----------------
-    kpi_data = reports.values("action_plan__strategy_map__kpi", "action_plan__strategic_cycle__end_date", "achievement").order_by("action_plan__strategic_cycle__end_date")
     kpi_fig = go.Figure()
-    for kpi in set([k["action_plan__strategy_map__kpi"] for k in kpi_data if k["action_plan__strategy_map__kpi"]]):
-        x_vals, y_vals = [], []
-        for d in kpi_data:
-            if d["action_plan__strategy_map__kpi"] == kpi:
-                x_vals.append(d["action_plan__strategic_cycle__end_date"].strftime("%B %Y") if d["action_plan__strategic_cycle__end_date"] else "N/A")
-                y_vals.append(d["achievement"] or 0)
-        kpi_fig.add_trace(go.Scatter(x=x_vals, y=y_vals, mode="lines+markers", name=kpi))
-    kpi_fig.update_layout(title="KPI Achievement Over Time", xaxis_title="Cycle End Date", yaxis_title="Achievement")
+    palette = qualitative.Set2
+    for i, kpi in enumerate(kpi_names):
+        y_vals = [kpi_matrix[kpi][d] for d in cycle_dates_set]
+        kpi_fig.add_trace(go.Bar(
+            x=cycle_labels,
+            y=y_vals,
+            name=kpi,
+            marker_color=palette[i % len(palette)],
+            text=y_vals,
+            textposition="auto",
+            hovertemplate=f"KPI: {kpi}<br>Date: %{{x}}<br>Achievement: %{{y}}<extra></extra>"
+        ))
+
+    kpi_fig.update_layout(
+        title="KPI Achievement by Cycle",
+        xaxis_title="Cycle Months",
+        yaxis_title="Achievement",
+        yaxis=dict(type="category", categoryorder="array", categoryarray=kpi_names[::-1]),
+        barmode="group",
+        height=600,
+        legend_title_text="KPIs",
+        xaxis_tickangle=-45,
+        template="plotly_white",
+        margin=dict(l=150, r=50, t=80, b=100)
+    )
     kpi_plot = plot(kpi_fig, output_type="div", config={"displayModeBar": False})
 
     # ---------------- Context ----------------
@@ -416,11 +477,18 @@ def strategic_report_chart(request):
         "avg_weighted_score": avg_weighted_score,
         "status_plot": status_plot,
         "cycle_plot": cycle_plot,
-        "body_plot": body_plot,
         "kpi_plot": kpi_plot,
         "strategic_cycles": StrategicCycle.objects.all(),
-        "responsible_bodies": sorted({b.stakeholder_name for r in StrategicReport.objects.all().prefetch_related("action_plan__responsible_bodies") for b in r.action_plan.responsible_bodies.all()}),
-        "time_horizons": sorted({r.action_plan.strategic_cycle.time_horizon_type for r in StrategicReport.objects.all().select_related("action_plan__strategic_cycle") if r.action_plan.strategic_cycle and r.action_plan.strategic_cycle.time_horizon_type}),
+        "responsible_bodies": sorted({
+            b.stakeholder_name
+            for r in StrategicReport.objects.filter(organization_name=request.user.organization_name).prefetch_related("action_plan__responsible_bodies")
+            for b in r.action_plan.responsible_bodies.all()
+        }),
+        "time_horizons": sorted({
+            r.action_plan.strategic_cycle.time_horizon_type
+            for r in StrategicReport.objects.filter(organization_name=request.user.organization_name).select_related("action_plan__strategic_cycle")
+            if r.action_plan.strategic_cycle and r.action_plan.strategic_cycle.time_horizon_type
+        }),
         "selected_cycle": cycle_filter,
         "selected_body": body_filter,
         "selected_horizon": horizon_filter,
@@ -428,7 +496,6 @@ def strategic_report_chart(request):
     }
 
     return render(request, "strategic_report/chart.html", context)
-
 
 
 

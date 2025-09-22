@@ -13,14 +13,6 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.core.validators import MinValueValidator
 # services
 
-from .services.strategic_action_plan import StrategicActionPlanService
-from .services.strategic_report.business import StrategicReportBusinessService
-from .services.strategic_report.context import get_strategic_report_context
-from .services.deduction_adjustment.business import DeductionAdjustmentBusinessService
-from .services.deduction_adjustment.context import get_deduction_adjustment_context
-from .services.severance_pay import SeverancePayService
-from .services.absence_deduction import VisionService
-from management_project.services.pension import calculate_pension_contributions
 from .services.values import ValuesService
 import calendar
 
@@ -78,6 +70,114 @@ def validate_phone_number(value):
     pattern = r'^\d{9,10}'
     if not re.match(pattern, value):
         raise ValidationError("Enter a valid phone number (7-12 digits) without country code.")
+
+
+
+
+class SwotAnalysis(models.Model):
+    SWOT_TYPES = [
+        ("Strength", "Strength"),
+        ("Weakness", "Weakness"),
+        ("Opportunity", "Opportunity"),
+        ("Threat", "Threat"),
+    ]
+    PRIORITY_CHOICES = [
+        ("High", "High"),
+        ("Medium", "Medium"),
+        ("Low", "Low"),
+    ]
+    IMPACT_CHOICES = [
+        ("High", "High"),
+        ("Medium", "Medium"),
+        ("Low", "Low"),
+    ]
+    LIKELIHOOD_CHOICES = [
+        ("High", "High"),
+        ("Medium", "Medium"),
+        ("Low", "Low"),
+    ]
+
+    organization_name = models.ForeignKey(
+        OrganizationalProfile, on_delete=models.PROTECT
+    )
+    swot_type = models.CharField(max_length=20, choices=SWOT_TYPES)
+    swot_pillar = models.CharField(max_length=100)
+    swot_factor = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default="Medium")
+    impact = models.CharField(max_length=10, choices=IMPACT_CHOICES, default="Medium")
+    likelihood = models.CharField(max_length=10, choices=LIKELIHOOD_CHOICES, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["swot_type", "priority", "-created_at"]
+
+    def __str__(self):
+        return f"{self.swot_type} → {self.swot_pillar} → {self.swot_factor[:50]}"
+
+
+
+class Vision(models.Model):
+    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
+    vision_statement = models.CharField(max_length=500)
+
+    def __str__(self):
+        return f"{self.vision_statement} - {self.organization_name}"
+
+    @property
+    def display_vision_statement(self):
+        from management_project.services.vision import VisionService
+        return VisionService.get_display_statement(self.organization_name.organization_name, self.vision_statement)
+
+
+class Mission(models.Model):
+    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
+    mission_statement = models.CharField(max_length=500)
+
+    def __str__(self):
+        return f"{self.mission_statement} - {self.organization_name}"
+
+    @property
+    def display_mission_statement(self):
+        from management_project.services.mission import MissionService
+        return MissionService.get_display_statement(self.organization_name.organization_name, self.mission_statement)
+
+
+
+
+class Values(models.Model):
+    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
+
+    values = models.CharField(
+        max_length=50,
+        choices=[(key, label) for group in ValuesService.VALUE_CHOICES for key, label in group[1]],
+        unique=True
+    )
+
+    def get_category(self):
+        for group_name, group_values in ValuesService.VALUE_CHOICES:
+            for key, label in group_values:
+                if key == self.values:
+                    return group_name
+        return None
+
+    def __str__(self):
+        return self.get_values_display()
+
+
+class StrategyMap(models.Model):
+    organization_name = models.ForeignKey(
+        OrganizationalProfile, on_delete=models.PROTECT
+    )
+    strategic_perspective = models.CharField(max_length=100)
+    strategic_pillar = models.CharField(max_length=100)
+    objective = models.CharField(max_length=100)
+    kpi = models.CharField(max_length=100)
+    formula = models.CharField(max_length=100, blank=True)
+
+    def __str__(self):
+        return f"{self.strategic_perspective} → {self.strategic_pillar} → {self.objective} → {self.kpi}"
 
 
 class Stakeholder(models.Model):
@@ -207,8 +307,6 @@ class Stakeholder(models.Model):
     description = models.TextField(blank=True, null=True, help_text="Brief description of the stakeholder")
 
 
-
-
     class Meta:
         ordering = ["-priority", "stakeholder_name"]
 
@@ -244,40 +342,6 @@ class Stakeholder(models.Model):
     def impact_interest_matrix(self):
         """Quick reference for categorization"""
         return f"Impact: {self.impact_level}, Interest: {self.interest_level}"
-
-
-
-class PayrollPeriod(models.Model):
-    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
-    year = models.CharField(max_length=4, choices=YEAR_CHOICES,
-                            default=str(datetime.datetime.now().year),
-                            help_text='payroll processing year')
-    month = models.CharField(max_length=12, choices=MONTH_CHOICES,
-                             default=datetime.datetime.now().strftime('%B'),
-                             help_text='payroll processing month')
-
-    payroll_month = models.CharField(max_length=70, blank=True)
-    slug = models.SlugField(unique=True)  # Slug for payroll month
-
-    def __str__(self):
-        # Defensive: ensure always string
-        if isinstance(self.payroll_month, str):
-            return self.payroll_month
-        return str(self.payroll_month)
-
-    class Meta:
-        verbose_name = "              Strategic Cycle"
-        verbose_name_plural = "              Strategic Cycles"
-        ordering = ['-id']  # You can change the ordering field as needed
-
-    def save(self, *args, **kwargs):
-        self.payroll_month = f"{self.get_month_display()}-{self.year}"
-        if self.organization_name_id:
-            self.slug = f"{self.organization_name.id}-{self.payroll_month}"
-        else:
-            self.slug = self.payroll_month
-        super().save(*args, **kwargs)
-
 
 
 class StrategicCycle(models.Model):
@@ -534,241 +598,3 @@ class StrategicReport(models.Model):
     def __str__(self):
         return f"{self.action_plan.key_performance_indicator} | Achieved: {self.achievement} | {self.percent_achieved:.2f}%"
 
-# start deduction adjustment
-
-class DeductionAdjustment(models.Model):
-    # Choices list for different payroll components
-    DEDUCTION_ADJUSTMENT_COMPONENTS_CHOICES = [
-
-        ('Deductions and Other Adjustments', [
-            ('charitable_donation', 'Charitable Donation'),
-            ('saving_plan', 'Saving Plan'),
-            ('loan_payment', 'Loan Payment'),
-            ('court_order', 'Court Order'),
-            ('workers_association', 'Workers Association'),
-            ('personnel_insurance_saving', 'Personnel Insurance Saving'),
-            ('red_cross', 'Red Cross'),
-            ('party_contribution', 'Party Contribution'),
-            ('other_deduction', 'Other Deduction'),
-        ]),
-    ]
-
-    ADJUSTMENT_CASES_CHOICES = [
-        ('correction', 'Correction'),
-        ('overpayment', 'Overpayment'),
-        ('retroactive_deduction', 'Retroactive Deduction'),
-        ('deduction_adjustment', 'Deduction Adjustment'),
-        ('court_order_payment', 'Court Ordered Deduction'),
-        ('advance_recovery', 'Advance Recovery'),
-        ('other_adjustment', 'Other Adjustment'),
-    ]
-
-    # Model fields as described
-    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
-    #
-    payroll_to_record = models.ForeignKey(StrategicActionPlan, on_delete=models.CASCADE, related_name='deduction_adjustments')
-    payroll_needing_adjustment = models.ForeignKey(StrategicActionPlan, on_delete=models.CASCADE)
-    case = models.CharField(max_length=90, choices=ADJUSTMENT_CASES_CHOICES)
-
-    component = models.CharField(max_length=90, choices=DEDUCTION_ADJUSTMENT_COMPONENTS_CHOICES)
-    deduction_amount = models.DecimalField(max_digits=12, decimal_places=2,
-                                           validators=[MinValueValidator(Decimal('0.00'))]
-                                           )
-
-    adjusted_month_total_deduction = models.DecimalField(max_digits=12, decimal_places=2,
-                                                                validators=[MinValueValidator(Decimal('0.00'))],
-                                                                default=Decimal('0.00')
-                                                                )
-
-    recorded_month_total_deduction = models.DecimalField(max_digits=12, decimal_places=2,
-                                                           validators=[MinValueValidator(Decimal('0.00'))],
-                                                           default=Decimal('0.00')
-                                                           )
-    period_start = models.DateField(default=datetime.date.today)
-    period_end = models.DateField(default=datetime.date.today)
-    months_covered = models.IntegerField()
-    created_at = models.DateField(default=datetime.date.today, blank=True,
-                                  help_text="Date when this record was created")
-    updated_at = models.DateField(default=datetime.date.today, help_text="Date when this record was last updated")
-
-    def clean(self):
-        if not self.payroll_needing_adjustment or not self.payroll_to_record:
-            raise ValidationError("Both 'Payroll Needing Adjustment' and 'Record Month' must be set.")
-
-    def save(self, *args, **kwargs):
-        DeductionAdjustmentBusinessService(self).perform_all_calculations()  # Calculate & update fields
-        super().save(*args, **kwargs)  # Save once after all updates
-
-
-# end deduction adjustment
-
-# severance pay
-
-class SeverancePay(models.Model):
-    SEVERANCE_TYPE_CHOICES = [
-        ('normal', 'Normal Termination of contract'),
-        ('no_notice', 'Termination Without Prior Notice'),
-        ('harassment', 'Sexual Harassment'),
-    ]
-
-    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
-
-    severance_record_month = models.ForeignKey(PayrollPeriod, on_delete=models.PROTECT, help_text='Severance processing month')
-    severance_type = models.CharField(max_length=150, choices=SEVERANCE_TYPE_CHOICES, default='normal')
-    personnel_full_name = models.ForeignKey(Stakeholder, on_delete=models.SET_NULL, null=True,
-                                            related_name='personnel_severance_pay')
-
-    last_week_daily_wages = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        validators=[MinValueValidator(Decimal('0.00'))],
-        help_text='Enter the daily wage amount for the last week. If the amount is the same throughout the month, divide the this_month_total salary by 30.'
-    )
-    start_date = models.DateField(help_text='Enter the start date of employment.', verbose_name='Service Start Date')
-    end_date = models.DateField(help_text='Enter the end date of employment.',
-                                default=datetime.date.today, verbose_name='Service End Date')
-
-    service_years = models.PositiveIntegerField(blank=True)
-    service_days = models.PositiveIntegerField(blank=True)
-
-    severance_for_years = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    severance_for_days = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    gross_severance_pay = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    basic_salary = models.DecimalField(max_digits=12, decimal_places=2, blank=True)
-    prorate_salary = models.DecimalField(max_digits=12, decimal_places=2, blank=True)
-    employment_income_tax_from_basic_salary = models.DecimalField(max_digits=12, decimal_places=2, blank=True)
-    total_employment_income_tax_from_basic_salary = models.DecimalField(max_digits=12, decimal_places=2, blank=True)
-    employment_income_tax_from_prorate_salary = models.DecimalField(max_digits=12, decimal_places=2, blank=True)
-    employment_income_tax_from_severance_pay = models.DecimalField(max_digits=12, decimal_places=2, blank=True)
-    net_severance_pay = models.DecimalField(max_digits=12, decimal_places=2, blank=True)
-
-    def __str__(self):
-        return str(self.personnel_full_name)
-
-    class Meta:
-        verbose_name = "             Severance Pay"
-        verbose_name_plural = "             Severance Pay"
-        ordering = ['-id']  # You can change the ordering field as needed
-
-    def clean(self):
-        if self.start_date and self.end_date:
-            self.service_years = (self.end_date - self.start_date).days
-            # Validate service years
-            if self.service_years and self.service_years < 365:
-                raise ValidationError({'start_date': 'No clear directive for severance pay for less than a year.'})
-        super().clean()
-
-    def save(self, *args, **kwargs):
-        """
-        Overridden save method to delegate all business logic to service class.
-        Keeps model logic clean.
-        """
-        SeverancePayService(self).compute()
-        super().save(*args, **kwargs)
-
-
-
-class Vision(models.Model):
-    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
-    vision_statement = models.CharField(max_length=500)
-
-    def __str__(self):
-        return f"{self.vision_statement} - {self.organization_name}"
-
-    @property
-    def display_vision_statement(self):
-        from management_project.services.vision import VisionService
-        return VisionService.get_display_statement(self.organization_name.organization_name, self.vision_statement)
-
-
-class Mission(models.Model):
-    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
-    mission_statement = models.CharField(max_length=500)
-
-    def __str__(self):
-        return f"{self.mission_statement} - {self.organization_name}"
-
-    @property
-    def display_mission_statement(self):
-        from management_project.services.mission import MissionService
-        return MissionService.get_display_statement(self.organization_name.organization_name, self.mission_statement)
-
-
-
-
-class Values(models.Model):
-    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
-
-    values = models.CharField(
-        max_length=50,
-        choices=[(key, label) for group in ValuesService.VALUE_CHOICES for key, label in group[1]],
-        unique=True
-    )
-
-    def get_category(self):
-        for group_name, group_values in ValuesService.VALUE_CHOICES:
-            for key, label in group_values:
-                if key == self.values:
-                    return group_name
-        return None
-
-    def __str__(self):
-        return self.get_values_display()
-
-
-
-class SwotAnalysis(models.Model):
-    SWOT_TYPES = [
-        ("Strength", "Strength"),
-        ("Weakness", "Weakness"),
-        ("Opportunity", "Opportunity"),
-        ("Threat", "Threat"),
-    ]
-    PRIORITY_CHOICES = [
-        ("High", "High"),
-        ("Medium", "Medium"),
-        ("Low", "Low"),
-    ]
-    IMPACT_CHOICES = [
-        ("High", "High"),
-        ("Medium", "Medium"),
-        ("Low", "Low"),
-    ]
-    LIKELIHOOD_CHOICES = [
-        ("High", "High"),
-        ("Medium", "Medium"),
-        ("Low", "Low"),
-    ]
-
-    organization_name = models.ForeignKey(
-        OrganizationalProfile, on_delete=models.PROTECT
-    )
-    swot_type = models.CharField(max_length=20, choices=SWOT_TYPES)
-    swot_pillar = models.CharField(max_length=100)
-    swot_factor = models.CharField(max_length=200)
-    description = models.TextField(blank=True, null=True)
-    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default="Medium")
-    impact = models.CharField(max_length=10, choices=IMPACT_CHOICES, default="Medium")
-    likelihood = models.CharField(max_length=10, choices=LIKELIHOOD_CHOICES, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ["swot_type", "priority", "-created_at"]
-
-    def __str__(self):
-        return f"{self.swot_type} → {self.swot_pillar} → {self.swot_factor[:50]}"
-
-
-class StrategyMap(models.Model):
-    organization_name = models.ForeignKey(
-        OrganizationalProfile, on_delete=models.PROTECT
-    )
-    strategic_perspective = models.CharField(max_length=100)
-    strategic_pillar = models.CharField(max_length=100)
-    objective = models.CharField(max_length=100)
-    kpi = models.CharField(max_length=100)
-    formula = models.CharField(max_length=100, blank=True)
-
-    def __str__(self):
-        return f"{self.strategic_perspective} → {self.strategic_pillar} → {self.objective} → {self.kpi}"

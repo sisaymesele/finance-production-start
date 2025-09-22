@@ -1,124 +1,167 @@
 {% extends "dashboard.html" %}
-{% load static %}
-
+{% load humanize %}
 {% block content %}
-<div class="container-fluid py-3">
 
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">📊 Strategic Report Dashboard</h2>
-        <span class="text-muted">Last updated: {{ current_date|date:"M d, Y" }}</span>
+<div class="container-fluid mt-4">
+
+  <!-- Summary Cards - Only show if there are reports -->
+  {% if total_reports > 0 %}
+  <div class="row g-4 mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body text-center">
+          <h6 class="text-muted mb-2">Total Reports</h6>
+          <h4 class="fw-bold">{{ total_reports|intcomma }}</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body text-center">
+          <h6 class="text-muted mb-2">Avg. % Achieved</h6>
+          <h4 class="fw-bold">{{ avg_percent_achieved|floatformat:2 }}%</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body text-center">
+          <h6 class="text-muted mb-2">Avg. Variance</h6>
+          <h4 class="fw-bold">{{ avg_variance|floatformat:2 }}</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body text-center">
+          <h6 class="text-muted mb-2">Avg. Weighted Score</h6>
+          <h4 class="fw-bold">{{ avg_weighted_score|floatformat:2 }}</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <!-- Empty State for Summary -->
+  <div class="row g-4 mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-graph-up display-1 text-muted"></i>
+          <h4 class="text-muted mt-3">No Data Available</h4>
+          <p class="text-muted">No strategic reports match your current filters.</p>
+          <a href="?strategic_cycle=all&responsible_body=all&time_horizon=all" class="btn btn-primary mt-2">
+            Clear Filters
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Filters -->
+  <form method="get" class="row g-3 mb-4">
+    <div class="col-md-4">
+      <label for="cycle" class="form-label">Strategic Cycle</label>
+      <select name="strategic_cycle" id="cycle" class="form-select" onchange="this.form.submit()">
+        <option value="all">All Cycles</option>
+        {% for cycle in strategic_cycles %}
+          <option value="{{ cycle.id }}" {% if selected_cycle == cycle.id|stringformat:"s" %}selected{% endif %}>
+            {{ cycle }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label for="body" class="form-label">Responsible Body</label>
+      <select name="responsible_body" id="body" class="form-select" onchange="this.form.submit()">
+        <option value="all">All Bodies</option>
+        {% for body in responsible_bodies %}
+          <option value="{{ body }}" {% if selected_body == body %}selected{% endif %}>{{ body }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label for="horizon" class="form-label">Time Horizon</label>
+      <select name="time_horizon" id="horizon" class="form-select" onchange="this.form.submit()">
+        <option value="all">All Horizons</option>
+        {% for horizon in time_horizons %}
+          <option value="{{ horizon }}" {% if selected_horizon == horizon %}selected{% endif %}>
+            {{ horizon }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+
+  <!-- Charts - Only show if there's data -->
+  {% if total_reports > 0 %}
+
+    <!-- Status Chart -->
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            <h6 class="card-title mb-3">Report Status</h6>
+            {% if status_plot and "no-data" not in status_plot %}
+              {{ status_plot|safe }}
+            {% else %}
+              <div class="text-center py-4">
+                <i class="bi bi-pie-chart display-4 text-muted"></i>
+                <p class="text-muted mt-2 mb-0">No status data available</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Cycle Metrics Chart -->
+      <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            <h6 class="card-title mb-3">Cycle-Level Metrics</h6>
+            {% if cycle_plot and "no-data" not in cycle_plot %}
+              {{ cycle_plot|safe }}
+            {% else %}
+              <div class="text-center py-4">
+                <i class="bi bi-bar-chart display-4 text-muted"></i>
+                <p class="text-muted mt-2 mb-0">No cycle data available</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Filters -->
-    <form method="get" class="row g-3 mb-4">
-        <div class="col-md-3">
-            <label class="form-label">Strategic Cycle</label>
-            <select class="form-select" name="strategic_cycle" onchange="this.form.submit()">
-                <option value="all" {% if selected_cycle == "all" %}selected{% endif %}>All</option>
-                {% for cycle in strategic_cycles %}
-                <option value="{{ cycle.id }}" {% if selected_cycle|add:'' == cycle.id|add:'' %}selected{% endif %}>
-                    {{ cycle.name }}
-                </option>
-                {% endfor %}
-            </select>
+    <!-- KPI Trends Chart -->
+    <div class="row g-4 mt-2">
+      <div class="col-12">
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            <h6 class="card-title mb-3">KPI Achievement Over Time</h6>
+            {% if kpi_plot and "no-data" not in kpi_plot %}
+              {{ kpi_plot|safe }}
+            {% else %}
+              <div class="text-center py-5">
+                <i class="bi bi-graph-up display-4 text-muted"></i>
+                <p class="text-muted mt-2 mb-0">No KPI trend data available</p>
+              </div>
+            {% endif %}
+          </div>
         </div>
-
-        <div class="col-md-3">
-            <label class="form-label">Responsible Body</label>
-            <select class="form-select" name="responsible_body" onchange="this.form.submit()">
-                <option value="all" {% if selected_body == "all" %}selected{% endif %}>All</option>
-                {% for body in responsible_bodies %}
-                <option value="{{ body }}" {% if selected_body == body %}selected{% endif %}>
-                    {{ body }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="col-md-3">
-            <label class="form-label">Time Horizon</label>
-            <select class="form-select" name="time_horizon" onchange="this.form.submit()">
-                <option value="all" {% if selected_horizon == "all" %}selected{% endif %}>All</option>
-                {% for horizon in time_horizons %}
-                <option value="{{ horizon }}" {% if selected_horizon == horizon %}selected{% endif %}>
-                    {{ horizon }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-    </form>
-
-    <!-- Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Total Reports</h5>
-                    <h3 class="fw-bold">{{ total_reports }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Avg % Achieved</h5>
-                    <h3 class="fw-bold text-success">{{ avg_percent_achieved|floatformat:2 }}%</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Avg Variance</h5>
-                    <h3 class="fw-bold text-warning">{{ avg_variance|floatformat:2 }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Avg Weighted Score</h5>
-                    <h3 class="fw-bold text-primary">{{ avg_weighted_score|floatformat:2 }}</h3>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
-    <!-- Charts -->
-    <div class="row">
-        <div class="col-lg-6 mb-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <h5 class="card-title">Status Distribution</h5>
-                    {{ status_plot|safe }}
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-6 mb-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <h5 class="card-title">Cycle-Level Averages</h5>
-                    {{ cycle_plot|safe }}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body">
-            <h5 class="card-title">Performance by Responsible Body & Cycle</h5>
-            {{ body_plot|safe }}
-        </div>
-    </div>
-
-    <div class="card shadow-sm border-0">
-        <div class="card-body">
-            <h5 class="card-title">KPI Achievement Trend</h5>
-            {{ kpi_plot|safe }}
-        </div>
-    </div>
+  {% endif %}
 
 </div>
+
+<style>
+.empty-state {
+  opacity: 0.6;
+}
+.empty-state i {
+  font-size: 4rem;
+}
+</style>
+
 {% endblock %}
