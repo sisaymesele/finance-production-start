@@ -7,15 +7,15 @@
     <p>Are you sure you want to delete <strong>{{ entry }}</strong>?</p>
 
     <form method="post"
-          hx-post="{% url 'delete_swot' entry.pk %}"
+          hx-post="{% url 'delete_swot_analysis' entry.pk %}"
           hx-target="#full-page-container"
           hx-swap="innerHTML"
           hx-push-url="true">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger">Yes, Delete</button>
-        <a href="{% url 'swot_list' %}"
+        <a href="{% url 'swot_analysis_list' %}"
            class="btn btn-secondary"
-           hx-get="{% url 'swot_list' %}"
+           hx-get="{% url 'swot_analysis_list' %}"
            hx-target="#full-page-container"
            hx-swap="innerHTML"
            hx-push-url="true">

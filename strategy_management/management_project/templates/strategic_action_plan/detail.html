@@ -25,9 +25,9 @@
                 Strategic Context
             </div>
             <div class="card-body">
-                <p class="mb-2"><strong>Perspective:</strong> {{ strategic_action_plan.strategy_map.strategic_perspective }}</p>
-                <p class="mb-2"><strong>Pillar:</strong> {{ strategic_action_plan.strategy_map.strategic_pillar }}</p>
-                <p class="mb-0"><strong>Objective:</strong> {{ strategic_action_plan.strategy_map.objective }}</p>
+                <p class="mb-2"><strong>Perspective:</strong> {{ strategic_action_plan.strategy_hierarchy.strategic_perspective }}</p>
+                <p class="mb-2"><strong>Pillar:</strong> {{ strategic_action_plan.strategy_hierarchy.strategic_pillar }}</p>
+                <p class="mb-0"><strong>Objective:</strong> {{ strategic_action_plan.strategy_hierarchy.objective }}</p>
             </div>
         </div>
     </div>
@@ -39,8 +39,8 @@
                 Performance Metrics
             </div>
             <div class="card-body">
-                <p class="mb-2"><strong>KPI:</strong> {{ strategic_action_plan.strategy_map.kpi }}</p>
-                <p class="mb-2"><strong>Formula:</strong> {{ strategic_action_plan.strategy_map.formula }}</p>
+                <p class="mb-2"><strong>KPI:</strong> {{ strategic_action_plan.strategy_hierarchy.kpi }}</p>
+                <p class="mb-2"><strong>Formula:</strong> {{ strategic_action_plan.strategy_hierarchy.formula }}</p>
                 <p class="mb-2"><strong>Indicator Type:</strong> {{ strategic_action_plan.get_indicator_type_display }}</p>
                 <p class="mb-2"><strong>Direction:</strong> {{ strategic_action_plan.get_direction_of_change_display }}</p>
                 <p class="mb-2"><strong>Baseline:</strong> {{ strategic_action_plan.baseline|floatformat:2|intcomma }}</p>

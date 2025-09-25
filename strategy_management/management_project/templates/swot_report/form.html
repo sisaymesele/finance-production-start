@@ -3,11 +3,10 @@
 {% block content %}
 <div id="full-page-container">
     <form method="post" class="row g-3"
-          hx-post="{% if form.instance.pk %}{% url 'update_swot' form.instance.pk %}{% else %}{% url 'create_swot' %}{% endif %}"
+          hx-post="{% if form.instance.pk %}{% url 'update_swot_report' form.instance.pk %}{% else %}{% url 'create_swot_report' %}{% endif %}"
           hx-target="#full-page-container"
           hx-swap="innerHTML"
-          hx-push-url="true"
-    >
+          hx-push-url="true">
         {% csrf_token %}
 
         {% if messages %}
@@ -18,13 +17,20 @@
             {% endfor %}
         {% endif %}
 
+        <!-- Strategic Report Period -->
+        <div class="col-md-6">
+            {{ form.strategic_report_period.label_tag }}
+            {{ form.strategic_report_period }}
+        </div>
+
         <!-- SWOT Type -->
         <div class="col-md-4">
             <label>SWOT Type</label>
             <select name="swot_type" class="form-select"
-                    hx-post="{% url 'create_swot' %}"
+                    hx-post="{% if form.instance.pk %}{% url 'update_swot_report' form.instance.pk %}{% else %}{% url 'create_swot_report' %}{% endif %}"
                     hx-target="#full-page-container"
-                    hx-swap="innerHTML">
+                    hx-swap="innerHTML"
+                    hx-trigger="change">
                 {% for value, label in form.fields.swot_type.choices %}
                     <option value="{{ value }}"
                         {% if value == form.data.swot_type|default_if_none:form.instance.swot_type %}selected{% endif %}>
@@ -34,13 +40,14 @@
             </select>
         </div>
 
-        <!-- Pillar -->
+        <!-- SWOT Pillar -->
         <div class="col-md-4">
             <label>Pillar</label>
             <select name="swot_pillar" class="form-select"
-                    hx-post="{% url 'create_swot' %}"
+                    hx-post="{% if form.instance.pk %}{% url 'update_swot_report' form.instance.pk %}{% else %}{% url 'create_swot_report' %}{% endif %}"
                     hx-target="#full-page-container"
                     hx-swap="innerHTML"
+                    hx-trigger="change"
                     {% if form.fields.swot_pillar.widget.attrs.disabled %}disabled{% endif %}>
                 {% for value, label in form.fields.swot_pillar.choices %}
                     <option value="{{ value }}"
@@ -51,11 +58,11 @@
             </select>
         </div>
 
-        <!-- Factor -->
+        <!-- SWOT Factor -->
         <div class="col-md-4">
             <label>Factor</label>
             <select name="swot_factor" class="form-select"
-                    hx-post="{% url 'create_swot' %}"
+                    hx-post="{% if form.instance.pk %}{% url 'update_swot_report' form.instance.pk %}{% else %}{% url 'create_swot_report' %}{% endif %}"
                     hx-target="#full-page-container"
                     hx-swap="innerHTML"
                     {% if form.fields.swot_factor.widget.attrs.disabled %}disabled{% endif %}>
@@ -90,14 +97,11 @@
 
         <!-- Save / Cancel -->
         <div class="col-12 mt-3">
-            <button type="submit" name="save" class="btn btn-success"
-                    hx-post="{% if form.instance.pk %}{% url 'update_swot' form.instance.pk %}{% else %}{% url 'create_swot' %}{% endif %}"
-                    hx-target="#full-page-container"
-                    hx-swap="innerHTML">
+            <button type="submit" name="save" class="btn btn-success">
                 Save
             </button>
-            <a href="{% url 'swot_list' %}" class="btn btn-secondary"
-               hx-get="{% url 'swot_list' %}"
+            <a href="{% url 'swot_report_list' %}" class="btn btn-secondary"
+               hx-get="{% url 'swot_report_list' %}"
                hx-target="#full-page-container"
                hx-swap="innerHTML"
                hx-push-url="true">
@@ -107,3 +111,5 @@
     </form>
 </div>
 {% endblock %}
+
+

@@ -2,7 +2,7 @@
 
 {% block content %}
 <form method="post"
-      hx-post="{% if form.instance.pk %}{% url 'update_strategy_map' form.instance.pk %}{% else %}{% url 'create_strategy_map' %}{% endif %}"
+      hx-post="{% if form.instance.pk %}{% url 'update_strategy_hierarchy' form.instance.pk %}{% else %}{% url 'create_strategy_hierarchy' %}{% endif %}"
       hx-target="#full-page-container"
       hx-swap="innerHTML"
       hx-push-url="true"
@@ -14,7 +14,7 @@
         <label>Perspective</label>
         <select name="strategic_perspective"
                 class="form-select"
-                hx-post="{% if form.instance.pk %}{% url 'update_strategy_map' form.instance.pk %}{% else %}{% url 'create_strategy_map' %}{% endif %}"
+                hx-post="{% if form.instance.pk %}{% url 'update_strategy_hierarchy' form.instance.pk %}{% else %}{% url 'create_strategy_hierarchy' %}{% endif %}"
                 hx-target="#full-page-container"
                 hx-swap="innerHTML"
                 hx-trigger="change">
@@ -31,7 +31,7 @@
         <label>Pillar</label>
         <select name="strategic_pillar"
                 class="form-select"
-                hx-post="{% if form.instance.pk %}{% url 'update_strategy_map' form.instance.pk %}{% else %}{% url 'create_strategy_map' %}{% endif %}"
+                hx-post="{% if form.instance.pk %}{% url 'update_strategy_hierarchy' form.instance.pk %}{% else %}{% url 'create_strategy_hierarchy' %}{% endif %}"
                 hx-target="#full-page-container"
                 hx-swap="innerHTML"
                 hx-trigger="change">
@@ -48,7 +48,7 @@
         <label>Objective</label>
         <select name="objective"
                 class="form-select"
-                hx-post="{% if form.instance.pk %}{% url 'update_strategy_map' form.instance.pk %}{% else %}{% url 'create_strategy_map' %}{% endif %}"
+                hx-post="{% if form.instance.pk %}{% url 'update_strategy_hierarchy' form.instance.pk %}{% else %}{% url 'create_strategy_hierarchy' %}{% endif %}"
                 hx-target="#full-page-container"
                 hx-swap="innerHTML"
                 hx-trigger="change">
@@ -65,7 +65,7 @@
         <label>KPI</label>
         <select name="kpi"
                 class="form-select"
-                hx-post="{% if form.instance.pk %}{% url 'update_strategy_map' form.instance.pk %}{% else %}{% url 'create_strategy_map' %}{% endif %}"
+                hx-post="{% if form.instance.pk %}{% url 'update_strategy_hierarchy' form.instance.pk %}{% else %}{% url 'create_strategy_hierarchy' %}{% endif %}"
                 hx-target="#full-page-container"
                 hx-swap="innerHTML"
                 hx-trigger="change">
@@ -87,11 +87,11 @@
     <div class="col-12 mt-3">
         <button type="submit" name="save" class="btn btn-success">Save</button>
         <a class="btn btn-secondary"
-           hx-get="{% url 'strategy_map_list' %}"
+           hx-get="{% url 'strategy_hierarchy_list' %}"
            hx-target="#full-page-container"
            hx-swap="innerHTML"
            hx-push-url="true"
-           href="{% url 'strategy_map_list' %}">
+           href="{% url 'strategy_hierarchy_list' %}">
             Cancel
         </a>
     </div>

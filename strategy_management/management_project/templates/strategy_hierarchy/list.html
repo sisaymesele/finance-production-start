@@ -11,22 +11,22 @@
     <div class="row mb-3">
         <div class="col-md-6">
             <!-- HTMX-enabled Add button -->
-            <a href="{% url 'create_strategy_map' %}"
+            <a href="{% url 'create_strategy_hierarchy' %}"
                class="btn btn-primary"
-               hx-get="{% url 'create_strategy_map' %}"
+               hx-get="{% url 'create_strategy_hierarchy' %}"
                hx-trigger="click"
                hx-target="#full-page-container"
                hx-swap="innerHTML"
                hx-push-url="true">
-                Add Strategy Map
+                Add Strategy Hierarchy
             </a>
         </div>
         <div class="col-md-6">
             <!-- HTMX-enabled Search Form -->
             <form method="get"
-                  action="{% url 'strategy_map_list' %}"
+                  action="{% url 'strategy_hierarchy_list' %}"
                   class="d-flex justify-content-end"
-                  hx-get="{% url 'strategy_map_list' %}"
+                  hx-get="{% url 'strategy_hierarchy_list' %}"
                   hx-target="#full-page-container"
                   hx-trigger="keyup changed delay:800ms from:input[name='q']">
                 <input type="text"
@@ -64,7 +64,7 @@
                     <td>{{ s.formula|default:"-" }}</td>
                     <td>
                         <a class="btn btn-warning"
-                           hx-get="{% url 'update_strategy_map' s.pk %}"
+                           hx-get="{% url 'update_strategy_hierarchy' s.pk %}"
                            hx-trigger="click"
                            hx-target="#full-page-container"
                            hx-swap="innerHTML"
@@ -74,7 +74,7 @@
                     </td>
                     <td>
                         <a class="btn btn-danger"
-                           hx-get="{% url 'delete_strategy_map' s.pk %}"
+                           hx-get="{% url 'delete_strategy_hierarchy' s.pk %}"
                            hx-trigger="click"
                            hx-target="#full-page-container"
                            hx-swap="innerHTML"

@@ -7,7 +7,7 @@ from django.db.models import Q
 
 # -------------------- SWOT LIST --------------------
 @login_required
-def swot_list(request):
+def swot_analysis_list(request):
     query = request.GET.get("search", "").strip()
 
     swots = SwotAnalysis.objects.filter(
@@ -22,7 +22,7 @@ def swot_list(request):
 
     swots = swots.order_by("swot_type", "priority", "-created_at")
 
-    return render(request, "swot/list.html", {
+    return render(request, "swot_analysis/list.html", {
         "swots": swots,
         "search_query": query,
     })
@@ -32,7 +32,7 @@ def swot_list(request):
 
 
 @login_required
-def create_swot(request):
+def create_swot_analysis(request):
     if request.method == 'POST':
         form = SwotAnalysisForm(request.POST)
         # Only save if the Save button is clicked
@@ -41,16 +41,16 @@ def create_swot(request):
             swot_entry.organization_name = request.user.organization_name
             swot_entry.save()
             messages.success(request, "SWOT entry created successfully!")
-            return redirect('swot_list')
+            return redirect('swot_analysis_list')
     else:
         form = SwotAnalysisForm()
 
-    return render(request, 'swot/form.html', {'form': form})
+    return render(request, 'swot_analysis/form.html', {'form': form})
 
 
 # -------------------- UPDATE SWOT --------------------
 @login_required
-def update_swot(request, pk):
+def update_swot_analysis(request, pk):
     # Fetch the entry only if it belongs to the user's organization
     entry = get_object_or_404(SwotAnalysis, pk=pk, organization_name=request.user.organization_name)
 
@@ -59,19 +59,19 @@ def update_swot(request, pk):
         if 'save' in request.POST and form.is_valid():
             form.save()
             messages.success(request, "SWOT entry updated successfully!")
-            return redirect('swot_list')
+            return redirect('swot_analysis_list')
         else:
             messages.error(request, "Error updating SWOT entry. Please check the form.")
     else:
         form = SwotAnalysisForm(instance=entry)
 
-    return render(request, 'swot/form.html', {'form': form})
+    return render(request, 'swot_analysis/form.html', {'form': form})
 
 
 # -------------------- DELETE SWOT --------------------
 
 @login_required
-def delete_swot(request, pk):
+def delete_swot_analysis(request, pk):
     entry = get_object_or_404(
         SwotAnalysis,
         pk=pk,
@@ -81,6 +81,6 @@ def delete_swot(request, pk):
     if request.method == 'POST':
         entry.delete()
         messages.success(request, "SWOT entry deleted successfully!")
-        return redirect('swot_list')
+        return redirect('swot_analysis_list')
 
-    return render(request, 'swot/delete_confirm.html', {'entry': entry})
+    return render(request, 'swot_analysis/delete_confirm.html', {'entry': entry})

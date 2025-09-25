@@ -50,10 +50,10 @@
                     <h6 class="mb-0">Strategic Context</h6>
                 </div>
                 <div class="card-body">
-                    <p class="mb-2"><strong>Perspective:</strong> {{ strategic_report.action_plan.strategy_map.strategic_perspective }}</p>
-                    <p class="mb-2"><strong>Pillar:</strong> {{ strategic_report.action_plan.strategy_map.strategic_pillar }}</p>
-                    <p class="mb-2"><strong>Objective:</strong> {{ strategic_report.action_plan.strategy_map.objective }}</p>
-                    <p class="mb-0"><strong>KPI:</strong> {{ strategic_report.action_plan.strategy_map.kpi }}</p>
+                    <p><strong>Perspective:</strong> {{ strategic_report.action_plan.strategy_hierarchy.strategic_perspective }}</p>
+                    <p><strong>Pillar:</strong> {{ strategic_report.action_plan.strategy_hierarchy.strategic_pillar }}</p>
+                    <p><strong>Objective:</strong> {{ strategic_report.action_plan.strategy_hierarchy.objective }}</p>
+                    <p><strong>KPI:</strong> {{ strategic_report.action_plan.strategy_hierarchy.kpi }}</p>
                 </div>
             </div>
         </div>
@@ -65,10 +65,10 @@
                     <h6 class="mb-0">Performance Metrics</h6>
                 </div>
                 <div class="card-body">
-                    <p class="mb-2"><strong>Baseline:</strong> {{ strategic_report.action_plan.baseline|floatformat:2|intcomma }}</p>
-                    <p class="mb-2"><strong>Target:</strong> {{ strategic_report.action_plan.target|floatformat:2|intcomma }}</p>
-                    <p class="mb-2"><strong>Achievement:</strong> {{ strategic_report.achievement|floatformat:2|intcomma }}</p>
-                    <p class="mb-2"><strong>% Achieved:</strong>
+                    <p><strong>Baseline:</strong> {{ strategic_report.action_plan.baseline|floatformat:2|intcomma }}</p>
+                    <p><strong>Target:</strong> {{ strategic_report.action_plan.target|floatformat:2|intcomma }}</p>
+                    <p><strong>Achievement:</strong> {{ strategic_report.achievement|floatformat:2|intcomma }}</p>
+                    <p><strong>% Achieved:</strong>
                         {% if strategic_report.percent_achieved >= 100 %}
                             <span class="badge bg-success">{{ strategic_report.percent_achieved|floatformat:0 }}%</span>
                         {% elif strategic_report.percent_achieved >= 75 %}
@@ -79,37 +79,46 @@
                             <span class="badge bg-danger">{{ strategic_report.percent_achieved|floatformat:0 }}%</span>
                         {% endif %}
                     </p>
-                    <p class="mb-2"><strong>Variance:</strong>
+                    <p><strong>Variance:</strong>
                         {% if strategic_report.variance > 0 %}
                             <span class="text-success">+{{ strategic_report.variance|floatformat:2|intcomma }}</span>
                         {% else %}
                             <span class="text-danger">{{ strategic_report.variance|floatformat:2|intcomma }}</span>
                         {% endif %}
                     </p>
-                    <p class="mb-0"><strong>Weighted Score:</strong> {{ strategic_report.weighted_score|floatformat:2|intcomma }}</p>
+                    <p><strong>Weighted Score:</strong> {{ strategic_report.weighted_score|floatformat:2|intcomma }}</p>
                 </div>
             </div>
         </div>
 
-        <!-- Card 3: Administrative Info -->
+        <!-- Card 3: Administrative & Qualitative Info -->
         <div class="col-md-4 d-flex">
             <div class="card shadow-sm flex-fill h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0">Administrative Info</h6>
+                    <h6 class="mb-0">Administrative & Qualitative Info</h6>
                 </div>
                 <div class="card-body">
-                    <p class="mb-2"><strong>Responsible:</strong> {{ strategic_report.action_plan.responsible_bodies_display }}</p>
-                    <p class="mb-2"><strong>Status:</strong>
+                    <p><strong>Responsible:</strong> {{ strategic_report.action_plan.responsible_bodies_display }}</p>
+                    <p><strong>Status:</strong>
                         {% if strategic_report.status == 'completed' %}
                             <span class="badge bg-success">Completed</span>
-                        {% elif strategic_report.status == 'on_track' %}
-                            <span class="badge bg-primary">On Track</span>
-                        {% elif strategic_report.status == 'delayed' %}
-                            <span class="badge bg-warning">Delayed</span>
+                        {% elif strategic_report.status == 'in_progress' %}
+                            <span class="badge bg-primary">In Progress</span>
+                        {% elif strategic_report.status == 'on_hold' %}
+                            <span class="badge bg-warning">On Hold</span>
+                        {% elif strategic_report.status == 'cancelled' %}
+                            <span class="badge bg-danger">Cancelled</span>
                         {% else %}
                             <span class="badge bg-secondary">{{ strategic_report.status|default:"Pending" }}</span>
                         {% endif %}
                     </p>
+                    <p><strong>Data Source:</strong> {{ strategic_report.data_source|default:"-" }}</p>
+                    <p><strong>Data Collector:</strong> {{ strategic_report.data_collector|default:"-" }}</p>
+                    <p><strong>Progress Summary:</strong> {{ strategic_report.progress_summary|default:"-" }}</p>
+                    <p><strong>Performance Summary:</strong> {{ strategic_report.performance_summary|default:"-" }}</p>
+                    <p><strong>Challenges:</strong> {{ strategic_report.challenges|default:"-" }}</p>
+                    <p><strong>Successes:</strong> {{ strategic_report.successes|default:"-" }}</p>
+                    <p><strong>Lessons Learned:</strong> {{ strategic_report.lessons_learned|default:"-" }}</p>
                     <p class="mb-0"><strong>Last Updated:</strong> {{ strategic_report.updated_at|date:"M d, Y" }}</p>
                 </div>
             </div>

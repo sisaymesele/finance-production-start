@@ -1,14 +1,14 @@
 from django import forms
 from management_project.models import (
-    OrganizationalProfile, SwotAnalysis, Vision, Mission, Values, StrategyMap,
-    Stakeholder, StrategicCycle, StrategicActionPlan, StrategicReport,
+    OrganizationalProfile, SwotAnalysis, Vision, Mission, Values, StrategyHierarchy,
+    Stakeholder, StrategicCycle, StrategicActionPlan, StrategicReport, SwotReport
 )
 from management_project.services.vision import VisionService
 from management_project.services.mission import MissionService
-from management_project.services.swot import SwotChoicesService
 from .services.swot import SwotChoicesService
-from .services.strategy_map import StrategyMapChoicesService
+from .services.strategy_hierarchy import StrategyHierarchyChoicesService
 from .services.values import ValuesService
+
 
 class OrganizationalProfileForm(forms.ModelForm):
 
@@ -220,8 +220,7 @@ class ValuesForm(forms.ModelForm):
         self.fields['values'].choices = ValuesService.VALUE_CHOICES
 
 
-
-class StrategyMapForm(forms.ModelForm):
+class StrategyHierarchyForm(forms.ModelForm):
     # Include formula in the form explicitly
     formula = forms.CharField(
         required=False,
@@ -235,19 +234,20 @@ class StrategyMapForm(forms.ModelForm):
     )
 
     class Meta:
-        model = StrategyMap
-        # Include formula in fields so it is rendered
-        fields = ['strategic_perspective', 'strategic_pillar', 'objective', 'kpi', 'formula',]
+        model = StrategyHierarchy
+        fields = ['strategic_perspective', 'strategic_pillar', 'objective', 'kpi', 'formula']
         widgets = {
             'strategic_perspective': forms.Select(attrs={'class': 'form-control'}),
             'strategic_pillar': forms.Select(attrs={'class': 'form-control'}),
             'objective': forms.Select(attrs={'class': 'form-control'}),
             'kpi': forms.Select(attrs={'class': 'form-control'}),
-
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # instantiate the service once
+        service = StrategyHierarchyChoicesService()
 
         # Load current selections
         perspective = self.data.get('strategic_perspective') or getattr(self.instance, 'strategic_perspective', None)
@@ -256,29 +256,29 @@ class StrategyMapForm(forms.ModelForm):
         kpi = self.data.get('kpi') or getattr(self.instance, 'kpi', None)
 
         # Populate dropdowns dynamically
-        self.fields['strategic_perspective'].choices = [('', '--- Select Perspective ---')] + StrategyMapChoicesService.get_perspective_choices()
+        self.fields['strategic_perspective'].choices = [('', '--- Select Perspective ---')] + service.get_perspective_choices()
 
         if perspective:
-            self.fields['strategic_pillar'].choices = [('', '--- Select Pillar ---')] + StrategyMapChoicesService.get_pillar_choices(perspective)
+            self.fields['strategic_pillar'].choices = [('', '--- Select Pillar ---')] + service.get_pillar_choices(perspective)
         else:
             self.fields['strategic_pillar'].choices = [('', '--- Select Perspective First ---')]
             self.fields['strategic_pillar'].widget.attrs['disabled'] = True
 
         if perspective and pillar:
-            self.fields['objective'].choices = [('', '--- Select Objective ---')] + StrategyMapChoicesService.get_objective_choices(perspective, pillar)
+            self.fields['objective'].choices = [('', '--- Select Objective ---')] + service.get_objective_choices(perspective, pillar)
         else:
             self.fields['objective'].choices = [('', '--- Select Pillar First ---')]
             self.fields['objective'].widget.attrs['disabled'] = True
 
         if perspective and pillar and objective:
-            self.fields['kpi'].choices = [('', '--- Select KPI ---')] + StrategyMapChoicesService.get_kpi_choices(perspective, pillar, objective)
+            self.fields['kpi'].choices = [('', '--- Select KPI ---')] + service.get_kpi_choices(perspective, pillar, objective)
         else:
             self.fields['kpi'].choices = [('', '--- Select Objective First ---')]
             self.fields['kpi'].widget.attrs['disabled'] = True
 
         # Auto-fill formula
         if perspective and pillar and objective and kpi:
-            self.fields['formula'].initial = StrategyMapChoicesService.get_formula(perspective, pillar, objective, kpi)
+            self.fields['formula'].initial = service.get_formula(perspective, pillar, objective, kpi)
         else:
             self.fields['formula'].initial = "Select a KPI to see the formula"
 
@@ -363,7 +363,7 @@ class StrategicActionPlanForm(forms.ModelForm):
         widgets = {
             # Foreign keys
             'strategic_cycle': forms.Select(attrs={'class': 'form-control'}),
-            'strategy_map': forms.Select(attrs={'class': 'form-control'}),
+            'strategy_hierarchy': forms.Select(attrs={'class': 'form-control'}),
             'responsible_bodies': forms.SelectMultiple(attrs={'class': 'form-control'}),
 
             # KPI & Measurement
@@ -373,6 +373,7 @@ class StrategicActionPlanForm(forms.ModelForm):
             'target': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter target value'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'weight': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Weight'}),
+            'budget': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Weight'}),
 
         }
 
@@ -384,11 +385,11 @@ class StrategicActionPlanForm(forms.ModelForm):
         if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
             org = self.request.user.organization_name
             self.fields['strategic_cycle'].queryset = StrategicCycle.objects.filter(organization_name=org)
-            self.fields['strategy_map'].queryset = StrategyMap.objects.filter(organization_name=org)
+            self.fields['strategy_hierarchy'].queryset = StrategyHierarchy.objects.filter(organization_name=org)
             self.fields['responsible_bodies'].queryset = Stakeholder.objects.filter(organization_name=org)
         else:
             self.fields['strategic_cycle'].queryset = StrategicCycle.objects.none()
-            self.fields['strategy_map'].queryset = StrategyMap.objects.none()
+            self.fields['strategy_hierarchy'].queryset = StrategyHierarchy.objects.none()
             self.fields['responsible_bodies'].queryset = Stakeholder.objects.none()
 
         # Add invalid bootstrap styling for error fields
@@ -419,7 +420,8 @@ class StrategicReportForm(forms.ModelForm):
         model = StrategicReport
         fields = [
             'action_plan', 'achievement', 'data_source',
-            'data_collector', 'progress_summary', 'performance_summary', 'status'
+            'data_collector', 'progress_summary', 'performance_summary',
+            'challenges', 'successes', 'lessons_learned', 'status',
         ]
         widgets = {
             'achievement': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
@@ -427,13 +429,16 @@ class StrategicReportForm(forms.ModelForm):
             'data_collector': forms.TextInput(attrs={'class': 'form-control'}),
             'progress_summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'performance_summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'challenges': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'successes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'lessons_learned': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'status': forms.Select(attrs={'class': 'form-control'}),
 
         }
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
-        self.cycle = kwargs.pop('cycle', None)  # ✅ handle cycle
+        self.cycle = kwargs.pop('cycle', None)
         super().__init__(*args, **kwargs)
 
         # Filter by user organization
@@ -455,4 +460,67 @@ class StrategicReportForm(forms.ModelForm):
 
         self.fields['action_plan'].queryset = qs
 
+# #
+# #
 
+# #
+class SwotReportForm(forms.ModelForm):
+    strategic_report_period = forms.ModelChoiceField(
+        queryset=StrategicReport.objects.none(),  # initially empty
+        label="Strategic Report Period",
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        empty_label="Select Strategic Report"
+    )
+
+    class Meta:
+        model = SwotReport
+        fields = [
+            'strategic_report_period', 'swot_type', 'swot_pillar', 'swot_factor',
+            'priority', 'impact', 'likelihood', 'description'
+        ]
+        widgets = {
+            'swot_type': forms.Select(attrs={'class': 'form-control'}),
+            'swot_pillar': forms.Select(attrs={'class': 'form-control'}),
+            'swot_factor': forms.Select(attrs={'class': 'form-control'}),
+            'priority': forms.Select(attrs={'class': 'form-control'}),
+            'impact': forms.Select(attrs={'class': 'form-control'}),
+            'likelihood': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+
+        # ---------------- Filter by organization ----------------
+        if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
+            org = self.request.user.organization_name
+            self.fields['strategic_report_period'].queryset = StrategicReport.objects.filter(organization_name=org)
+        else:
+            self.fields['strategic_report_period'].queryset = StrategicReport.objects.none()
+
+
+        # ---------------- Cascade dropdown logic ----------------
+        swot_type = self.data.get('swot_type') or getattr(self.instance, 'swot_type', None)
+        pillar = self.data.get('swot_pillar') or getattr(self.instance, 'swot_pillar', None)
+
+        # Level 1: SWOT Type
+        self.fields['swot_type'].choices = [('', '--- Select SWOT Type ---')] + SwotChoicesService.get_swot_type_choices()
+
+        # Level 2: Pillar
+        if swot_type:
+            self.fields['swot_pillar'].choices = [('', '--- Select Pillar ---')] + SwotChoicesService.get_pillar_choices(swot_type)
+            self.fields['swot_pillar'].widget.attrs.pop('disabled', None)
+        else:
+            self.fields['swot_pillar'].choices = [('', '--- Select Type First ---')]
+            self.fields['swot_pillar'].widget.attrs['disabled'] = True
+
+        # Level 3: Factor
+        if swot_type and pillar:
+            self.fields['swot_factor'].choices = [('', '--- Select Factor ---')] + SwotChoicesService.get_factor_choices(swot_type, pillar)
+            self.fields['swot_factor'].widget.attrs.pop('disabled', None)
+        else:
+            self.fields['swot_factor'].choices = [('', '--- Select Pillar First ---')]
+            self.fields['swot_factor'].widget.attrs['disabled'] = True
+
+#

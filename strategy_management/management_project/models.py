@@ -166,14 +166,14 @@ class Values(models.Model):
         return self.get_values_display()
 
 
-class StrategyMap(models.Model):
+class StrategyHierarchy(models.Model):
     organization_name = models.ForeignKey(
         OrganizationalProfile, on_delete=models.PROTECT
     )
     strategic_perspective = models.CharField(max_length=100)
     strategic_pillar = models.CharField(max_length=100)
     objective = models.CharField(max_length=100)
-    kpi = models.CharField(max_length=100)
+    kpi = models.CharField(max_length=100, verbose_name='Key Performance Indicator')
     formula = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
@@ -445,15 +445,17 @@ class StrategicActionPlan(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
-    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
+    organization_name = models.ForeignKey(
+        OrganizationalProfile, on_delete=models.PROTECT, verbose_name='Owner / Responsible Party'
+    )
     # Parent references
     strategic_cycle = models.ForeignKey(
         'StrategicCycle',
         on_delete=models.CASCADE,
         related_name='action_plans'
     )
-    strategy_map = models.ForeignKey(
-        'StrategyMap',
+    strategy_hierarchy = models.ForeignKey(
+        'StrategyHierarchy',
         on_delete=models.CASCADE,
         related_name='action_plans'
     )
@@ -475,6 +477,8 @@ class StrategicActionPlan(models.Model):
         default=100,
         help_text="Weight of this Action Plan KPI relative to other KPI per strategic cycle"
     )
+    budget = models.DecimalField(max_digits=12, decimal_places=2)
+
 
 
     class Meta:
@@ -502,7 +506,7 @@ class StrategicActionPlan(models.Model):
             f"{self.strategic_cycle.time_horizon_type} - {self.strategic_cycle.start_date} - "
             f"{self.strategic_cycle.end_date}" if self.strategic_cycle else "N/A"
         )
-        kpi = self.strategy_map.kpi if self.strategy_map else "N/A"
+        kpi = self.strategy_hierarchy.kpi if self.strategy_hierarchy else "N/A"
         baseline = self.baseline or 0
         target = self.target or 0
         responsible = self.responsible_bodies_display() or "N/A"
@@ -518,7 +522,7 @@ class StrategicActionPlan(models.Model):
         else:
             cycle_name = "N/A"
 
-        kpi = self.strategy_map.kpi if self.strategy_map else "N/A"
+        kpi = self.strategy_hierarchy.kpi if self.strategy_hierarchy else "N/A"
         baseline = self.baseline or 0
         target = self.target or 0
         responsible = self.responsible_bodies_display() or "N/A"
@@ -535,7 +539,7 @@ class StrategicActionPlan(models.Model):
         else:
             cycle_line = "Cycle: N/A"
 
-        kpi = self.strategy_map.kpi if self.strategy_map else "N/A"
+        kpi = self.strategy_hierarchy.kpi if self.strategy_hierarchy else "N/A"
         baseline = self.baseline or 0
         target = self.target or 0
         resp = self.responsible_bodies_display() or "N/A"
@@ -559,7 +563,6 @@ class StrategicReport(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
-    # Model fields as described
     organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
     action_plan = models.ForeignKey(
         StrategicActionPlan, on_delete=models.CASCADE, related_name="reports"
@@ -572,11 +575,16 @@ class StrategicReport(models.Model):
     data_collector = models.CharField(max_length=200, blank=True, null=True)
     progress_summary = models.TextField(blank=True, null=True)
     performance_summary = models.TextField(blank=True, null=True)
+    # Optional qualitative fields
+    challenges = models.TextField(blank=True, null=True)
+    successes = models.TextField(blank=True, null=True)
+    lessons_learned = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES,
                               default='pending', help_text="Current status of the strategic plan"
                               )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
 
     class Meta:
         ordering = ['-created_at']
@@ -584,6 +592,7 @@ class StrategicReport(models.Model):
         verbose_name_plural = "Strategic Reports"
 
     def save(self, *args, **kwargs):
+
         plan = self.action_plan
         # Ensure percent achieved and variance
         baseline = plan.baseline or 0
@@ -596,5 +605,54 @@ class StrategicReport(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.action_plan.key_performance_indicator} | Achieved: {self.achievement} | {self.percent_achieved:.2f}%"
+        return (
+            f"{self.action_plan.strategic_cycle.time_horizon} | "
+            f"Start: {self.action_plan.strategic_cycle.start_date:%B %d, %Y} | "
+            f"End: {self.action_plan.strategic_cycle.end_date:%B %d, %Y}"
+        )
 
+
+class SwotReport(models.Model):
+    SWOT_TYPES = [
+        ("Strength", "Strength"),
+        ("Weakness", "Weakness"),
+        ("Opportunity", "Opportunity"),
+        ("Threat", "Threat"),
+    ]
+    PRIORITY_CHOICES = [
+        ("High", "High"),
+        ("Medium", "Medium"),
+        ("Low", "Low"),
+    ]
+    IMPACT_CHOICES = [
+        ("High", "High"),
+        ("Medium", "Medium"),
+        ("Low", "Low"),
+    ]
+    LIKELIHOOD_CHOICES = [
+        ("High", "High"),
+        ("Medium", "Medium"),
+        ("Low", "Low"),
+    ]
+
+    organization_name = models.ForeignKey(
+        OrganizationalProfile, on_delete=models.PROTECT
+    )
+    strategic_report_period = models.ForeignKey(
+        StrategicReport, on_delete=models.CASCADE
+    )
+    swot_type = models.CharField(max_length=20, choices=SWOT_TYPES)
+    swot_pillar = models.CharField(max_length=100)
+    swot_factor = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default="Medium")
+    impact = models.CharField(max_length=10, choices=IMPACT_CHOICES, default="Medium")
+    likelihood = models.CharField(max_length=10, choices=LIKELIHOOD_CHOICES, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["swot_type", "priority", "-created_at"]
+
+    def __str__(self):
+        return f"{self.swot_type} → {self.swot_pillar} → {self.swot_factor[:50]}"

@@ -10,7 +10,7 @@ from .organization import organizational_profile, create_organizational_profile,
 from .strategic_cycle import strategic_cycle_list, create_strategic_cycle, \
     update_strategic_cycle, delete_strategic_cycle
 
-from .strategic_action_plan import strategy_by_cycle_list, strategic_action_plan_list, strategic_action_plan_detail, \
+from .strategic_action_plan import strategic_action_plan_by_cycle, strategic_action_plan_list, strategic_action_plan_detail, \
     create_strategic_action_plan, update_strategic_action_plan, delete_strategic_action_plan, \
     export_strategic_action_plan_to_excel, strategic_action_plan_chart
 
@@ -21,5 +21,9 @@ from .strategic_report import strategy_report_by_cycle_list, strategic_report_de
 from .vision import vision_list, create_vision, update_vision, delete_vision
 from .mission import mission_list, create_mission, update_mission, delete_mission
 from .values import values_list, create_values, update_values, delete_values
-from .swot import swot_list, create_swot, update_swot, delete_swot
-from .strategy_map import strategy_map_list, create_strategy_map, update_strategy_map, delete_strategy_map
+from .swot_analysis import swot_analysis_list, create_swot_analysis, update_swot_analysis, delete_swot_analysis
+from .strategy_hierarchy import strategy_hierarchy_list, create_strategy_hierarchy, update_strategy_hierarchy, delete_strategy_hierarchy
+
+from .swot_report import swot_report_by_cycle_list, swot_report_list, \
+    create_swot_report, update_swot_report, delete_swot_report
+

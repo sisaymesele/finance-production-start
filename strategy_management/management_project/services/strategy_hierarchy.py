@@ -1,133 +1,371 @@
-
-class StrategyMapChoicesService:
+class StrategyHierarchyChoicesService:
     # Define the complete hierarchy in a single structure
     STRATEGY_MAP_HIERARCHY = {
-
         "Financial Perspective": {
-            "Revenue Growth & Market Expansion": {
-                "Expand into new geographic markets and regions": {
-                    "Revenue from new markets ($)": "Total revenue generated from all new markets",
-                    "Market share in new regions": "(Revenue in new regions / Total regional revenue) * 100",
-                    "Customer acquisition cost in new markets ($ per customer)": "Total marketing and sales spend divided by new customers acquired",
-                    "Successful market entries count": "Count of markets entered where sales targets were met"
+
+            # ---------------- 1. REVENUE GROWTH & DIVERSIFICATION ----------------
+            "Revenue Growth & Diversification": {
+                "Enhance Total Revenue Performance": {
+                    "Total revenue growth (%)": "(Current revenue - Previous revenue) / Previous revenue * 100",
+                    "Quarterly revenue growth rate (%)": "Quarter-over-quarter revenue increase percentage",
+                    "Annual revenue growth acceleration": "Year-over-year growth rate improvement",
+                    "Revenue per customer growth ($)": "(Current revenue/customer - Previous) / Previous * 100"
                 },
-                "Increase market share in existing segments": {
-                    "Market share by segment": "(Sales in segment / Total segment sales) * 100",
-                    "Revenue growth vs. market growth rate": "Revenue growth rate minus market growth rate",
-                    "Competitive win rate": "(Deals won / Deals competed in key accounts) * 100",
-                    "Customer acquisition in target segments (count)": "Number of new customers acquired in target segments"
+                "Strengthen Market Share & Positioning": {
+                    "Market share growth (%)": "(Current market share - Previous market share) / Previous * 100",
+                    "Revenue in target segments growth (%)": "Growth in priority customer segments",
+                    "Geographic expansion revenue ($)": "Revenue from new geographic markets",
+                    "Competitive win rate (%)": "(Contracts won / Total bids) * 100"
                 },
-                "Launch new products and services": {
-                    "Revenue from new products/services ($)": "Revenue from all products launched in the last period",
-                    "Time-to-market for new launches (days)": "Average duration from idea to market launch",
-                    "Market adoption rate": "(Number of customers using new product / Total target customers) * 100",
-                    "Return on R&D investment": "((Revenue from new products - R&D cost) / R&D cost) * 100"
+                "Accelerate New Product/Service Revenue": {
+                    "Revenue from innovations (%)": "(Revenue from new products / Total revenue) * 100",
+                    "Time-to-revenue for new offerings (months)": "Speed from launch to revenue generation",
+                    "R&D ROI from new products (%)": "(Revenue from new products / R&D investment) * 100",
+                    "Product adoption rate acceleration": "Faster customer adoption of new offerings"
                 },
-                "Develop recurring revenue streams": {
-                    "Recurring revenue as percentage of total revenue": "(Recurring revenue / Total revenue) * 100",
-                    "Customer subscription growth rate": "((Current subscriptions - Previous subscriptions) / Previous subscriptions) * 100",
-                    "Monthly/Annual recurring revenue ($)": "Sum of recurring revenue per month or year",
-                    "Customer retention rate": "(Retained recurring customers / Total recurring customers) * 100"
-                },
-                "Grow digital and e-commerce channels": {
-                    "Online sales growth": "((Current online sales - Previous online sales) / Previous online sales) * 100",
-                    "Digital channel conversion rate": "(Leads converted / Total leads through digital channels) * 100",
-                    "Revenue from e-commerce channels ($)": "Total revenue generated via e-commerce platforms",
-                    "Customer acquisition cost ratio (digital vs traditional)": "Digital acquisition cost divided by traditional acquisition cost"
-                },
-                "Strengthen cross-selling and upselling": {
-                    "Cross-sell revenue growth": "((Revenue from cross-sold products - Previous revenue) / Previous revenue) * 100",
-                    "Upsell conversion rate": "(Upsell transactions / Total eligible customers) * 100",
-                    "Average revenue per customer ($)": "Total revenue / Total number of customers",
-                    "Customer penetration rate": "(Number of customers buying multiple products / Total customers) * 100"
-                },
-                "Diversify revenue sources": {
-                    "Revenue from new business lines ($)": "Revenue generated from newly introduced business lines",
-                    "Percentage of revenue from top 3 products": "(Revenue from top 3 products / Total revenue) * 100",
-                    "Number of distinct revenue streams": "Count of distinct revenue sources contributing to total revenue",
-                    "Revenue concentration risk index": "Measure of dependency on top revenue sources"
-                },
-                "Enhance pricing strategies": {
-                    "Average selling price improvement ($)": "Current average selling price - Previous average selling price",
-                    "Price optimization success rate": "(Number of products priced optimally / Total products) * 100",
-                    "Margin per product category": "((Revenue - Cost per category) / Revenue per category) * 100",
-                    "Competitive pricing index": "Your price vs Competitor average price index"
-                },
-                "Deepen strategic partnerships": {
-                    "Revenue from partnership channels ($)": "Revenue generated through partnerships",
-                    "Number of active strategic partnerships (count)": "Count of partnerships with ongoing business activity",
-                    "Partnership satisfaction score": "Average satisfaction rating from partners",
-                    "Joint initiative success rate": "(Completed initiatives meeting objectives / Total initiatives) * 100"
-                },
-                "Improve sales force effectiveness": {
-                    "Sales per representative ($)": "Revenue generated divided by number of sales representatives",
-                    "Sales cycle length reduction": "((Previous cycle length - Current cycle length) / Previous cycle length) * 100",
-                    "Quota attainment rate": "(Number of reps meeting quota / Total reps) * 100",
-                    "Lead-to-close conversion rate": "(Leads closed / Total leads) * 100"
+                "Diversify Revenue Streams": {
+                    "Recurring revenue ratio (%)": "(Subscription revenue / Total revenue) * 100",
+                    "Number of revenue streams (#)": "Count of distinct revenue sources",
+                    "Revenue concentration risk index": "1 - (Revenue from top 3 products / Total revenue)",
+                    "Passive income growth (%)": "Growth in non-operational revenue streams"
                 }
             },
-            "Cost Efficiency & Productivity": {
-                "Reduce operational waste and inefficiencies": {
-                    "Cost savings from waste reduction ($)": "Monetary savings achieved from reducing waste",
-                    "Process efficiency improvement": "(Improved output / Baseline output) * 100",
-                    "Waste reduction": "(Reduced waste / Total previous waste) * 100",
-                    "Operational cost per unit produced ($)": "Total operational cost / Total units produced"
+
+            # ---------------- 2. COST MANAGEMENT & EFFICIENCY ----------------
+            "Cost Management & Efficiency": {
+                "Enhance Operational Efficiency": {
+                    "Cost per unit reduction (%)": "(Current cost/unit - Previous) / Previous * 100",
+                    "Labor productivity growth (%)": "(Current output/employee - Previous) / Previous * 100",
+                    "Process efficiency improvement (%)": "Reduction in process cycle time",
+                    "Energy efficiency ratio": "Output per unit of energy consumed"
                 },
-                "Optimize vendor and supplier contracts": {
-                    "Cost savings from contract optimization ($)": "Savings achieved through improved contract terms",
-                    "Supplier performance score": "Average score from supplier performance assessments",
-                    "Contract compliance rate": "(Contracts meeting compliance / Total contracts) * 100",
-                    "Procurement cycle time reduction (days)": "Previous average procurement cycle - Current average cycle"
+                "Implement Strategic Cost Reduction": {
+                    "Operating expense ratio (%)": "(Operating expenses / Revenue) * 100",
+                    "Cost savings achievement rate (%)": "(Actual savings / Target savings) * 100",
+                    "Overhead cost optimization (%)": "Reduction in administrative costs",
+                    "Zero-based budgeting effectiveness": "Cost justification and optimization"
                 },
-                "Streamline administrative costs": {
-                    "Administrative cost reduction": "((Previous admin cost - Current admin cost) / Previous admin cost) * 100",
-                    "Cost per administrative transaction ($)": "Total admin cost / Number of transactions",
-                    "Process automation rate": "(Automated admin processes / Total admin processes) * 100",
-                    "Headcount efficiency ratio": "Output / Number of admin employees"
+                "Optimize Procurement & Supply Chain": {
+                    "Procurement cost reduction (%)": "Savings from strategic sourcing",
+                    "Supplier performance index": "Weighted score of supplier metrics",
+                    "Supply chain cost as % of revenue": "(Total supply chain cost / Revenue) * 100",
+                    "Inventory carrying cost reduction (%)": "Reduction in holding costs"
                 },
-                "Improve procurement efficiency": {
-                    "Procurement cost savings": "(Cost saved through procurement improvements / Total procurement cost) * 100",
-                    "Purchase order cycle time (days)": "Average time from purchase request to order fulfillment",
-                    "Supplier on-time delivery rate": "(On-time deliveries / Total deliveries) * 100",
-                    "Procurement process compliance rate": "(Compliant purchase orders / Total orders) * 100"
-                },
-                "Automate manual processes": {
-                    "Processes automated": "(Number of automated processes / Total processes) * 100",
-                    "Time savings from automation (hours)": "Total hours saved through automation",
-                    "Error reduction rate": "(Errors reduced / Previous errors) * 100",
-                    "Return on automation investment": "((Cost savings + Productivity gains) / Automation investment) * 100"
-                },
-                "Right-size inventory levels": {
-                    "Inventory turnover ratio": "COGS / Average inventory",
-                    "Inventory carrying cost reduction ($)": "Reduction in storage and holding costs",
-                    "Stock-out frequency reduction": "Reduction in number of stock-outs compared to previous period",
-                    "Obsolete inventory": "(Obsolete inventory / Total inventory) * 100"
-                },
-                "Control discretionary spending": {
-                    "Discretionary spend reduction": "((Previous discretionary spend - Current) / Previous) * 100",
-                    "Budget variance": "((Actual spend - Budgeted spend) / Budgeted spend) * 100",
-                    "Approval cycle time reduction (days)": "Previous approval cycle time - Current cycle time",
-                    "Spending policy compliance rate": "(Transactions compliant with policy / Total transactions) * 100"
-                },
-                "Implement energy conservation programs": {
-                    "Energy cost savings": "((Previous energy cost - Current cost) / Previous cost) * 100",
-                    "Carbon emissions reduction": "(CO2 emissions reduced / Previous emissions) * 100",
-                    "Energy consumption per unit": "Total energy consumed / Units produced",
-                    "Renewable energy usage": "(Energy from renewable sources / Total energy) * 100"
-                },
-                "Outsource non-core functions": {
-                    "Cost savings from outsourcing ($)": "Savings from outsourcing activities vs in-house",
-                    "SLA compliance": "(SLAs met / Total SLAs) * 100",
-                    "Quality score of outsourced services": "Average quality rating of outsourced service",
-                    "Internal resource reallocation efficiency": "(Freed internal resources / Total resources) * 100"
-                },
-                "Improve resource utilization": {
-                    "Resource utilization": "(Used resources / Total available resources) * 100",
-                    "Idle time reduction": "((Previous idle time - Current) / Previous) * 100",
-                    "Capacity utilization improvement": "Current capacity utilization - Previous utilization",
-                    "Productivity per resource unit": "Total output produced / Total number of resource units"
+                "Enhance Resource Utilization": {
+                    "Asset utilization rate (%)": "(Productive time / Total available time) * 100",
+                    "Capacity utilization improvement (%)": "Increase in production capacity usage",
+                    "Technology ROI (%)": "(Benefits from technology / Technology cost) * 100",
+                    "Space utilization efficiency": "Revenue generated per square foot"
                 }
-            }
+            },
+
+            # ---------------- 3. PROFITABILITY OPTIMIZATION ----------------
+            "Profitability Optimization": {
+                "Maximize Net Profit Performance": {
+                    "Net profit margin (%)": "(Net income / Revenue) * 100",
+                    "Net profit growth rate (%)": "(Current net profit - Previous) / Previous * 100",
+                    "Earnings quality score": "Sustainability and predictability of earnings",
+                    "Return on revenue (%)": "Net income / Revenue * 100"
+                },
+                "Enhance Gross Margin Performance": {
+                    "Gross margin (%)": "(Revenue - COGS) / Revenue * 100",
+                    "Product margin optimization": "Improvement in lowest-margin products",
+                    "Direct cost efficiency (%)": "Reduction in direct production costs",
+                    "Pricing strategy effectiveness": "Margin improvement from pricing changes"
+                },
+                "Improve Operating Profitability": {
+                    "EBITDA margin (%)": "(EBITDA / Revenue) * 100",
+                    "Operating leverage effect": "Revenue growth vs. operating cost growth",
+                    "Departmental profitability": "Profit contribution by business unit",
+                    "Break-even point reduction": "Lower revenue required for profitability"
+                },
+                "Optimize Contribution Margins": {
+                    "Average contribution margin (%)": "(Revenue - Variable costs) / Revenue * 100",
+                    "Customer profitability segmentation": "Profitability by customer tier",
+                    "Product portfolio margin mix": "Weighted average margin across products",
+                    "Variable cost control effectiveness": "Reduction in direct variable costs"
+                }
+            },
+
+            # ---------------- 4. LIQUIDITY & CASH FLOW MANAGEMENT ----------------
+            "Liquidity & Cash Flow Management": {
+                "Enhance Operating Cash Flow": {
+                    "Operating cash flow growth (%)": "(Current OCF - Previous OCF) / Previous * 100",
+                    "Cash flow margin (%)": "(Operating cash flow / Revenue) * 100",
+                    "Free cash flow generation ($)": "Operating cash flow - Capital expenditures",
+                    "Cash flow predictability index": "Variance in monthly cash flows"
+                },
+                "Optimize Working Capital Efficiency": {
+                    "Working capital ratio improvement": "Current assets / Current liabilities",
+                    "Cash conversion cycle reduction (days)": "DSO + Inventory days - DPO",
+                    "Working capital turnover ratio": "Revenue / Average working capital",
+                    "Excess working capital reduction ($)": "Optimization of current assets"
+                },
+                "Maintain Strong Liquidity Position": {
+                    "Current ratio stability": "Current assets / Current liabilities",
+                    "Quick ratio improvement": "(Current assets - Inventory) / Current liabilities",
+                    "Liquidity buffer adequacy (days)": "Cash available for daily operations",
+                    "Short-term financial flexibility": "Access to emergency funding"
+                },
+                "Improve Cash Flow Forecasting": {
+                    "Cash forecast accuracy (%)": "(1 - |Forecast - Actual| / Actual) * 100",
+                    "Cash flow timing optimization": "Alignment of inflows and outflows",
+                    "Working capital predictability": "Accuracy of working capital projections",
+                    "Scenario planning effectiveness": "Preparedness for cash flow variations"
+                }
+            },
+
+            # ---------------- 5. FINANCIAL STABILITY & RISK MANAGEMENT ----------------
+            "Financial Stability & Risk Management": {
+                "Strengthen Balance Sheet Structure": {
+                    "Debt-to-equity ratio optimization": "Total liabilities / Shareholders' equity",
+                    "Asset quality improvement": "Percentage of performing assets",
+                    "Capital structure efficiency": "Optimal mix of debt and equity",
+                    "Tangible net worth growth ($)": "Increase in real asset value"
+                },
+                "Enhance Solvency & Creditworthiness": {
+                    "Interest coverage ratio": "EBIT / Interest expense",
+                    "Debt service coverage ratio": "Operating income / Total debt service",
+                    "Credit rating improvement": "Upgrade in credit agency ratings",
+                    "Borrowing cost reduction (%)": "Decrease in interest expenses"
+                },
+                "Implement Robust Risk Management": {
+                    "Financial risk exposure reduction": "Decrease in volatility-sensitive positions",
+                    "Hedging effectiveness (%)": "Risk reduction from hedging strategies",
+                    "Compliance adherence rate (%)": "(Compliant processes / Total processes) * 100",
+                    "Risk-adjusted return improvement": "Return per unit of risk taken"
+                },
+                "Strengthen Business Continuity Planning": {
+                    "Contingency fund adequacy (%)": "(Contingency funds / Risk exposure) * 100",
+                    "Disaster recovery readiness": "Time to restore critical operations",
+                    "Insurance coverage optimization": "Adequacy of risk transfer mechanisms",
+                    "Stress testing frequency (#)": "Number of risk scenario analyses"
+                }
+            },
+
+            # ---------------- 6. ECONOMIC DEVELOPMENT & IMPACT ----------------
+            "Economic Development & Impact": {
+                "Drive Regional Economic Growth": {
+                    "GDP contribution growth (%)": "(Sector contribution / Total GDP) * 100",
+                    "Regional economic multiplier effect": "Total economic impact / Direct investment",
+                    "Local supplier development (#)": "Number of local businesses supported",
+                    "Infrastructure development impact": "Economic benefits from infrastructure projects"
+                },
+                "Promote Trade & Commerce": {
+                    "Export growth rate (%)": "(Current exports - Previous exports) / Previous * 100",
+                    "Import substitution value ($)": "Value of locally produced substitutes",
+                    "Trade balance improvement ($)": "Exports - Imports",
+                    "Market access expansion (#)": "New markets entered for local products"
+                },
+                "Foster Innovation Ecosystem": {
+                    "R&D investment growth (%)": "Increase in research and development spending",
+                    "Technology transfer value ($)": "Commercial value of research成果",
+                    "Startup ecosystem support (#)": "Number of new businesses incubated",
+                    "Innovation cluster development": "Growth of innovation-focused zones"
+                },
+                "Enhance Economic Resilience": {
+                    "Economic diversification index": "Number of viable economic sectors",
+                    "Shock absorption capacity": "Ability to withstand economic disruptions",
+                    "Regional economic stability": "Reduction in economic volatility",
+                    "Long-term economic sustainability": "Sustainable growth indicators"
+                }
+            },
+
+            # ---------------- 7. INFRASTRUCTURE DEVELOPMENT & MANAGEMENT ----------------
+            "Infrastructure Development & Management": {
+                "Enhance Physical Infrastructure": {
+                    "Infrastructure quality index": "Condition and capacity of physical assets",
+                    "Maintenance efficiency ratio": "(Planned maintenance / Total maintenance) * 100",
+                    "Infrastructure utilization rate (%)": "(Actual usage / Design capacity) * 100",
+                    "Asset lifecycle cost reduction (%)": "Reduction in total ownership costs"
+                },
+                "Optimize Digital Infrastructure": {
+                    "Digital connectivity coverage (%)": "(Population with access / Total population) * 100",
+                    "Network reliability index": "Uptime and performance metrics",
+                    "Data infrastructure capacity (TB)": "Storage and processing capabilities",
+                    "Cybersecurity infrastructure strength": "Protection level of digital assets"
+                },
+                "Improve Transportation & Logistics": {
+                    "Transport efficiency index": "Cost and time efficiency of logistics",
+                    "Logistics cost reduction (%)": "Decrease in supply chain transportation costs",
+                    "Accessibility improvement (%)": "(Population with transport access / Total) * 100",
+                    "Supply chain resilience": "Ability to maintain operations during disruptions"
+                },
+                "Enhance Public Infrastructure": {
+                    "Public facility utilization (%)": "(Users served / Design capacity) * 100",
+                    "Infrastructure investment ROI": "Economic return on public infrastructure",
+                    "Community infrastructure access": "Percentage with access to basic services",
+                    "Sustainable infrastructure ratio": "(Green infrastructure / Total infrastructure) * 100"
+                }
+            },
+
+            # ---------------- 8. FUND & GRANT MANAGEMENT ----------------
+            "Fund & Grant Management": {
+                "Optimize Funding Acquisition": {
+                    "Grant success rate (%)": "(Grants awarded / Grants applied) * 100",
+                    "Funding diversification index": "Number of distinct funding sources",
+                    "Average grant size growth ($)": "Increase in funding per successful application",
+                    "Donor retention rate (%)": "(Retained donors / Total donors) * 100"
+                },
+                "Enhance Fund Utilization Efficiency": {
+                    "Fund utilization rate (%)": "(Funds used effectively / Total funds) * 100",
+                    "Program cost efficiency": "Outcomes achieved per spent",
+                    "Administrative cost ratio (%)": "(Admin costs / Total expenses) * 100",
+                    "Grant compliance rate (%)": "(Compliant expenditures / Total expenditures) * 100"
+                },
+                "Strengthen Donor Relations": {
+                    "Donor satisfaction index": "Feedback from funding partners",
+                    "Reporting timeliness (%)": "(Reports submitted on time / Total reports) * 100",
+                    "Donor engagement level": "Depth of relationship with funders",
+                    "Funding predictability index": "Stability of future funding streams"
+                },
+                "Improve Impact Measurement & Reporting": {
+                    "Outcome achievement rate (%)": "(Target outcomes achieved / Total targets) * 100",
+                    "Impact reporting quality": "Completeness and accuracy of impact reports",
+                    "Cost per outcome ($)": "Total cost / Number of outcomes achieved",
+                    "Stakeholder feedback integration": "Use of feedback in program improvement"
+                }
+            },
+
+            # ---------------- 9. INVESTMENT MANAGEMENT & GROWTH ----------------
+            "Investment Management & Growth": {
+                "Enhance Investment Performance": {
+                    "Portfolio ROI (%)": "(Total return / Total investment) * 100",
+                    "Risk-adjusted returns": "Return per unit of risk",
+                    "Investment diversification score": "Spread across asset classes and sectors",
+                    "Alpha generation (%)": "Excess return over benchmark"
+                },
+                "Optimize Capital Allocation": {
+                    "Return on invested capital (%)": "(NOPAT / Invested capital) * 100",
+                    "Capital allocation efficiency": "Alignment with strategic priorities",
+                    "Hurdle rate achievement (%)": "(Projects meeting targets / Total projects) * 100",
+                    "Investment timing effectiveness": "Market entry and exit timing"
+                },
+                "Strengthen Strategic Investments": {
+                    "Strategic alignment score": "Investment alignment with organizational goals",
+                    "Long-term value creation": "Net present value of future benefits",
+                    "Innovation investment ratio (%)": "(Innovation spending / Total investment) * 100",
+                    "ESG investment performance": "Returns from sustainable investments"
+                },
+                "Improve Investment Decision Making": {
+                    "Due diligence effectiveness": "Quality of investment analysis",
+                    "Investment committee efficiency": "Speed and quality of decisions",
+                    "Post-investment monitoring": "Ongoing performance tracking",
+                    "Exit strategy success rate (%)": "(Successful exits / Total exits) * 100"
+                }
+            },
+
+            # ---------------- 10. POVERTY REDUCTION & SOCIAL EQUITY ----------------
+            "Poverty Reduction & Social Equity": {
+                "Reduce Income Poverty": {
+                    "Households above poverty line (#)": "Number lifted out of poverty",
+                    "Income inequality reduction (Gini)": "Improvement in income distribution",
+                    "Living wage achievement rate (%)": "(Employees earning living wage / Total) * 100",
+                    "Economic mobility index": "Ability to move between income levels"
+                },
+                "Enhance Access to Basic Services": {
+                    "Basic service coverage (%)": "(Population with access / Total population) * 100",
+                    "Affordability index": "Cost of basic services relative to income",
+                    "Service quality improvement": "Quality metrics for essential services",
+                    "Digital inclusion rate (%)": "(Population with digital access / Total) * 100"
+                },
+                "Promote Social Protection": {
+                    "Social safety net coverage (%)": "(Protected population / Vulnerable population) * 100",
+                    "Disaster resilience index": "Community ability to withstand shocks",
+                    "Vulnerability reduction rate": "Decrease in at-risk populations",
+                    "Social cohesion indicators": "Community trust and cooperation levels"
+                },
+                "Strengthen Gender & Social Inclusion": {
+                    "Gender parity index": "Equality across gender indicators",
+                    "Minority inclusion rate (%)": "(Representation in opportunities / Population share) * 100",
+                    "Disability access improvement": "Accessibility for people with disabilities",
+                    "Social equity achievement": "Reduction in discrimination and barriers"
+                }
+            },
+
+            # ---------------- 11. EMPLOYMENT GENERATION & WORKFORCE DEVELOPMENT ----------------
+            "Employment Generation & Workforce Development": {
+                "Create Quality Employment Opportunities": {
+                    "Net jobs created (#)": "New employment opportunities generated",
+                    "Employment growth rate (%)": "(Current employment - Previous) / Previous * 100",
+                    "Job quality index": "Wages, benefits, and working conditions",
+                    "Youth employment rate (%)": "(Employed youth / Total youth) * 100"
+                },
+                "Enhance Workforce Skills & Capabilities": {
+                    "Skills development completion rate (%)": "(Trained individuals / Enrolled) * 100",
+                    "Workforce productivity growth (%)": "Output per worker improvement",
+                    "Technical certification rate (%)": "(Certified workers / Total workers) * 100",
+                    "Digital literacy improvement": "Increase in technology skills"
+                },
+                "Promote Labor Market Inclusion": {
+                    "Female employment rate (%)": "(Employed women / Working-age women) * 100",
+                    "Disadvantaged group employment (#)": "Jobs for marginalized populations",
+                    "Wage gap reduction (%)": "Closing of pay disparities",
+                    "Workplace diversity index": "Representation across demographic groups"
+                },
+                "Strengthen Labor Market Efficiency": {
+                    "Job matching efficiency": "Speed and quality of employment matches",
+                    "Labor market information system": "Quality of employment data",
+                    "Vocational training relevance": "Alignment with market needs",
+                    "Employment retention rate (%)": "(Retained employees / Total employees) * 100"
+                }
+            },
+
+            # ---------------- 12. FINANCIAL EFFICIENCY & PRODUCTIVITY ----------------
+            "Financial Efficiency & Productivity": {
+                "Optimize Financial Operations": {
+                    "Financial process automation rate (%)": "(Automated processes / Total processes) * 100",
+                    "Transaction processing cost ($)": "Cost per financial transaction",
+                    "Financial close cycle time (days)": "Time for period-end closing",
+                    "Error reduction in financial operations (%)": "Decrease in processing errors"
+                },
+                "Enhance Financial Technology Utilization": {
+                    "FinTech adoption rate (%)": "(Digital finance users / Total users) * 100",
+                    "Data analytics ROI in finance": "Value from financial data analysis",
+                    "AI implementation in finance (%)": "(AI-driven processes / Total processes) * 100",
+                    "Blockchain application value": "Benefits from distributed ledger technology"
+                },
+                "Improve Financial Decision Support": {
+                    "Financial modeling accuracy (%)": "(Model accuracy / Total predictions) * 100",
+                    "Decision support system utilization": "Usage of financial analysis tools",
+                    "Scenario analysis effectiveness": "Quality of financial projections",
+                    "Strategic planning integration": "Finance input in strategic decisions"
+                },
+                "Strengthen Financial Governance": {
+                    "Internal control effectiveness": "Strength of financial controls",
+                    "Audit finding resolution rate (%)": "(Resolved findings / Total findings) * 100",
+                    "Policy compliance rate (%)": "(Compliant operations / Total operations) * 100",
+                    "Financial transparency index": "Openness in financial reporting"
+                }
+            },
+
+            # ---------------- 13. SUSTAINABLE FINANCE & ESG INTEGRATION ----------------
+            "Sustainable Finance & ESG Integration": {
+                "Enhance Environmental Financial Performance": {
+                    "Green investment portfolio (%)": "(Sustainable investments / Total portfolio) * 100",
+                    "Carbon cost reduction ($)": "Savings from emissions reduction",
+                    "Circular economy revenue ($)": "Income from waste-to-value initiatives",
+                    "Climate resilience investment ROI": "Return on climate adaptation spending"
+                },
+                "Strengthen Social Impact Finance": {
+                    "Social impact bond performance": "Achievement of social outcome targets",
+                    "Community investment returns": "Financial and social returns",
+                    "Financial inclusion rate (%)": "(Population with financial access / Total) * 100",
+                    "Affordable financing availability": "Access to credit for underserved groups"
+                },
+                "Optimize Governance-Linked Finance": {
+                    "ESG compliance cost reduction": "Savings from proactive compliance",
+                    "Stakeholder engagement value": "Financial benefits from engagement",
+                    "Ethical investment growth (%)": "Increase in responsible investing",
+                    "Transparency premium": "Value from open financial practices"
+                },
+                "Implement Sustainable Banking Practices": {
+                    "Green loan portfolio growth (%)": "Increase in environmentally friendly lending",
+                    "Social responsibility banking": "Community-focused financial services",
+                    "Sustainable risk management": "Integration of ESG in risk assessment",
+                    "Impact measurement sophistication": "Quality of sustainability reporting"
+                },
+            },
         },
 
         "Customer Perspective": {
@@ -319,7 +557,7 @@ class StrategyMapChoicesService:
             },
             "Customer Value & Relationship Management": {
                 "Increase customer lifetime value": {
-                    "CLV dollar amount improvement": "Current CLV - Previous CLV",
+                    "CLV amount improvement": "Current CLV - Previous CLV",
                     "Customer profitability score increase": "Current profitability score - Previous profitability score",
                     "Value per customer growth": "((Current value per customer - Previous value per customer) / Previous value per customer) * 100",
                     "Return on customer investment": "(Profit from customer / Cost to acquire & serve customer) * 100"
@@ -378,7 +616,170 @@ class StrategyMapChoicesService:
                     "Case study completion rate": "(Completed case studies / Improvement Needed case studies) * 100",
                     "Advocate engagement score": "(Sum of engagement actions by advocates / Total advocates) * 100"
                 }
-            }
+            },
+            "Customer Insights & Analytics": {
+                "Enhance customer data collection": {
+                    "Data completeness score": "(Complete customer profiles / Total customers) * 100",
+                    "Data accuracy rate": "(Accurate data points / Total data points) * 100",
+                    "Real-time data availability": "(Real-time data sources / Total data sources) * 100",
+                    "Customer profile enrichment rate": "(Enriched profiles / Total profiles) * 100"
+                },
+                "Improve customer analytics capabilities": {
+                    "Predictive model accuracy": "(Correct predictions / Total predictions) * 100",
+                    "Customer segmentation effectiveness": "(Revenue from targeted segments / Total revenue) * 100",
+                    "Behavioral pattern identification rate": "(Identified patterns / Total potential patterns) * 100",
+                    "Analytics adoption by business units": "(Business units using analytics / Total units) * 100"
+                },
+                "Leverage customer feedback for improvement": {
+                    "Feedback implementation rate": "(Implemented feedback items / Total feedback) * 100",
+                    "Customer-suggested improvements implemented": "(Implemented customer suggestions / Total suggestions) * 100",
+                    "Feedback response time": "Average time to respond to customer feedback",
+                    "Customer perception of feedback utilization": "Survey score on how well feedback is used"
+                },
+                "Enhance customer journey analytics": {
+                    "Journey mapping completeness": "(Mapped journey stages / Total stages) * 100",
+                    "Drop-off point identification": "(Identified drop-off points / Total potential points) * 100",
+                    "Journey optimization impact": "((Improved conversion rate - Baseline rate) / Baseline rate) * 100",
+                    "Cross-channel journey visibility": "(Visible cross-channel interactions / Total interactions) * 100"
+                },
+                "Develop customer intelligence systems": {
+                    "Customer intelligence platform adoption": "(Users adopting platform / Total potential users) * 100",
+                    "Single customer view completeness": "(Complete customer views / Total customers) * 100",
+                    "Real-time customer insights availability": "(Available real-time insights / Total improvement_needed insights) * 100",
+                    "Customer intelligence ROI": "((Benefits from intelligence - System cost) / System cost) * 100"
+                },
+            },
+            #health
+            "Health / Health Outcomes & Impact": {
+                "Reduce disease prevalence": {
+                    "Incidence rate of target diseases": "(New cases / Population at risk) * 1000",
+                    "Mortality rate reduction": "((Previous mortality rate - Current mortality rate) / Previous rate) * 100",
+                    "DALYs reduction": "((Previous DALYs - Current DALYs) / Previous DALYs) * 100",
+                    "Patient recovery rate": "(Recovered patients / Total patients) * 100"
+                },
+                "Improve chronic disease management": {
+                    "Patients under disease control": "(Patients with controlled condition / Total chronic patients) * 100",
+                    "Hospital readmission rate reduction": "((Previous readmissions - Current readmissions) / Previous readmissions) * 100",
+                    "Medication adherence rate": "(Patients adhering to prescribed treatment / Total patients) * 100",
+                    "Complication incidence reduction": "((Previous complication rate - Current rate) / Previous rate) * 100"
+                },
+                "Enhance mental health outcomes": {
+                    "Population with improved mental well-being": "(Individuals reporting improvement / Total served) * 100",
+                    "Reduction in depression prevalence": "((Previous depression cases - Current cases) / Previous cases) * 100",
+                    "Suicide rate reduction": "((Previous rate - Current rate) / Previous rate) * 100",
+                    "Access to counseling services": "(Individuals receiving counseling / Total target population) * 100"
+                },
+                "Increase life expectancy & quality of life": {
+                    "Life expectancy at birth": "Average years",
+                    "Healthy life expectancy": "Average years free of major illness",
+                    "Quality-adjusted life years (QALY)": "Sum of QALYs gained",
+                    "Productivity improvement due to health": "(Workdays gained / Total potential workdays) * 100"
+                },
+            },
+            "Health / Preventive & Public Health": {
+                "Increase immunization coverage": {
+                    "Vaccination coverage %": "(Vaccinated population / Total eligible population) * 100",
+                    "Reduction in preventable disease prevalence": "((Previous prevalence - Current prevalence) / Previous prevalence) * 100",
+                    "Maternal and child health service utilization": "(Women/children served / Target population) * 100",
+                    "Public health campaign reach": "(Population reached / Total target population) * 100"
+                },
+                "Promote health education & awareness": {
+                    "Health literacy index": "Survey score on population knowledge of health practices",
+                    "Community health workshops conducted": "Number of workshops / period",
+                    "Campaign engagement rate": "(Population actively engaged / Total target population) * 100",
+                    "Behavioral change adoption rate": "(Population adopting healthy behaviors / Total targeted) * 100"
+                },
+                "Expand preventive screening programs": {
+                    "Screening coverage %": "(Population screened / Total target population) * 100",
+                    "Early detection rate": "(Cases detected early / Total cases) * 100",
+                    "Follow-up adherence rate": "(Patients completing follow-up / Total patients requiring follow-up) * 100",
+                    "Screening campaign reach": "(Population reached / Total target population) * 100"
+                },
+                "Improve maternal & child health": {
+                    "Antenatal care coverage": "(Women receiving ANC / Total pregnant women) * 100",
+                    "Safe delivery rate": "(Institutional deliveries / Total expected deliveries) * 100",
+                    "Postnatal care coverage": "(Women receiving PNC / Total mothers) * 100",
+                    "Child growth monitoring coverage": "(Children monitored / Total children under 5) * 100"
+                },
+            },
+            "Health / Health Service Accessibility & Coverage": {
+                "Expand access to primary healthcare": {
+                    "Population with access to primary healthcare": "(Number of people with access / Total population) * 100",
+                    "Geographic coverage of facilities": "(Number of regions covered / Total regions) * 100",
+                    "Equity in access for marginalized groups": "(Number of marginalized served / Total marginalized population) * 100",
+                    "Telemedicine adoption rate": "(Telemedicine users / Eligible population) * 100"
+                },
+                "Improve patient service availability": {
+                    "Average appointment availability": "Average time to get appointment",
+                    "24/7 emergency service coverage": "(Facilities offering 24/7 emergency / Total facilities) * 100",
+                    "Average response time for emergencies": "Average minutes to respond",
+                    "Availability of essential medications": "(Available essential meds / Total essential meds) * 100"
+                },
+                "Enhance specialty services access": {
+                    "Population served by specialists": "(Patients receiving specialist care / Total needing care) * 100",
+                    "Wait time for specialty appointments": "Average days from referral to appointment",
+                    "Referral completion rate": "(Completed referrals / Total referrals) * 100",
+                    "Patient satisfaction with specialty care": "(Sum of satisfaction ratings / Number of respondents) * 100"
+                },
+                "Increase telehealth utilization": {
+                    "Telemedicine visit rate": "(Telemedicine visits / Total visits) * 100",
+                    "Patient adoption rate": "(Patients using telehealth / Total eligible patients) * 100",
+                    "Telemedicine satisfaction score": "(Sum of satisfaction ratings / Number of respondents) * 100",
+                    "Reduction in in-person visit load": "((Previous in-person visits - Current in-person visits) / Previous visits) * 100"
+                },
+            },
+            "Health / Health Equity & Gender": {
+                "Promote gender-sensitive healthcare": {
+                    "Female access to maternal care": "(Women served / Target women population) * 100",
+                    "Reduction in gender disparities in health": "Index comparing male/female outcomes",
+                    "Women-focused health programs coverage": "(Programs delivered / Planned programs) * 100",
+                    "Gender-specific morbidity reduction": "((Previous female/male morbidity rate - Current rate) / Previous rate) * 100"
+                },
+                "Ensure inclusion of vulnerable populations": {
+                    "Access for disabled individuals": "(Disabled individuals served / Total disabled population) * 100",
+                    "Health services for elderly population": "(Elderly served / Target elderly population) * 100",
+                    "Rural population health service coverage": "(Rural residents served / Total rural population) * 100",
+                    "Monitoring health disparities index": "Index tracking service disparities among groups"
+                },
+                "Improve indigenous & minority health outcomes": {
+                    "Population coverage for indigenous groups": "(Indigenous population served / Total indigenous population) * 100",
+                    "Reduction in morbidity disparities": "Index comparing minority vs majority morbidity rates",
+                    "Access to culturally sensitive care": "(Patients receiving culturally sensitive care / Total target population) * 100",
+                    "Community satisfaction among minority groups": "(Sum of satisfaction ratings / Number of respondents) * 100"
+                },
+                "Address refugee & migrant health": {
+                    "Refugee/migrant population served": "(Individuals served / Total refugee/migrant population) * 100",
+                    "Immunization coverage in migrant groups": "(Vaccinated migrants / Total eligible migrants) * 100",
+                    "Access to primary healthcare": "(Migrants accessing services / Total target population) * 100",
+                    "Follow-up and continuity of care": "(Completed follow-ups / Total required follow-ups) * 100"
+                },
+            },
+            "Health / Community & Stakeholder Engagement": {
+                "Engage citizens and communities in health initiatives": {
+                    "Community participation rate": "(Participants in programs / Total targeted population) * 100",
+                    "Feedback incorporation rate": "(Community suggestions implemented / Total suggestions) * 100",
+                    "Local health committee involvement": "(Active committees / Total planned committees) * 100",
+                    "Public awareness improvement": "(Surveyed population aware / Total population) * 100"
+                },
+                "Collaborate with NGOs and social organizations": {
+                    "Joint health initiatives launched": "Number of projects implemented jointly",
+                    "Beneficiaries reached through partnerships": "Number of people served",
+                    "Social program effectiveness score": "Evaluation score from program assessment",
+                    "Community satisfaction with partnerships": "(Sum of satisfaction ratings / Number of respondents) * 100"
+                },
+                "Strengthen community-led health programs": {
+                    "Number of community health projects": "Count of active community projects",
+                    "Population reached by community programs": "(Population served / Total target population) * 100",
+                    "Community participation in planning": "(Individuals involved in planning / Total invited) * 100",
+                    "Impact of community interventions": "(Measured health improvement / Target improvement) * 100"
+                },
+                "Enhance cross-sector stakeholder engagement": {
+                    "Number of multi-stakeholder meetings": "Count per period",
+                    "Joint initiatives executed": "(Completed joint initiatives / Planned initiatives) * 100",
+                    "Stakeholder satisfaction score": "(Sum of satisfaction ratings / Number of respondents) * 100",
+                    "Policy adoption influenced by stakeholders": "(Policies adopted / Total proposed) * 100"
+                },
+            },
         },
 
         "Internal Process Perspective": {
@@ -442,7 +843,7 @@ class StrategyMapChoicesService:
                     "Customer experience consistency score": "((Number of consistent experiences / Total experiences) * 100)",
                     "Process standard deviation reduction": "Previous process deviation - Current deviation",
                     "Service level agreement compliance rate": "(SLAs met / Total SLAs) * 100"
-                }
+                },
             },
             "Innovation & New Product Development": {
                 "Accelerate time-to-market for new products": {
@@ -505,7 +906,103 @@ class StrategyMapChoicesService:
                     "Innovation culture survey score": "Average survey score on innovation culture",
                     "Implemented ideas percentage": "(Implemented ideas / Total submitted ideas) * 100"
                 }
-            }
+            },
+            "Supply Chain & Logistics Management": {
+                "Optimize end-to-end supply chain": {
+                    "End-to-end supply chain visibility": "(Visible supply chain segments / Total segments) * 100",
+                    "Supply chain cost reduction": "((Previous total cost - Current cost) / Previous cost) * 100",
+                    "Perfect order fulfillment rate": "(Perfect orders / Total orders) * 100",
+                    "Supply chain risk mitigation score": "Weighted score of risk reduction measures"
+                },
+                "Improve logistics and distribution": {
+                    "On-time delivery performance": "(On-time deliveries / Total deliveries) * 100",
+                    "Transportation cost optimization": "((Previous transport cost - Current) / Previous) * 100",
+                    "Delivery accuracy rate": "(Accurate deliveries / Total deliveries) * 100",
+                    "Last-mile delivery efficiency": "(Successful last-mile deliveries / Total) * 100"
+                },
+                "Enhance supplier relationship management": {
+                    "Supplier performance score": "Weighted average of supplier KPIs",
+                    "Supplier innovation contribution": "(Supplier-driven innovations / Total innovations) * 100",
+                    "Supplier risk assessment coverage": "(Assessed suppliers / Total suppliers) * 100",
+                    "Strategic supplier partnership depth": "Score based on partnership maturity"
+                },
+                "Optimize warehouse operations": {
+                    "Warehouse capacity utilization": "(Used capacity / Total capacity) * 100",
+                    "Order picking accuracy rate": "(Accurate picks / Total picks) * 100",
+                    "Warehouse throughput improvement": "((Current throughput - Previous) / Previous) * 100",
+                    "Storage cost per unit reduction": "((Previous cost - Current) / Previous) * 100"
+                },
+                "Improve demand forecasting accuracy": {
+                    "Forecast accuracy percentage": "(1 - (Absolute forecast error / Actual demand)) * 100",
+                    "Inventory turnover improvement": "((Current turnover - Previous) / Previous) * 100",
+                    "Stock-out rate reduction": "((Previous stock-outs - Current) / Previous) * 100",
+                    "Excess inventory percentage decrease": "((Previous excess - Current) / Previous) * 100"
+                }
+            },
+            "Technology & Digital Operations": {
+                "Enhance IT infrastructure reliability": {
+                    "System uptime percentage": "(Uptime / Total operational time) * 100",
+                    "Mean time between failures improvement": "Current MTBF - Previous MTBF",
+                    "Infrastructure scalability score": "Weighted score of scalability metrics",
+                    "Disaster recovery readiness": "(Recovery objectives met / Total objectives) * 100"
+                },
+                "Improve software development lifecycle": {
+                    "Development velocity improvement": "((Current velocity - Previous) / Previous) * 100",
+                    "Code quality score improvement": "Current quality score - Previous score",
+                    "Deployment frequency increase": "((Current deployments - Previous) / Previous) * 100",
+                    "Bug resolution time reduction": "((Previous resolution time - Current) / Previous) * 100"
+                },
+                "Optimize cloud operations": {
+                    "Cloud cost optimization percentage": "((Previous cloud spend - Current) / Previous) * 100",
+                    "Cloud performance reliability": "(Actual performance / Expected performance) * 100",
+                    "Cloud security compliance score": "Weighted security compliance metrics",
+                    "Multi-cloud management efficiency": "(Managed cloud resources / Total resources) * 100"
+                },
+                "Enhance data management capabilities": {
+                    "Data quality score improvement": "Current data quality - Previous quality",
+                    "Data processing efficiency": "(Processed data volume / Processing time)",
+                    "Data governance compliance rate": "(Compliant data processes / Total processes) * 100",
+                    "Master data management maturity": "Weighted maturity score"
+                },
+                "Improve cybersecurity posture": {
+                    "Security incident reduction percentage": "((Previous incidents - Current) / Previous) * 100",
+                    "Vulnerability remediation time reduction": "((Previous remediation time - Current) / Previous) * 100",
+                    "Security training completion rate": "(Trained employees / Total employees) * 100",
+                    "Compliance audit pass rate": "(Passed audits / Total audits) * 100"
+                },
+            },
+            "Risk Management & Compliance": {
+                "Strengthen enterprise risk management": {
+                    "Risk identification coverage": "(Identified risks / Total potential risks) * 100",
+                    "Risk mitigation effectiveness": "(Mitigated risks / Total risks) * 100",
+                    "Risk assessment completion rate": "(Completed assessments / Total improvement_needed) * 100",
+                    "Business continuity readiness": "(Ready processes / Total critical processes) * 100"
+                },
+                "Enhance regulatory compliance": {
+                    "Compliance audit score improvement": "Current audit score - Previous score",
+                    "Regulatory change implementation time": "Average time to implement regulatory changes",
+                    "Compliance training completion rate": "(Completed training / Total required) * 100",
+                    "Penalty avoidance percentage": "(Avoided penalties / Potential penalties) * 100"
+                },
+                "Improve business continuity planning": {
+                    "BCP test success rate": "(Successful tests / Total tests) * 100",
+                    "Recovery time objective achievement": "(Achieved RTOs / Total RTOs) * 100",
+                    "Business impact analysis coverage": "(Analyzed processes / Total processes) * 100",
+                    "Disaster recovery drill effectiveness": "Weighted score of drill performance"
+                },
+                "Strengthen internal controls": {
+                    "Control effectiveness score": "Weighted score of control performance",
+                    "Control deficiency resolution rate": "(Resolved deficiencies / Total deficiencies) * 100",
+                    "Segregation of duties compliance": "(Compliant access rights / Total access rights) * 100",
+                    "Fraud detection and prevention rate": "(Detected/prevented fraud / Total attempts) * 100"
+                },
+                "Enhance environmental, social, governance (ESG) performance": {
+                    "ESG rating improvement": "Current ESG rating - Previous rating",
+                    "Carbon footprint reduction percentage": "((Previous emissions - Current) / Previous) * 100",
+                    "Social responsibility program impact": "Weighted impact score of social programs",
+                    "Governance compliance score": "Weighted governance compliance metrics"
+                },
+            },
         },
 
         "Learning & Growth Perspective": {
@@ -757,27 +1254,87 @@ class StrategyMapChoicesService:
                     "Application of learning in business outcomes": "(Measured application of learning in tasks / total expected application) * 100"
                 },
             },
+            "Organizational Agility & Change Management": {
+                "Improve organizational responsiveness": {
+                    "Time to market for new initiatives": "Average time from decision to implementation",
+                    "Change implementation speed": "((Previous implementation time - Current) / Previous) * 100",
+                    "Agility index score": "Weighted score of responsiveness metrics",
+                    "Adaptation success rate": "(Successfully adapted initiatives / Total initiatives) * 100"
+                },
+                "Enhance change readiness": {
+                    "Change readiness assessment score": "Average score from readiness assessments",
+                    "Employee change adoption rate": "(Employees adopting change / Total employees) * 100",
+                    "Change initiative success rate": "(Successful changes / Total changes) * 100",
+                    "Resistance mitigation effectiveness": "((Previous resistance - Current resistance) / Previous) * 100"
+                },
+                "Strengthen strategic alignment": {
+                    "Strategic goal alignment percentage": "(Employees understanding strategic goals / Total employees) * 100",
+                    "Departmental goal alignment score": "Weighted score of departmental alignment",
+                    "Strategic initiative completion rate": "(Completed initiatives / Total initiatives) * 100",
+                    "Performance metric alignment": "(Aligned metrics / Total metrics) * 100"
+                },
+                "Improve decision-making speed": {
+                    "Average decision cycle time": "Time from problem identification to decision",
+                    "Decision quality score": "Weighted score of decision outcomes",
+                    "Empowered decision-making rate": "(Decisions made at appropriate level / Total decisions) * 100",
+                    "Information-to-decision time reduction": "((Previous time - Current time) / Previous) * 100"
+                },
+                "Enhance organizational resilience": {
+                    "Business continuity readiness score": "Weighted score of resilience capabilities",
+                    "Crisis response effectiveness": "(Effective responses / Total crises) * 100",
+                    "Recovery time improvement": "((Previous recovery time - Current) / Previous) * 100",
+                    "Risk mitigation coverage": "(Mitigated risks / Total identified risks) * 100"
+                },
+            },
         },
     }
 
     # Getters for forms
-    @classmethod
-    def get_perspective_choices(cls):
-        return [(p, p) for p in cls.STRATEGY_MAP_HIERARCHY.keys()]
+    # Getters for forms
+    def get_perspective_choices(self):
+        return [(p, p) for p in self.STRATEGY_MAP_HIERARCHY.keys()]
 
-    @classmethod
-    def get_pillar_choices(cls, perspective):
-        return [(p, p) for p in cls.STRATEGY_MAP_HIERARCHY.get(perspective, {}).keys()]
+    def get_pillar_choices(self, perspective):
+        return [(p, p) for p in self.STRATEGY_MAP_HIERARCHY.get(perspective, {}).keys()]
 
-    @classmethod
-    def get_objective_choices(cls, perspective, pillar):
-        return [(o, o) for o in cls.STRATEGY_MAP_HIERARCHY.get(perspective, {}).get(pillar, {}).keys()]
+    def get_objective_choices(self, perspective, pillar):
+        return [(o, o) for o in self.STRATEGY_MAP_HIERARCHY.get(perspective, {}).get(pillar, {}).keys()]
 
-    @classmethod
-    def get_kpi_choices(cls, perspective, pillar, objective):
-        return [(kpi, kpi) for kpi in
-                cls.STRATEGY_MAP_HIERARCHY.get(perspective, {}).get(pillar, {}).get(objective, {}).keys()]
+    def get_kpi_choices(self, perspective, pillar, objective):
+        return [
+            (kpi, kpi)
+            for kpi in self.STRATEGY_MAP_HIERARCHY.get(perspective, {})
+            .get(pillar, {})
+            .get(objective, {})
+            .keys()
+        ]
 
-    @classmethod
-    def get_formula(cls, perspective, pillar, objective, kpi):
-        return cls.STRATEGY_MAP_HIERARCHY.get(perspective, {}).get(pillar, {}).get(objective, {}).get(kpi, "")
+    def get_formula(self, perspective, pillar, objective, kpi):
+        return (
+            self.STRATEGY_MAP_HIERARCHY
+            .get(perspective, {})
+            .get(pillar, {})
+            .get(objective, {})
+            .get(kpi, "")
+        )
+
+    # @classmethod
+    # def get_perspective_choices(cls):
+    #     return [(p, p) for p in cls.STRATEGY_MAP_HIERARCHY.keys()]
+    #
+    # @classmethod
+    # def get_pillar_choices(cls, perspective):
+    #     return [(p, p) for p in cls.STRATEGY_MAP_HIERARCHY.get(perspective, {}).keys()]
+    #
+    # @classmethod
+    # def get_objective_choices(cls, perspective, pillar):
+    #     return [(o, o) for o in cls.STRATEGY_MAP_HIERARCHY.get(perspective, {}).get(pillar, {}).keys()]
+    #
+    # @classmethod
+    # def get_kpi_choices(cls, perspective, pillar, objective):
+    #     return [(kpi, kpi) for kpi in
+    #             cls.STRATEGY_MAP_HIERARCHY.get(perspective, {}).get(pillar, {}).get(objective, {}).keys()]
+    #
+    # @classmethod
+    # def get_formula(cls, perspective, pillar, objective, kpi):
+    #     return cls.STRATEGY_MAP_HIERARCHY.get(perspective, {}).get(pillar, {}).get(objective, {}).get(kpi, "")

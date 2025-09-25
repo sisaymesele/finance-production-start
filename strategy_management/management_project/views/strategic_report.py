@@ -76,11 +76,11 @@ def strategic_report_list(request, cycle_slug):
     search_query = request.GET.get("search", "").strip()
     if search_query:
         reports = reports.filter(
-            Q(action_plan__strategy_map__objective__icontains=search_query) |
-            Q(action_plan__strategy_map__kpi__icontains=search_query) |
+            Q(action_plan__strategy_hierarchy__strategic_perspective__icontains=search_query) |
+            Q(action_plan__strategy_hierarchy__strategic_pillar__icontains=search_query) |
+            Q(action_plan__strategy_hierarchy__objective__icontains=search_query) |
+            Q(action_plan__strategy_hierarchy__kpi__icontains=search_query) |
             Q(achievement__icontains=search_query) |
-            Q(progress_summary__icontains=search_query) |
-            Q(performance_summary__icontains=search_query) |
             Q(status__icontains=search_query)
         ).distinct()
 
@@ -214,7 +214,7 @@ def export_strategic_report_to_excel(request, cycle_slug):
     reports = StrategicReport.objects.filter(
         action_plan__strategic_cycle=cycle,
         organization_name=request.user.organization_name
-    ).select_related("action_plan", "action_plan__strategy_map", "action_plan__strategic_cycle")
+    ).select_related("action_plan", "action_plan__strategy_hierarchy", "action_plan__strategic_cycle")
 
     workbook = Workbook()
     sheet = workbook.active
@@ -258,15 +258,15 @@ def export_strategic_report_to_excel(request, cycle_slug):
     # Data rows
     for row_idx, report in enumerate(reports, start=3):
         action_plan = report.action_plan
-        strategy_map = action_plan.strategy_map if action_plan else None
+        strategy_hierarchy = action_plan.strategy_hierarchy if action_plan else None
         strategic_cycle = action_plan.strategic_cycle if action_plan else None
 
         data = [
             row_idx - 2,
-            strategy_map.strategic_perspective if strategy_map else "",
-            split_two_lines(strategy_map.strategic_pillar if strategy_map else ""),
-            split_two_lines(strategy_map.objective if strategy_map else ""),
-            split_two_lines(strategy_map.kpi if strategy_map else ""),
+            strategy_hierarchy.strategic_perspective if strategy_hierarchy else "",
+            split_two_lines(strategy_hierarchy.strategic_pillar if strategy_hierarchy else ""),
+            split_two_lines(strategy_hierarchy.objective if strategy_hierarchy else ""),
+            split_two_lines(strategy_hierarchy.kpi if strategy_hierarchy else ""),
             action_plan.baseline if action_plan else 0,
             action_plan.target if action_plan else 0,
             report.achievement,
@@ -425,18 +425,18 @@ def strategic_report_chart(request):
     # ---------------- 4. Body + Cycle Metrics ----------------
 
     kpi_data = reports.values(
-        "action_plan__strategy_map__kpi",
+        "action_plan__strategy_hierarchy__kpi",
         "action_plan__strategic_cycle__end_date",
         "achievement"
     ).order_by("action_plan__strategic_cycle__end_date")
 
-    kpi_names = sorted({r['action_plan__strategy_map__kpi'] for r in kpi_data if r['action_plan__strategy_map__kpi']})
+    kpi_names = sorted({r['action_plan__strategy_hierarchy__kpi'] for r in kpi_data if r['action_plan__strategy_hierarchy__kpi']})
     cycle_dates_set = sorted({r['action_plan__strategic_cycle__end_date'] for r in kpi_data if r['action_plan__strategic_cycle__end_date']})
     cycle_labels = [d.strftime("%b %Y") for d in cycle_dates_set]
 
     kpi_matrix = defaultdict(lambda: {d: 0 for d in cycle_dates_set})
     for r in kpi_data:
-        kpi = r['action_plan__strategy_map__kpi']
+        kpi = r['action_plan__strategy_hierarchy__kpi']
         date = r['action_plan__strategic_cycle__end_date']
         if kpi and date:
             kpi_matrix[kpi][date] = r['achievement'] or 0

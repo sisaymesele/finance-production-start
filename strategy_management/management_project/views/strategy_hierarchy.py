@@ -1,18 +1,18 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from management_project.models import StrategyMap
-from management_project.forms import StrategyMapForm
+from management_project.models import StrategyHierarchy
+from management_project.forms import StrategyHierarchyForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 
 
 @login_required
-def strategy_map_list(request):
+def strategy_hierarchy_list(request):
     """
-    List all strategy map entries belonging to the current user's organization,
+    List all strategy hierarchy entries belonging to the current user's organization,
     with optional search on perspective, pillar, and objective.
     """
     # Base queryset filtered by user's organization
-    strategies = StrategyMap.objects.filter(
+    strategies = StrategyHierarchy.objects.filter(
         organization_name=request.user.organization_name
     )
 
@@ -25,63 +25,63 @@ def strategy_map_list(request):
             Q(objective__icontains=query)
         )
 
-    return render(request, 'strategy_map/list.html', {
+    return render(request, 'strategy_hierarchy/list.html', {
         'strategies': strategies,
         'query': query,  # pass back search term to template
     })
 
 
 @login_required
-def create_strategy_map(request):
+def create_strategy_hierarchy(request):
     """
-    Create a new strategy map entry for the current user's organization.
+    Create a new strategy hierarchy entry for the current user's organization.
     """
     if request.method == 'POST':
-        form = StrategyMapForm(request.POST)
+        form = StrategyHierarchyForm(request.POST)
         if 'save' in request.POST and form.is_valid():
             strategy = form.save(commit=False)
             strategy.organization_name = request.user.organization_name
             strategy.save()
-            return redirect('strategy_map_list')
+            return redirect('strategy_hierarchy_list')
     else:
-        form = StrategyMapForm()
+        form = StrategyHierarchyForm()
 
-    return render(request, 'strategy_map/form.html', {'form': form})
+    return render(request, 'strategy_hierarchy/form.html', {'form': form})
 
 
 @login_required
-def update_strategy_map(request, pk):
+def update_strategy_hierarchy(request, pk):
     """
-    Update an existing strategy map entry, only if it belongs to the user's organization.
+    Update an existing strategy hierarchy entry, only if it belongs to the user's organization.
     """
     entry = get_object_or_404(
-        StrategyMap,
+        StrategyHierarchy,
         pk=pk,
         organization_name=request.user.organization_name
     )
     if request.method == 'POST':
-        form = StrategyMapForm(request.POST, instance=entry)
+        form = StrategyHierarchyForm(request.POST, instance=entry)
         if 'save' in request.POST and form.is_valid():
             form.save()
-            return redirect('strategy_map_list')
+            return redirect('strategy_hierarchy_list')
     else:
-        form = StrategyMapForm(instance=entry)
+        form = StrategyHierarchyForm(instance=entry)
 
-    return render(request, 'strategy_map/form.html', {'form': form})
+    return render(request, 'strategy_hierarchy/form.html', {'form': form})
 
 
 @login_required
-def delete_strategy_map(request, pk):
+def delete_strategy_hierarchy(request, pk):
     """
-    Delete an existing strategy map entry, only if it belongs to the user's organization.
+    Delete an existing strategy hierarchy entry, only if it belongs to the user's organization.
     """
     entry = get_object_or_404(
-        StrategyMap,
+        StrategyHierarchy,
         pk=pk,
         organization_name=request.user.organization_name
     )
     if request.method == 'POST':
         entry.delete()
-        return redirect('strategy_map_list')
+        return redirect('strategy_hierarchy_list')
 
-    return render(request, 'strategy_map/delete_confirm.html', {'entry': entry})
+    return render(request, 'strategy_hierarchy/delete_confirm.html', {'entry': entry})

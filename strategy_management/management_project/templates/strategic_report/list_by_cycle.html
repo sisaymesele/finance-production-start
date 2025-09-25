@@ -10,48 +10,61 @@
        hx-target="#full-page-container"
        hx-swap="innerHTML"
        hx-push-url="true">
-        <i class="bi bi-arrow-left"></i> Back to Strategic Report Cycles
+        <i class="bi bi-arrow-left"></i> Back to Report Cycles
+    </a>
+
+    <!-- Chart View Button -->
+    <a class="btn btn-info ms-auto"
+       href="{% url 'strategic_report_chart' %}"
+       hx-get="{% url 'strategic_report_chart' %}"
+       hx-target="#full-page-container"
+       hx-swap="innerHTML"
+       hx-push-url="true">
+        <i class="bi bi-bar-chart"></i> View Charts
     </a>
 </div>
 
 <!-- Page Header -->
 <div class="d-flex flex-column flex-md-row flex-wrap align-items-md-center justify-content-between mb-4 gap-3">
-
-    <!-- Left: Title -->
     <div class="me-md-3">
-        <h2 class="mb-0">Strategic Report Records</h2>
+        <h2 class="mb-0">Strategic Performance Reports</h2>
         <h5 class="text-muted mb-0">{{ strategy_by_cycle.name }}</h5>
+        <p class="text-muted mb-0 small">
+            Period: {{ strategy_by_cycle.start_date|date:"M Y" }} - {{ strategy_by_cycle.end_date|date:"M Y" }}
+        </p>
     </div>
 
-    <!-- Middle: Search -->
-    <form method="get"
-          action="{% url 'strategic_report_list' strategy_by_cycle.slug %}"
-          class="d-flex flex-grow-1 mx-md-3"
-          hx-get="{% url 'strategic_report_list' strategy_by_cycle.slug %}"
-          hx-target="#full-page-container"
-          hx-trigger="keyup changed delay:500ms from:input[name='search']">
-        <div class="input-group w-100">
-            <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input type="text" name="search"
-                   class="form-control"
-                   placeholder="Search by Perspective, Pillar, Objective, KPI, Responsible Body..."
-                   value="{{ search_query|default_if_none:'' }}">
-        </div>
-    </form>
+    <div class="d-flex flex-column flex-grow-1 mx-md-3 gap-2">
+        <form method="get"
+              action="{% url 'strategic_report_list' cycle_slug=strategy_by_cycle.slug %}"
+              class="d-flex"
+              hx-get="{% url 'strategic_report_list' cycle_slug=strategy_by_cycle.slug %}"
+              hx-target="#full-page-container"
+              hx-trigger="change from:select, keyup changed delay:500ms from:input[name='search']">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" name="search"
+                       class="form-control"
+                       placeholder="Search by Perspective, Pillar, Objective, KPI..."
+                       value="{{ search_query|default_if_none:'' }}">
+            </div>
+        </form>
+    </div>
 
-    <!-- Right: Buttons -->
     <div class="d-flex flex-wrap align-items-center gap-2 mt-2 mt-md-0">
         <a class="btn btn-success"
-           href="{% url 'export_strategic_reports' strategy_by_cycle.slug %}">
+           href="{% url 'export_strategic_report' cycle_slug=strategy_by_cycle.slug %}"
+           data-bs-toggle="tooltip" title="Export to Excel">
             <i class="bi bi-file-earmark-excel"></i> Export
         </a>
         <a class="btn btn-primary"
-           href="{% url 'create_strategic_report' strategy_by_cycle.slug %}"
-           hx-get="{% url 'create_strategic_report' strategy_by_cycle.slug %}"
+           href="{% url 'create_strategic_report' cycle_slug=strategy_by_cycle.slug %}"
+           hx-get="{% url 'create_strategic_report' cycle_slug=strategy_by_cycle.slug %}"
            hx-target="#full-page-container"
            hx-swap="innerHTML"
-           hx-push-url="true">
-            <i class="bi bi-plus-circle"></i> Create Report
+           hx-push-url="true"
+           data-bs-toggle="tooltip" title="Create New Report">
+            <i class="bi bi-plus-circle"></i> New Report
         </a>
     </div>
 </div>
@@ -59,8 +72,13 @@
 <!-- Data Table -->
 <div class="card">
     <div class="card-header bg-light d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Reports</h5>
-        <span class="badge bg-primary">{{ page_obj.paginator.count }} records</span>
+        <h5 class="mb-0">Performance Reports</h5>
+        <div>
+            <span class="badge bg-primary">{{ page_obj.paginator.count }} records</span>
+            {% if search_query %}
+            <span class="badge bg-secondary">Search: "{{ search_query }}"</span>
+            {% endif %}
+        </div>
     </div>
     <div class="table-responsive">
         <table class="table table-bordered table-hover table-sm">
@@ -74,12 +92,18 @@
                 <th>Baseline</th>
                 <th>Target</th>
                 <th>Achievement</th>
-                <th>% Achieved</th>
+                <th>Percent Achieved</th>
                 <th>Variance</th>
-                <th>Weighted Score</th>
-                <th>Responsible</th>
+                <th>Score</th>
+                <th>Progress</th>
                 <th>Status</th>
-                <th>Updated</th>
+                <th>Data Source</th>
+                <th>Data Collector</th>
+                <th>Performance Summary</th>
+                <th>Progress Summary</th>
+                <th>Challenges</th>
+                <th>Successes</th>
+                <th>Lessons Learned</th>
                 <th class="text-center">Actions</th>
             </tr>
             </thead>
@@ -87,71 +111,70 @@
             {% for report in page_obj %}
             <tr>
                 <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
-                <td>{{ report.action_plan.strategy_map.strategic_perspective|truncatewords:3 }}</td>
-                <td>{{ report.action_plan.strategy_map.strategic_pillar|truncatewords:3 }}</td>
-                <td>{{ report.action_plan.strategy_map.objective|truncatewords:4 }}</td>
-                <td>{{ report.action_plan.strategy_map.kpi|truncatewords:4 }}</td>
-                <td class="text-end">{{ report.action_plan.baseline|floatformat:2|intcomma }}</td>
-                <td class="text-end">{{ report.action_plan.target|floatformat:2|intcomma }}</td>
-                <td class="text-end fw-semibold">{{ report.achievement|floatformat:2|intcomma }}</td>
+                <td>{{ report.action_plan.strategy_hierarchy.strategic_perspective|default:"-" }}</td>
+                <td>{{ report.action_plan.strategy_hierarchy.strategic_pillar|default:"-" }}</td>
+                <td>{{ report.action_plan.strategy_hierarchy.objective|default:"-" }}</td>
+                <td>{{ report.action_plan.strategy_hierarchy.kpi|default:"-" }}</td>
+                <td class="text-end">{{ report.action_plan.baseline|floatformat:2|intcomma|default:"-" }}</td>
+                <td class="text-end">{{ report.action_plan.target|floatformat:2|intcomma|default:"-" }}</td>
+                <td class="text-end">{{ report.achievement|floatformat:2|intcomma|default:"-" }}</td>
+                <td class="text-end">{{ report.percent_achieved|floatformat:2|intcomma|default:"-" }}</td>
                 <td class="text-end">
-                    {% if report.percent_achieved >= 100 %}
-                        <span class="badge bg-success">{{ report.percent_achieved|floatformat:0 }}%</span>
-                    {% elif report.percent_achieved >= 75 %}
-                        <span class="badge bg-primary">{{ report.percent_achieved|floatformat:0 }}%</span>
-                    {% elif report.percent_achieved >= 50 %}
-                        <span class="badge bg-warning">{{ report.percent_achieved|floatformat:0 }}%</span>
-                    {% else %}
-                        <span class="badge bg-danger">{{ report.percent_achieved|floatformat:0 }}%</span>
-                    {% endif %}
+                    <span class="badge {% if report.variance >= 0 %}bg-success{% else %}bg-danger{% endif %}">
+                        {{ report.variance|floatformat:2|intcomma|default:"0.00" }}
+                    </span>
                 </td>
                 <td class="text-end">
-                    {% if report.variance > 0 %}
-                        <span class="text-success">+{{ report.variance|floatformat:2|intcomma }}</span>
-                    {% else %}
-                        <span class="text-danger">{{ report.variance|floatformat:2|intcomma }}</span>
-                    {% endif %}
+                    <span class="badge {% if report.weighted_score >= 80 %}bg-success{% elif report.weighted_score >= 60 %}bg-warning{% else %}bg-danger{% endif %}">
+                        {{ report.weighted_score|floatformat:1|default:"0.0" }}%
+                    </span>
                 </td>
-                <td class="text-end fw-semibold">{{ report.weighted_score|floatformat:2|intcomma }}</td>
-                <td>{{ report.action_plan.responsible_bodies_display|truncatewords:3 }}</td>
                 <td>
-                    {% if report.status == 'completed' %}
-                        <span class="badge bg-success">Completed</span>
-                    {% elif report.status == 'on_track' %}
-                        <span class="badge bg-primary">On Track</span>
-                    {% elif report.status == 'delayed' %}
-                        <span class="badge bg-warning">Delayed</span>
-                    {% else %}
-                        <span class="badge bg-secondary">{{ report.status|default:"Pending" }}</span>
-                    {% endif %}
+                    <div class="progress" style="height: 8px;" data-bs-toggle="tooltip" title="{{ report.progress_summary|default:'No progress summary' }}">
+                        <div class="progress-bar {% if report.weighted_score >= 80 %}bg-success{% elif report.weighted_score >= 60 %}bg-warning{% else %}bg-danger{% endif %}"
+                             style="width: {% if report.weighted_score %}{{ report.weighted_score }}%{% else %}0%{% endif %}">
+                        </div>
+                    </div>
+                    <small class="text-muted">{{ report.weighted_score|default:0 }}%</small>
                 </td>
-                <td nowrap>{{ report.updated_at|date:"M d, Y" }}</td>
-                <td class="text-center" nowrap>
+                <td>
+                    <span class="badge {% if report.status == 'completed' %}bg-success{% elif report.status == 'in_progress' %}bg-primary{% elif report.status == 'on_hold' %}bg-warning{% elif report.status == 'cancelled' %}bg-danger{% else %}bg-secondary{% endif %}">
+                        {{ report.get_status_display|default:"Pending" }}
+                    </span>
+                </td>
+                <td>{{ report.data_source|default:"-" }}</td>
+                <td>{{ report.data_collector|default:"-" }}</td>
+                <td>{{ report.performance_summary|default:"-" }}</td>
+                <td>{{ report.progress_summary|default:"-" }}</td>
+                <td>{{ report.challenges|default:"-" }}</td>
+                <td>{{ report.successes|default:"-" }}</td>
+                <td>{{ report.lessons_learned|default:"-" }}</td>
+                <td nowrap class="text-center">
                     <div class="btn-group btn-group-sm" role="group">
                         <a class="btn btn-info"
-                           href="{% url 'strategic_report_detail' strategy_by_cycle.slug report.pk %}"
-                           hx-get="{% url 'strategic_report_detail' strategy_by_cycle.slug report.pk %}"
+                           href="{% url 'strategic_report_detail' cycle_slug=strategy_by_cycle.slug pk=report.pk %}"
+                           hx-get="{% url 'strategic_report_detail' cycle_slug=strategy_by_cycle.slug pk=report.pk %}"
                            hx-target="#full-page-container"
                            hx-swap="innerHTML"
                            data-bs-toggle="tooltip" title="View Details">
                             <i class="bi bi-eye"></i>
                         </a>
                         <a class="btn btn-warning"
-                           href="{% url 'update_strategic_report' strategy_by_cycle.slug report.pk %}"
-                           hx-get="{% url 'update_strategic_report' strategy_by_cycle.slug report.pk %}"
+                           href="{% url 'update_strategic_report' cycle_slug=strategy_by_cycle.slug pk=report.pk %}"
+                           hx-get="{% url 'update_strategic_report' cycle_slug=strategy_by_cycle.slug pk=report.pk %}"
                            hx-target="#full-page-container"
                            hx-swap="innerHTML"
                            hx-push-url="true"
-                           data-bs-toggle="tooltip" title="Edit">
+                           data-bs-toggle="tooltip" title="Edit Report">
                             <i class="bi bi-pencil"></i>
                         </a>
                         <a class="btn btn-danger"
-                           href="{% url 'delete_strategic_report' strategy_by_cycle.slug report.pk %}"
-                           hx-get="{% url 'delete_strategic_report' strategy_by_cycle.slug report.pk %}"
+                           href="{% url 'delete_strategic_report' cycle_slug=strategy_by_cycle.slug pk=report.pk %}"
+                           hx-get="{% url 'delete_strategic_report' cycle_slug=strategy_by_cycle.slug pk=report.pk %}"
                            hx-target="#full-page-container"
                            hx-swap="innerHTML"
                            hx-push-url="true"
-                           data-bs-toggle="tooltip" title="Delete">
+                           data-bs-toggle="tooltip" title="Delete Report">
                             <i class="bi bi-trash"></i>
                         </a>
                     </div>
@@ -159,13 +182,16 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="15" class="text-center py-4">
+                <td colspan="21" class="text-center py-4">
                     <div class="text-muted">
                         <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                        <p class="mt-2">No Strategic Reports found.</p>
+                        <p class="mt-2">No Strategic Performance Reports found.</p>
+                        {% if search_query %}
+                        <p class="small">Try adjusting your search criteria</p>
+                        {% endif %}
                         <a class="btn btn-primary mt-2"
-                           href="{% url 'create_strategic_report' strategy_by_cycle.slug %}"
-                           hx-get="{% url 'create_strategic_report' strategy_by_cycle.slug %}"
+                           href="{% url 'create_strategic_report' cycle_slug=strategy_by_cycle.slug %}"
+                           hx-get="{% url 'create_strategic_report' cycle_slug=strategy_by_cycle.slug %}"
                            hx-target="#full-page-container"
                            hx-swap="innerHTML"
                            hx-push-url="true">
@@ -188,19 +214,39 @@
 </div>
 
 <style>
-.sticky-top { position: sticky; top: 0; z-index: 10; }
-.table th { white-space: nowrap; }
-.table-responsive { max-height: 70vh; overflow: auto; }
+.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.table th, .table td {
+    white-space: nowrap;
+    font-size: 0.875rem;
+}
+.table-responsive {
+    max-height: 65vh;
+    overflow: auto;
+}
+.progress {
+    min-width: 80px;
+    background-color: #e9ecef;
+}
+.badge { font-size: 0.75rem; }
 </style>
 
 <script>
 // Initialize tooltips
 document.addEventListener('DOMContentLoaded', function() {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
     })
 });
+
+// Optional: Auto-refresh every 5 minutes
+setTimeout(function() {
+    htmx.ajax('GET', window.location.href, '#full-page-container');
+}, 300000);
 </script>
 
 {% endblock %}

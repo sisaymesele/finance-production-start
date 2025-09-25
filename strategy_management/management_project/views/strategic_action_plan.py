@@ -24,7 +24,7 @@ from management_project.forms import StrategicActionPlanForm
 
 
 @login_required
-def strategy_by_cycle_list(request):
+def strategic_action_plan_by_cycle(request):
     """List distinct strategic cycles for the current organization with all info."""
     cycles_qs = StrategicCycle.objects.filter(
         organization_name=request.user.organization_name
@@ -46,7 +46,7 @@ def strategy_by_cycle_list(request):
             'start_year': cycle.start_date.year if cycle.start_date else None,
         })
 
-    return render(request, 'strategy_by_cycle/list.html', {
+    return render(request, 'strategic_action_plan/cycle_list.html', {
         'strategic_cycles': cycles
     })
 
@@ -70,10 +70,10 @@ def strategic_action_plan_list(request, cycle_slug):
 
     if search_query:
         strategic_action_plans = strategic_action_plans.filter(
-            Q(strategy_map__objective__icontains=search_query) |
-            Q(strategy_map__kpi__icontains=search_query) |
-            Q(strategy_map__strategic_perspective__icontains=search_query) |
-            Q(strategy_map__strategic_pillar__icontains=search_query) |
+            Q(strategy_hierarchy__objective__icontains=search_query) |
+            Q(strategy_hierarchy__kpi__icontains=search_query) |
+            Q(strategy_hierarchy__strategic_perspective__icontains=search_query) |
+            Q(strategy_hierarchy__strategic_pillar__icontains=search_query) |
             Q(strategic_cycle__time_horizon__icontains=search_query) |
             Q(strategic_cycle__time_horizon_type__icontains=search_query) |
             Q(responsible_bodies__stakeholder_name__icontains=search_query)
@@ -249,10 +249,10 @@ def export_strategic_action_plan_to_excel(request, cycle_slug):
     for row_idx, plan in enumerate(plans, start=3):
         data = [
             row_idx - 2,
-            plan.strategy_map.strategic_perspective if plan.strategy_map else "",
-            split_two_lines(plan.strategy_map.strategic_pillar if plan.strategy_map else ""),
-            split_two_lines(plan.strategy_map.objective if plan.strategy_map else ""),
-            split_two_lines(plan.strategy_map.kpi if plan.strategy_map else ""),
+            plan.strategy_hierarchy.strategic_perspective if plan.strategy_hierarchy else "",
+            split_two_lines(plan.strategy_hierarchy.strategic_pillar if plan.strategy_hierarchy else ""),
+            split_two_lines(plan.strategy_hierarchy.objective if plan.strategy_hierarchy else ""),
+            split_two_lines(plan.strategy_hierarchy.kpi if plan.strategy_hierarchy else ""),
             plan.get_indicator_type_display(),
             plan.get_direction_of_change_display(),
             plan.baseline,
@@ -310,7 +310,7 @@ def strategic_action_plan_chart(request):
 
     # ---------------- Base queryset ----------------
     base_qs = (
-        StrategicActionPlan.objects.select_related("strategy_map", "strategic_cycle")
+        StrategicActionPlan.objects.select_related("strategy_hierarchy", "strategic_cycle")
         .prefetch_related("responsible_bodies")
         .filter(organization_name=request.user.organization_name)  # 🔹 restrict to user organization
     )
@@ -335,10 +335,10 @@ def strategic_action_plan_chart(request):
             defaultdict(int), defaultdict(int), defaultdict(int), defaultdict(int)
         )
         for plan in plans_subset:
-            objective = plan.strategy_map.objective or "Uncategorized"
+            objective = plan.strategy_hierarchy.objective or "Uncategorized"
             status = plan.get_status_display()
-            perspective = plan.strategy_map.strategic_perspective or "Uncategorized"
-            pillar = plan.strategy_map.strategic_pillar or "Uncategorized"
+            perspective = plan.strategy_hierarchy.strategic_perspective or "Uncategorized"
+            pillar = plan.strategy_hierarchy.strategic_pillar or "Uncategorized"
 
             objective_counts[objective] += 1
             status_data[status] += 1
