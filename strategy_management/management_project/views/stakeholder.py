@@ -21,39 +21,126 @@ from openpyxl.utils import get_column_letter
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 
+#
+# @login_required
+# def stakeholder_list(request):
+#     """List stakeholders for the logged-in user's organization"""
+#     qs = Stakeholder.objects.filter(organization_name=request.user.organization_name)
+#
+#     search_query = request.GET.get('search', '')
+#     if search_query:
+#         qs = qs.filter(
+#             Q(stakeholder_name__icontains=search_query) |
+#             Q(stakeholder_type__icontains=search_query) |
+#             Q(role__icontains=search_query) |
+#             Q(department__icontains=search_query)
+#         )
+#
+#     # Order by priority descending
+#     qs = qs.order_by('-priority', 'stakeholder_name')
+#
+#     # Pagination
+#     paginator = Paginator(qs, 10)
+#     page_number = request.GET.get('page')
+#     page_obj = paginator.get_page(page_number)
+#
+#     # Count by role for quick summary
+#     count_by_role = qs.values('role').annotate(role_count=Count('role'))
+#     total_stakeholders = qs.count()
+#
+#     context = {
+#         'page_obj': page_obj,
+#         'count_by_role': count_by_role,
+#         'total_stakeholders': total_stakeholders,
+#     }
+#     return render(request, 'stakeholder_list/list.html', context)
+
 
 @login_required
 def stakeholder_list(request):
-    """List stakeholders for the logged-in user's organization"""
-    qs = Stakeholder.objects.filter(organization_name=request.user.organization_name)
+    """List stakeholders for the logged-in user's organization with filtering"""
+    search_query = request.GET.get("search", "").strip()
+    stakeholder_type_filter = request.GET.get("type", "").strip()
+    role_filter = request.GET.get("role", "").strip()
+    priority_filter = request.GET.get("priority", "").strip()
+    page_number = request.GET.get("page", 1)
 
-    search_query = request.GET.get('search', '')
+    # Get all stakeholders for the organization
+    stakeholders = Stakeholder.objects.filter(
+        organization_name=request.user.organization_name
+    )
+
+    # Filter by stakeholder type if provided
+    if stakeholder_type_filter:
+        stakeholders = stakeholders.filter(stakeholder_type=stakeholder_type_filter)
+
+    # Filter by role if provided
+    if role_filter:
+        stakeholders = stakeholders.filter(role=role_filter)
+
+    # Filter by priority if provided
+    if priority_filter:
+        stakeholders = stakeholders.filter(priority=priority_filter)
+
+    # Apply search filter
     if search_query:
-        qs = qs.filter(
+        stakeholders = stakeholders.filter(
             Q(stakeholder_name__icontains=search_query) |
             Q(stakeholder_type__icontains=search_query) |
             Q(role__icontains=search_query) |
-            Q(department__icontains=search_query)
+            Q(department__icontains=search_query) |
+            Q(contact_info__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(notes__icontains=search_query)
         )
 
     # Order by priority descending
-    qs = qs.order_by('-priority', 'stakeholder_name')
+    stakeholders = stakeholders.order_by("-priority", "stakeholder_name")
 
     # Pagination
-    paginator = Paginator(qs, 10)
-    page_number = request.GET.get('page')
+    paginator = Paginator(stakeholders, 10)  # 10 items per page
     page_obj = paginator.get_page(page_number)
 
     # Count by role for quick summary
-    count_by_role = qs.values('role').annotate(role_count=Count('role'))
-    total_stakeholders = qs.count()
+    count_by_role = stakeholders.values('role').annotate(role_count=Count('role'))
+    count_by_department = stakeholders.values('department').annotate(department_count=Count('department'))
+    total_stakeholders = stakeholders.count()
 
-    context = {
-        'page_obj': page_obj,
-        'count_by_role': count_by_role,
-        'total_stakeholders': total_stakeholders,
-    }
-    return render(request, 'stakeholder_list/list.html', context)
+    # Calculate summary metrics
+    high_priority_count = stakeholders.filter(priority__in=['high', 'critical']).count()
+    high_satisfaction_count = stakeholders.filter(satisfaction_level__in=['high', 'very_high']).count()
+    high_risk_count = stakeholders.filter(risk_level__in=['high', 'critical']).count()
+
+    # Add percentages to counts
+    for entry in count_by_role:
+        entry['percentage'] = (entry['role_count'] / total_stakeholders * 100) if total_stakeholders > 0 else 0
+        entry['role_display'] = dict(Stakeholder.ROLE_CHOICES).get(entry['role'], entry['role'])
+
+    for entry in count_by_department:
+        entry['percentage'] = (entry['department_count'] / total_stakeholders * 100) if total_stakeholders > 0 else 0
+
+    return render(request, "stakeholder_list/list.html", {
+        "page_obj": page_obj,
+        "stakeholders": page_obj,  # For consistency with your SWOT pattern
+        "search_query": search_query,
+        "count_by_role": count_by_role,
+        "count_by_department": count_by_department,
+        "total_stakeholders": total_stakeholders,
+        "high_priority_count": high_priority_count,
+        "high_satisfaction_count": high_satisfaction_count,
+        "high_risk_count": high_risk_count,
+        "selected_type": stakeholder_type_filter,
+        "selected_role": role_filter,
+        "selected_priority": priority_filter,
+        "STAKEHOLDER_TYPE_CHOICES": Stakeholder.STAKEHOLDER_TYPE_CHOICES,
+        "ROLE_CHOICES": Stakeholder.ROLE_CHOICES,
+        "PRIORITY_CHOICES": Stakeholder.PRIORITY_CHOICES,
+        "IMPACT_LEVEL_CHOICES": Stakeholder.IMPACT_LEVEL_CHOICES,
+        "RISK_LEVEL_CHOICES": Stakeholder.RISK_LEVEL_CHOICES,
+        "SATISFACTION_LEVEL_CHOICES": Stakeholder.SATISFACTION_LEVEL_CHOICES,
+    })
+
+
 
 
 @login_required

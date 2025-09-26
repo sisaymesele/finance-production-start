@@ -76,25 +76,34 @@ def validate_phone_number(value):
 
 class SwotAnalysis(models.Model):
     SWOT_TYPES = [
-        ("Strength", "Strength"),
-        ("Weakness", "Weakness"),
-        ("Opportunity", "Opportunity"),
-        ("Threat", "Threat"),
+        ('Strength', 'Strength'),
+        ('Weakness', 'Weakness'),
+        ('Opportunity', 'Opportunity'),
+        ('Threat', 'Threat'),
     ]
+
     PRIORITY_CHOICES = [
-        ("High", "High"),
-        ("Medium", "Medium"),
-        ("Low", "Low"),
+        ('Very High', 'Very High'),
+        ('High', 'High'),
+        ('Medium', 'Medium'),
+        ('Low', 'Low'),
+        ('Very Low', 'Very Low'),
     ]
+
     IMPACT_CHOICES = [
-        ("High", "High"),
-        ("Medium", "Medium"),
-        ("Low", "Low"),
+        ('Very High', 'Very High'),
+        ('High', 'High'),
+        ('Medium', 'Medium'),
+        ('Low', 'Low'),
+        ('Very Low', 'Very Low'),
     ]
+
     LIKELIHOOD_CHOICES = [
-        ("High", "High"),
-        ("Medium", "Medium"),
-        ("Low", "Low"),
+        ('Almost Certain', 'Almost Certain'),
+        ('Likely', 'Likely'),
+        ('Possible', 'Possible'),
+        ('Unlikely', 'Unlikely'),
+        ('Rare', 'Rare'),
     ]
 
     organization_name = models.ForeignKey(
@@ -104,9 +113,9 @@ class SwotAnalysis(models.Model):
     swot_pillar = models.CharField(max_length=100)
     swot_factor = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
-    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default="Medium")
-    impact = models.CharField(max_length=10, choices=IMPACT_CHOICES, default="Medium")
-    likelihood = models.CharField(max_length=10, choices=LIKELIHOOD_CHOICES, blank=True, null=True)
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="Medium")
+    impact = models.CharField(max_length=20, choices=IMPACT_CHOICES, default="Medium")
+    likelihood = models.CharField(max_length=20, choices=LIKELIHOOD_CHOICES, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -171,13 +180,14 @@ class StrategyHierarchy(models.Model):
         OrganizationalProfile, on_delete=models.PROTECT
     )
     strategic_perspective = models.CharField(max_length=100)
-    strategic_pillar = models.CharField(max_length=100)
+    focus_area = models.CharField(max_length=100)
     objective = models.CharField(max_length=100)
     kpi = models.CharField(max_length=100, verbose_name='Key Performance Indicator')
     formula = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
-        return f"{self.strategic_perspective} → {self.strategic_pillar} → {self.objective} → {self.kpi}"
+        return f"{self.strategic_perspective} → {self.focus_area} → {self.objective} → {self.kpi}"
+
 
 
 class Stakeholder(models.Model):
@@ -230,6 +240,7 @@ class Stakeholder(models.Model):
     ]
 
     IMPACT_LEVEL_CHOICES = [
+        ('very_low', 'Very Low'),
         ('low', 'Low'),
         ('medium', 'Medium'),
         ('high', 'High'),
@@ -237,9 +248,11 @@ class Stakeholder(models.Model):
     ]
 
     INTEREST_LEVEL_CHOICES = [
+        ('very_low', 'Very Low'),
         ('low', 'Low'),
         ('medium', 'Medium'),
         ('high', 'High'),
+        ('very_high', 'Very High'),
     ]
 
     ENGAGEMENT_STRATEGY_CHOICES = [
@@ -251,24 +264,31 @@ class Stakeholder(models.Model):
     ]
 
     SATISFACTION_LEVEL_CHOICES = [
+        ('very_low', 'Very Low'),
         ('low', 'Low'),
         ('medium', 'Medium'),
         ('high', 'High'),
+        ('very_high', 'Very High'),
     ]
 
     RISK_LEVEL_CHOICES = [
+        ('very_low', 'Very Low'),
         ('low', 'Low'),
         ('medium', 'Medium'),
         ('high', 'High'),
         ('critical', 'Critical'),
     ]
+
     PRIORITY_CHOICES = [
+        ('very_low', 'Very Low'),
         ('low', 'Low'),
         ('medium', 'Medium'),
         ('high', 'High'),
         ('critical', 'Critical'),
     ]
+
     CONTRIBUTION_CHOICES = [
+        ('very_low', 'Very Low'),
         ('low', 'Low'),
         ('medium', 'Medium'),
         ('high', 'High'),
@@ -277,35 +297,31 @@ class Stakeholder(models.Model):
 
     # ------------------ Core Info ------------------
     organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
-    stakeholder_name = models.CharField(max_length=200, help_text="Stakeholder name or organization")
+    stakeholder_name = models.CharField(max_length=200, help_text='Stakeholder name or organization')
     stakeholder_type = models.CharField(max_length=20, choices=STAKEHOLDER_TYPE_CHOICES)
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)
-    department = models.CharField(max_length=100, blank=True, null=True, help_text="Optional department or team")
+    department = models.CharField(max_length=100, blank=True, null=True, help_text='Optional department or team')
 
     # ------------------ Analysis ------------------
     impact_level = models.CharField(max_length=20, choices=IMPACT_LEVEL_CHOICES, default='medium')
     interest_level = models.CharField(max_length=20, choices=INTEREST_LEVEL_CHOICES, default='medium')
     engagement_strategy = models.CharField(max_length=20, choices=ENGAGEMENT_STRATEGY_CHOICES, default='inform')
     influence_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0,
-                                          help_text="Quantitative measure of influence")
-    priority = models.CharField(
-        max_length=10,   choices=PRIORITY_CHOICES, default='medium',
-        help_text="Calculated from impact x interest x influence"
-    )
+                                          help_text='Quantitative measure of influence')
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium',
+                                help_text='Calculated from impact x interest x influence')
     satisfaction_level = models.CharField(max_length=20, choices=SATISFACTION_LEVEL_CHOICES, default='medium',
-                                          help_text="Stakeholder satisfaction with the project or SaaS")
+                                          help_text='Stakeholder satisfaction with the project or SaaS')
     risk_level = models.CharField(max_length=20, choices=RISK_LEVEL_CHOICES, default='medium',
-                                  help_text="Potential risk if stakeholder is disengaged")
-    contribution_score = models.CharField( max_length=10,   choices=CONTRIBUTION_CHOICES, default='medium',
-        help_text="Estimated contribution to strategic objectives"
-    )
+                                  help_text='Potential risk if stakeholder is disengaged')
+    contribution_score = models.CharField(max_length=10, choices=CONTRIBUTION_CHOICES, default='medium',
+                                          help_text='Estimated contribution to strategic objectives')
 
     # ------------------ Contact ------------------
     contact_info = models.CharField(max_length=200, blank=True, null=True,
-                                    help_text="Email, phone, or other contact details")
-    notes = models.TextField(blank=True, null=True, help_text="Additional observations or comments")
-    description = models.TextField(blank=True, null=True, help_text="Brief description of the stakeholder")
-
+                                    help_text='Email, phone, or other contact details')
+    notes = models.TextField(blank=True, null=True, help_text='Additional observations or comments')
+    description = models.TextField(blank=True, null=True, help_text='Brief description of the stakeholder')
 
     class Meta:
         ordering = ["-priority", "stakeholder_name"]
@@ -614,25 +630,34 @@ class StrategicReport(models.Model):
 
 class SwotReport(models.Model):
     SWOT_TYPES = [
-        ("Strength", "Strength"),
-        ("Weakness", "Weakness"),
-        ("Opportunity", "Opportunity"),
-        ("Threat", "Threat"),
+        ('Strength', 'Strength'),
+        ('Weakness', 'Weakness'),
+        ('Opportunity', 'Opportunity'),
+        ('Threat', 'Threat'),
     ]
+
     PRIORITY_CHOICES = [
-        ("High", "High"),
-        ("Medium", "Medium"),
-        ("Low", "Low"),
+        ('Very High', 'Very High'),
+        ('High', 'High'),
+        ('Medium', 'Medium'),
+        ('Low', 'Low'),
+        ('Very Low', 'Very Low'),
     ]
+
     IMPACT_CHOICES = [
-        ("High", "High"),
-        ("Medium", "Medium"),
-        ("Low", "Low"),
+        ('Very High', 'Very High'),
+        ('High', 'High'),
+        ('Medium', 'Medium'),
+        ('Low', 'Low'),
+        ('Very Low', 'Very Low'),
     ]
+
     LIKELIHOOD_CHOICES = [
-        ("High", "High"),
-        ("Medium", "Medium"),
-        ("Low", "Low"),
+        ('Almost Certain', 'Almost Certain'),
+        ('Likely', 'Likely'),
+        ('Possible', 'Possible'),
+        ('Unlikely', 'Unlikely'),
+        ('Rare', 'Rare'),
     ]
 
     organization_name = models.ForeignKey(
@@ -645,9 +670,9 @@ class SwotReport(models.Model):
     swot_pillar = models.CharField(max_length=100)
     swot_factor = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
-    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default="Medium")
-    impact = models.CharField(max_length=10, choices=IMPACT_CHOICES, default="Medium")
-    likelihood = models.CharField(max_length=10, choices=LIKELIHOOD_CHOICES, blank=True, null=True)
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="Medium")
+    impact = models.CharField(max_length=20, choices=IMPACT_CHOICES, default="Medium")
+    likelihood = models.CharField(max_length=20, choices=LIKELIHOOD_CHOICES, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

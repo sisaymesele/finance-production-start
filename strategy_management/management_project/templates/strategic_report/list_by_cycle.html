@@ -112,7 +112,7 @@
             <tr>
                 <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
                 <td>{{ report.action_plan.strategy_hierarchy.strategic_perspective|default:"-" }}</td>
-                <td>{{ report.action_plan.strategy_hierarchy.strategic_pillar|default:"-" }}</td>
+                <td>{{ report.action_plan.strategy_hierarchy.focus_area|default:"-" }}</td>
                 <td>{{ report.action_plan.strategy_hierarchy.objective|default:"-" }}</td>
                 <td>{{ report.action_plan.strategy_hierarchy.kpi|default:"-" }}</td>
                 <td class="text-end">{{ report.action_plan.baseline|floatformat:2|intcomma|default:"-" }}</td>

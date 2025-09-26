@@ -88,7 +88,7 @@
             <tr>
                 <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
                 <td>{{ plan.strategy_hierarchy.strategic_perspective|truncatewords:3 }}</td>
-                <td>{{ plan.strategy_hierarchy.strategic_pillar|truncatewords:3 }}</td>
+                <td>{{ plan.strategy_hierarchy.focus_area|truncatewords:3 }}</td>
                 <td>{{ plan.strategy_hierarchy.objective|truncatewords:4 }}</td>
                 <td>{{ plan.strategy_hierarchy.kpi|truncatewords:4 }}</td>
                 <td><span class="badge bg-secondary">{{ plan.get_indicator_type_display }}</span></td>

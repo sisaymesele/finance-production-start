@@ -235,10 +235,10 @@ class StrategyHierarchyForm(forms.ModelForm):
 
     class Meta:
         model = StrategyHierarchy
-        fields = ['strategic_perspective', 'strategic_pillar', 'objective', 'kpi', 'formula']
+        fields = ['strategic_perspective', 'focus_area', 'objective', 'kpi', 'formula']
         widgets = {
             'strategic_perspective': forms.Select(attrs={'class': 'form-control'}),
-            'strategic_pillar': forms.Select(attrs={'class': 'form-control'}),
+            'focus_area': forms.Select(attrs={'class': 'form-control'}),
             'objective': forms.Select(attrs={'class': 'form-control'}),
             'kpi': forms.Select(attrs={'class': 'form-control'}),
         }
@@ -251,7 +251,7 @@ class StrategyHierarchyForm(forms.ModelForm):
 
         # Load current selections
         perspective = self.data.get('strategic_perspective') or getattr(self.instance, 'strategic_perspective', None)
-        pillar = self.data.get('strategic_pillar') or getattr(self.instance, 'strategic_pillar', None)
+        pillar = self.data.get('focus_area') or getattr(self.instance, 'focus_area', None)
         objective = self.data.get('objective') or getattr(self.instance, 'objective', None)
         kpi = self.data.get('kpi') or getattr(self.instance, 'kpi', None)
 
@@ -259,10 +259,10 @@ class StrategyHierarchyForm(forms.ModelForm):
         self.fields['strategic_perspective'].choices = [('', '--- Select Perspective ---')] + service.get_perspective_choices()
 
         if perspective:
-            self.fields['strategic_pillar'].choices = [('', '--- Select Pillar ---')] + service.get_pillar_choices(perspective)
+            self.fields['focus_area'].choices = [('', '--- Select Pillar ---')] + service.get_pillar_choices(perspective)
         else:
-            self.fields['strategic_pillar'].choices = [('', '--- Select Perspective First ---')]
-            self.fields['strategic_pillar'].widget.attrs['disabled'] = True
+            self.fields['focus_area'].choices = [('', '--- Select Perspective First ---')]
+            self.fields['focus_area'].widget.attrs['disabled'] = True
 
         if perspective and pillar:
             self.fields['objective'].choices = [('', '--- Select Objective ---')] + service.get_objective_choices(perspective, pillar)

@@ -147,9 +147,9 @@ class StrategyHierarchyAdmin(admin.ModelAdmin):
     form = StrategyHierarchyForm
 
     list_display = (
-        'organization_name', 'strategic_perspective', 'strategic_pillar', 'objective', 'kpi', 'formula',
+        'organization_name', 'strategic_perspective', 'focus_area', 'objective', 'kpi', 'formula',
     )
-    list_filter = ('strategic_perspective', 'strategic_pillar', 'organization_name')
+    list_filter = ('strategic_perspective', 'focus_area', 'organization_name')
     search_fields = ('objective', 'kpi', 'formula')
 
     # Restrict foreign key choices based on logged-in user
@@ -267,7 +267,7 @@ class StrategicActionPlanAdmin(admin.ModelAdmin):
     get_perspective.short_description = "Perspective"
 
     def get_pillar(self, obj):
-        return obj.strategy_hierarchy.strategic_pillar
+        return obj.strategy_hierarchy.focus_area
 
     get_pillar.short_description = "Pillar"
 

@@ -77,7 +77,7 @@ def strategic_report_list(request, cycle_slug):
     if search_query:
         reports = reports.filter(
             Q(action_plan__strategy_hierarchy__strategic_perspective__icontains=search_query) |
-            Q(action_plan__strategy_hierarchy__strategic_pillar__icontains=search_query) |
+            Q(action_plan__strategy_hierarchy__focus_area__icontains=search_query) |
             Q(action_plan__strategy_hierarchy__objective__icontains=search_query) |
             Q(action_plan__strategy_hierarchy__kpi__icontains=search_query) |
             Q(achievement__icontains=search_query) |
@@ -264,7 +264,7 @@ def export_strategic_report_to_excel(request, cycle_slug):
         data = [
             row_idx - 2,
             strategy_hierarchy.strategic_perspective if strategy_hierarchy else "",
-            split_two_lines(strategy_hierarchy.strategic_pillar if strategy_hierarchy else ""),
+            split_two_lines(strategy_hierarchy.focus_area if strategy_hierarchy else ""),
             split_two_lines(strategy_hierarchy.objective if strategy_hierarchy else ""),
             split_two_lines(strategy_hierarchy.kpi if strategy_hierarchy else ""),
             action_plan.baseline if action_plan else 0,

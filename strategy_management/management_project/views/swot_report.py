@@ -9,6 +9,10 @@ from django.urls import reverse
 from management_project.models import SwotReport, StrategicCycle, StrategicReport
 from management_project.forms import SwotReportForm
 
+from django.http import HttpResponse
+import openpyxl
+from openpyxl.utils import get_column_letter
+
 
 
 @login_required
@@ -40,90 +44,11 @@ def swot_report_by_cycle_list(request):
 
 
 # -------------------- SWOT LIST --
-# -------------------- SWOT LIST --------------------
-# List all SWOT reports for a cycle
-#
-
-# -------------------- SWOT LIST --------------------
-# #
-# @login_required
-# def swot_report_list(request):
-#     query = request.GET.get("search", "").strip()
-#     swots = SwotReport.objects.filter(
-#         organization_name=request.user.organization_name
-#     )
-#
-#     if query:
-#         swots = swots.filter(
-#             Q(swot_type__icontains=query) |
-#             Q(swot_pillar__icontains=query) |
-#             Q(swot_factor__icontains=query)
-#         )
-#
-#     swots = swots.order_by("swot_type", "priority", "-created_at")
-#
-#     return render(request, "swot_report/list.html", {
-#         "swots": swots,
-#         "search_query": query,
-#     })
-
-# from django.db.models import Q
-#
-#
-# @login_required
-# def swot_report_list(request):
-#     query = request.GET.get("search", "").strip()
-#     cycle_slug = request.GET.get("cycle", "").strip()
-#
-#     # Get all SWOT reports for the organization
-#     swots = SwotReport.objects.filter(
-#         organization_name=request.user.organization_name
-#     )
-#
-#     # Filter by strategic cycle if provided
-#     if cycle_slug:
-#         try:
-#             strategic_cycle = StrategicCycle.objects.get(
-#                 slug=cycle_slug,
-#                 organization_name=request.user.organization_name
-#             )
-#             # Get strategic reports for this cycle, then filter SWOT reports
-#             strategic_reports = StrategicReport.objects.filter(
-#                 action_plan__strategic_cycle=strategic_cycle
-#             )
-#             swots = swots.filter(strategic_report_period__in=strategic_reports)
-#         except StrategicCycle.DoesNotExist:
-#             # If cycle doesn't exist, show all SWOT reports
-#             pass
-#
-#     # Apply search filter
-#     if query:
-#         swots = swots.filter(
-#             Q(swot_type__icontains=query) |
-#             Q(swot_pillar__icontains=query) |
-#             Q(swot_factor__icontains=query) |
-#             Q(description__icontains=query)
-#         )
-#
-#     # Get available strategic cycles for filter dropdown
-#     strategic_cycles = StrategicCycle.objects.filter(
-#         organization_name=request.user.organization_name
-#     ).order_by('-start_date')
-#
-#     swots = swots.order_by("swot_type", "priority", "-created_at")
-#
-#     return render(request, "swot_report/list.html", {
-#         "swots": swots,
-#         "search_query": query,
-#         "strategic_cycles": strategic_cycles,
-#         "selected_cycle": cycle_slug,
-#     })
-
-
 @login_required
 def swot_report_list(request):
     query = request.GET.get("search", "").strip()
     cycle_slug = request.GET.get("cycle", "").strip()
+    page_number = request.GET.get("page", 1)
 
     # Get all SWOT reports for the organization
     swots = SwotReport.objects.filter(
@@ -137,16 +62,14 @@ def swot_report_list(request):
                 slug=cycle_slug,
                 organization_name=request.user.organization_name
             )
-            # Get strategic reports for this cycle, then filter SWOT reports
             strategic_reports = StrategicReport.objects.filter(
                 action_plan__strategic_cycle=strategic_cycle
             )
             swots = swots.filter(strategic_report_period__in=strategic_reports)
         except StrategicCycle.DoesNotExist:
-            # If cycle doesn't exist, show all SWOT reports
             pass
 
-    # Apply search filter - now includes strategic cycle name search
+    # Apply search filter
     if query:
         swots = swots.filter(
             Q(swot_type__icontains=query) |
@@ -158,19 +81,27 @@ def swot_report_list(request):
             Q(strategic_report_period__action_plan__strategic_cycle__time_horizon_type__icontains=query)
         )
 
-    # Get available strategic cycles for filter dropdown
+    # Available strategic cycles for filter dropdown
     strategic_cycles = StrategicCycle.objects.filter(
         organization_name=request.user.organization_name
     ).order_by('-start_date')
 
+    # Ordering
     swots = swots.order_by("swot_type", "priority", "-created_at")
 
+    # Pagination
+    paginator = Paginator(swots, 10)  # 10 items per page
+    page_obj = paginator.get_page(page_number)
+
     return render(request, "swot_report/list.html", {
-        "swots": swots,
+        "swots": page_obj,
+        "page_obj": page_obj,
         "search_query": query,
         "strategic_cycles": strategic_cycles,
         "selected_cycle": cycle_slug,
     })
+#
+#
 # -------------------- CREATE SWOT --------------------
 
 
@@ -241,5 +172,108 @@ def delete_swot_report(request, pk):
 
 
 
+@login_required
+def swot_report_list(request):
+    query = request.GET.get("search", "").strip()
+    cycle_slug = request.GET.get("cycle", "").strip()
+    page_number = request.GET.get("page", 1)
+    export = request.GET.get("export", "").lower()
 
+    # Get all SWOT reports for the organization
+    swots = SwotReport.objects.filter(
+        organization_name=request.user.organization_name
+    )
+
+    # Filter by strategic cycle if provided
+    if cycle_slug:
+        try:
+            strategic_cycle = StrategicCycle.objects.get(
+                slug=cycle_slug,
+                organization_name=request.user.organization_name
+            )
+            strategic_reports = StrategicReport.objects.filter(
+                action_plan__strategic_cycle=strategic_cycle
+            )
+            swots = swots.filter(strategic_report_period__in=strategic_reports)
+        except StrategicCycle.DoesNotExist:
+            pass
+
+    # Apply search filter
+    if query:
+        swots = swots.filter(
+            Q(swot_type__icontains=query) |
+            Q(swot_pillar__icontains=query) |
+            Q(swot_factor__icontains=query) |
+            Q(description__icontains=query) |
+            Q(strategic_report_period__action_plan__strategic_cycle__name__icontains=query) |
+            Q(strategic_report_period__action_plan__strategic_cycle__time_horizon__icontains=query) |
+            Q(strategic_report_period__action_plan__strategic_cycle__time_horizon_type__icontains=query)
+        )
+
+    # Ordering
+    swots = swots.order_by("swot_type", "priority", "-created_at")
+
+    # Excel Export
+    if export == "excel":
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename=swot_reports.xlsx'
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "SWOT Reports"
+
+        # Headers
+        headers = [
+            "Strategic Cycle", "SWOT Type", "Pillar", "Factor",
+            "Description", "Priority", "Impact", "Likelihood", "Created At"
+        ]
+        ws.append(headers)
+
+        # Data rows
+        for s in swots:
+            ws.append([
+                s.strategic_report_period.action_plan.strategic_cycle.name,
+                s.swot_type,
+                s.swot_pillar,
+                s.swot_factor,
+                s.description,
+                s.priority,
+                s.impact,
+                s.likelihood or "",
+                s.created_at.strftime("%Y-%m-%d"),
+            ])
+
+        # Optional: adjust column widths
+        for col in ws.columns:
+            max_length = 0
+            col_letter = get_column_letter(col[0].column)
+            for cell in col:
+                try:
+                    if cell.value:
+                        max_length = max(max_length, len(str(cell.value)))
+                except:
+                    pass
+            ws.column_dimensions[col_letter].width = max_length + 2
+
+        wb.save(response)
+        return response
+
+    # Pagination
+    paginator = Paginator(swots, 10)  # 10 items per page
+    page_obj = paginator.get_page(page_number)
+
+    # Available strategic cycles for filter dropdown
+    strategic_cycles = StrategicCycle.objects.filter(
+        organization_name=request.user.organization_name
+    ).order_by('-start_date')
+
+    return render(request, "swot_report/list.html", {
+        "swots": page_obj,
+        "page_obj": page_obj,
+        "search_query": query,
+        "strategic_cycles": strategic_cycles,
+        "selected_cycle": cycle_slug,
+    })
 

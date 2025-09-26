@@ -21,7 +21,7 @@ def strategy_hierarchy_list(request):
     if query:
         strategies = strategies.filter(
             Q(strategic_perspective__icontains=query) |
-            Q(strategic_pillar__icontains=query) |
+            Q(focus_area__icontains=query) |
             Q(objective__icontains=query)
         )
 

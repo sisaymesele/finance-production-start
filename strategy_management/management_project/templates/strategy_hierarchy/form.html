@@ -26,17 +26,17 @@
         </select>
     </div>
 
-    <!-- Strategic Pillar -->
+    <!-- Focus Area -->
     <div class="col-md-3">
         <label>Pillar</label>
-        <select name="strategic_pillar"
+        <select name="focus_area"
                 class="form-select"
                 hx-post="{% if form.instance.pk %}{% url 'update_strategy_hierarchy' form.instance.pk %}{% else %}{% url 'create_strategy_hierarchy' %}{% endif %}"
                 hx-target="#full-page-container"
                 hx-swap="innerHTML"
                 hx-trigger="change">
-            {% for value, label in form.fields.strategic_pillar.choices %}
-                <option value="{{ value }}" {% if value == form.data.strategic_pillar|default:form.instance.strategic_pillar %}selected{% endif %}>
+            {% for value, label in form.fields.focus_area.choices %}
+                <option value="{{ value }}" {% if value == form.data.focus_area|default:form.instance.focus_area %}selected{% endif %}>
                     {{ label }}
                 </option>
             {% endfor %}

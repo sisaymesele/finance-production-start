@@ -73,7 +73,7 @@ def strategic_action_plan_list(request, cycle_slug):
             Q(strategy_hierarchy__objective__icontains=search_query) |
             Q(strategy_hierarchy__kpi__icontains=search_query) |
             Q(strategy_hierarchy__strategic_perspective__icontains=search_query) |
-            Q(strategy_hierarchy__strategic_pillar__icontains=search_query) |
+            Q(strategy_hierarchy__focus_area__icontains=search_query) |
             Q(strategic_cycle__time_horizon__icontains=search_query) |
             Q(strategic_cycle__time_horizon_type__icontains=search_query) |
             Q(responsible_bodies__stakeholder_name__icontains=search_query)
@@ -250,7 +250,7 @@ def export_strategic_action_plan_to_excel(request, cycle_slug):
         data = [
             row_idx - 2,
             plan.strategy_hierarchy.strategic_perspective if plan.strategy_hierarchy else "",
-            split_two_lines(plan.strategy_hierarchy.strategic_pillar if plan.strategy_hierarchy else ""),
+            split_two_lines(plan.strategy_hierarchy.focus_area if plan.strategy_hierarchy else ""),
             split_two_lines(plan.strategy_hierarchy.objective if plan.strategy_hierarchy else ""),
             split_two_lines(plan.strategy_hierarchy.kpi if plan.strategy_hierarchy else ""),
             plan.get_indicator_type_display(),
@@ -338,7 +338,7 @@ def strategic_action_plan_chart(request):
             objective = plan.strategy_hierarchy.objective or "Uncategorized"
             status = plan.get_status_display()
             perspective = plan.strategy_hierarchy.strategic_perspective or "Uncategorized"
-            pillar = plan.strategy_hierarchy.strategic_pillar or "Uncategorized"
+            pillar = plan.strategy_hierarchy.focus_area or "Uncategorized"
 
             objective_counts[objective] += 1
             status_data[status] += 1
