@@ -16,6 +16,9 @@ urlpatterns = [
     path('swot_analysis/create/', views.create_swot_analysis, name='create_swot_analysis'),
     path('swot_analysis/update/<int:pk>/', views.update_swot_analysis, name='update_swot_analysis'),
     path('swot_analysis/delete/<int:pk>/', views.delete_swot_analysis, name='delete_swot_analysis'),
+    # ✅ Export to Excel
+    path('swot-analysis/export/', views.export_swot_analysis_to_excel, name='export_swot_analysis_to_excel'),
+    path('swot-chart/', views.swot_analysis_chart, name='swot_analysis_report'),
 
     # Vision
     path('vision/', views.vision_list, name='vision_list'),
@@ -41,11 +44,18 @@ urlpatterns = [
     path('strategy-hierarchy/<int:pk>/update/', views.update_strategy_hierarchy, name='update_strategy_hierarchy'),
     path('strategy-hierarchy/<int:pk>/delete/', views.delete_strategy_hierarchy, name='delete_strategy_hierarchy'),
 
+    # -------------------- DEPARTMENT --------------------
+    # Department
+    path('departments/', views.department_list, name='department_list'),
+    path('departments/create/', views.create_department, name='create_department'),
+    path('departments/update/<int:pk>/', views.update_department, name='update_department'),
+    path('departments/delete/<int:pk>/', views.delete_department, name='delete_department'),
+
     # View the stakeholder_list list
-# Stakeholder List & Search
+    # Stakeholder List & Search
     path('stakeholders/', views.stakeholder_list, name='stakeholder_list'),
     # Export Stakeholders to Excel
-    path('stakeholders/export/', views.export_stakeholders_to_excel, name='export_stakeholders_to_excel'),
+    path("stakeholders/export/", views.export_stakeholders_to_excel, name="export_stakeholders"),
     # Create update a Stakeholder
     path('stakeholders/create/', views.create_stakeholder, name='create_stakeholder'),
     path('stakeholders/update/<int:pk>/', views.update_stakeholder, name='update_stakeholder'),
@@ -99,6 +109,7 @@ urlpatterns = [
     path('swot-report/create/', views.create_swot_report, name='create_swot_report'),
     path('swot-report/update/<int:pk>/', views.update_swot_report, name='update_swot_report'),
     path('swot-report/delete/<int:pk>/', views.delete_swot_report, name='delete_swot_report'),
+    path('swot-report-chart/', views.swot_report_chart, name='swot_report_chart'),
 
     # # List all cycles (entry point)
     path('swot-report-by-cycle/', views.swot_report_by_cycle_list, name='swot_report_by_cycle_list'),

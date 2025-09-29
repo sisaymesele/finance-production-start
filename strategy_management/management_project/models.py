@@ -15,6 +15,7 @@ from django.core.validators import MinValueValidator
 
 from .services.values import ValuesService
 import calendar
+from multiselectfield import MultiSelectField
 
 
 
@@ -189,6 +190,19 @@ class StrategyHierarchy(models.Model):
         return f"{self.strategic_perspective} → {self.focus_area} → {self.objective} → {self.kpi}"
 
 
+class Department(models.Model):
+    organization_name = models.ForeignKey(
+        OrganizationalProfile, on_delete=models.PROTECT
+    )
+    department_name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.department_name}"
+
+
+    class Meta:
+        unique_together = ('organization_name', 'department_name')
+
 
 class Stakeholder(models.Model):
     # ------------------ Choices ------------------
@@ -198,16 +212,35 @@ class Stakeholder(models.Model):
     ]
 
     ROLE_CHOICES = [
+        # Core organizational roles
         ('owner', 'Owner'),
         ('executive', 'Executive'),
-        ('employee', 'Employee'),
         ('manager', 'Manager'),
         ('team_lead', 'Team Lead'),
+        ('employee', 'Employee'),
+
+        # Functional roles
         ('developer', 'Developer'),
         ('designer', 'Designer'),
         ('qa', 'Quality Assurance'),
         ('sales', 'Sales'),
         ('marketing', 'Marketing'),
+        ('finance', 'Finance'),
+        ('hr', 'Human Resources'),
+        ('it', 'IT Support'),
+        ('operations', 'Operations'),
+        ('logistics', 'Logistics'),
+
+        # Product & project roles
+        ('product_owner', 'Product Owner'),
+        ('scrum_master', 'Scrum Master'),
+        ('analyst', 'Business Analyst'),
+        ('trainer', 'Trainer'),
+        ('mentor', 'Mentor'),
+        ('intern', 'Intern'),
+        ('contractor', 'Contractor'),
+
+        # External stakeholders
         ('customer', 'Customer'),
         ('partner', 'Partner'),
         ('supplier', 'Supplier'),
@@ -219,23 +252,13 @@ class Stakeholder(models.Model):
         ('advisor', 'Advisor'),
         ('board_member', 'Board Member'),
         ('volunteer', 'Volunteer'),
-        ('contractor', 'Contractor'),
         ('researcher', 'Researcher'),
         ('media', 'Media'),
         ('government_official', 'Government Official'),
         ('auditor', 'Auditor'),
         ('legal', 'Legal Counsel'),
-        ('finance', 'Finance'),
-        ('hr', 'Human Resources'),
-        ('it', 'IT Support'),
-        ('operations', 'Operations'),
-        ('logistics', 'Logistics'),
-        ('product_owner', 'Product Owner'),
-        ('scrum_master', 'Scrum Master'),
-        ('analyst', 'Business Analyst'),
-        ('trainer', 'Trainer'),
-        ('mentor', 'Mentor'),
-        ('intern', 'Intern'),
+
+        # Catch-all
         ('other', 'Other'),
     ]
 
@@ -261,6 +284,7 @@ class Stakeholder(models.Model):
         ('involve', 'Involve'),
         ('collaborate', 'Collaborate'),
         ('empower', 'Empower'),
+        ('monitor', 'Monitor'),
     ]
 
     SATISFACTION_LEVEL_CHOICES = [
@@ -287,6 +311,14 @@ class Stakeholder(models.Model):
         ('critical', 'Critical'),
     ]
 
+    INFLUENCE_SCORE_CHOICES = [
+        ('very_low', 'Very Low'),
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('critical', 'Critical'),
+    ]
+
     CONTRIBUTION_CHOICES = [
         ('very_low', 'Very Low'),
         ('low', 'Low'),
@@ -299,17 +331,31 @@ class Stakeholder(models.Model):
     organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
     stakeholder_name = models.CharField(max_length=200, help_text='Stakeholder name or organization')
     stakeholder_type = models.CharField(max_length=20, choices=STAKEHOLDER_TYPE_CHOICES)
-    role = models.CharField(max_length=50, choices=ROLE_CHOICES)
-    department = models.CharField(max_length=100, blank=True, null=True, help_text='Optional department or team')
-
+    role = MultiSelectField(
+        choices=ROLE_CHOICES,
+        max_length=500,
+        default='employee',
+        help_text="Select one or more roles"
+    )
+    department = models.ForeignKey( Department, on_delete=models.SET_NULL, blank=True, null=True,
+                                    related_name='stakeholders', help_text='Optional department or team'
+    )
     # ------------------ Analysis ------------------
     impact_level = models.CharField(max_length=20, choices=IMPACT_LEVEL_CHOICES, default='medium')
     interest_level = models.CharField(max_length=20, choices=INTEREST_LEVEL_CHOICES, default='medium')
-    engagement_strategy = models.CharField(max_length=20, choices=ENGAGEMENT_STRATEGY_CHOICES, default='inform')
-    influence_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0,
-                                          help_text='Quantitative measure of influence')
+    engagement_strategy = MultiSelectField(
+        choices=ENGAGEMENT_STRATEGY_CHOICES,
+        max_length=200,
+        default='inform',
+        help_text="Select one or more engagement strategies"
+    )
+    influence_score = models.CharField(max_length=20,
+        choices=INFLUENCE_SCORE_CHOICES,
+        default="medium",
+        help_text="Qualitative measure of influence"
+    )
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium',
-                                help_text='Calculated from impact x interest x influence')
+                                help_text='Qualitative measure of priority')
     satisfaction_level = models.CharField(max_length=20, choices=SATISFACTION_LEVEL_CHOICES, default='medium',
                                           help_text='Stakeholder satisfaction with the project or SaaS')
     risk_level = models.CharField(max_length=20, choices=RISK_LEVEL_CHOICES, default='medium',
@@ -320,7 +366,6 @@ class Stakeholder(models.Model):
     # ------------------ Contact ------------------
     contact_info = models.CharField(max_length=200, blank=True, null=True,
                                     help_text='Email, phone, or other contact details')
-    notes = models.TextField(blank=True, null=True, help_text='Additional observations or comments')
     description = models.TextField(blank=True, null=True, help_text='Brief description of the stakeholder')
 
     class Meta:
@@ -331,15 +376,6 @@ class Stakeholder(models.Model):
 
     # ------------------ Business Logic ------------------
     def save(self, *args, **kwargs):
-        # Priority calculation: impact * interest * influence (normalized)
-        impact_map = {'low': 1, 'medium': 2, 'high': 3, 'critical': 4}
-        interest_map = {'low': 1, 'medium': 2, 'high': 3}
-        influence_factor = float(self.influence_score) if self.influence_score else 1.0
-
-        self.priority = int(impact_map.get(self.impact_level, 2) *
-                            interest_map.get(self.interest_level, 2) *
-                            influence_factor)
-
 
         super().save(*args, **kwargs)
 

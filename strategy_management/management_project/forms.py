@@ -1,13 +1,14 @@
 from django import forms
 from management_project.models import (
-    OrganizationalProfile, SwotAnalysis, Vision, Mission, Values, StrategyHierarchy,
-    Stakeholder, StrategicCycle, StrategicActionPlan, StrategicReport, SwotReport
+    OrganizationalProfile, SwotAnalysis, Vision, Mission, Values, StrategyHierarchy, Department,
+    Stakeholder, StrategicCycle, StrategicActionPlan, StrategicReport, SwotReport,
 )
 from management_project.services.vision import VisionService
 from management_project.services.mission import MissionService
 from .services.swot import SwotChoicesService
 from .services.strategy_hierarchy import StrategyHierarchyChoicesService
 from .services.values import ValuesService
+from multiselectfield import MultiSelectFormField
 
 
 class OrganizationalProfileForm(forms.ModelForm):
@@ -282,52 +283,106 @@ class StrategyHierarchyForm(forms.ModelForm):
         else:
             self.fields['formula'].initial = "Select a KPI to see the formula"
 
+class DepartmentForm(forms.ModelForm):
+    class Meta:
+        model = Department
+        fields = ['department_name']
+        widgets = {
+            'department_name': forms.TextInput(
+                attrs={'class': 'form-control', 'placeholder': 'Enter department name'}
+            ),
+        }
+
+
+#
+# class StakeholderForm(forms.ModelForm):
+#
+#     class Meta:
+#         model = Stakeholder
+#         exclude = ['organization_name']  # Exclude the organization field
+#         widgets = {
+#             'stakeholder_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Stakeholder Name'}),
+#             'stakeholder_type': forms.Select(attrs={'class': 'form-control'}),
+#             # 'role': forms.CheckboxSelectMultiple(),
+#             'department': forms.Select(attrs={'class': 'form-control'}),
+#             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Brief description'}),
+#             'impact_level': forms.Select(attrs={'class': 'form-control'}),
+#             'interest_level': forms.Select(attrs={'class': 'form-control'}),
+#             # 'engagement_strategy': forms.CheckboxSelectMultiple(),
+#             'influence_score': forms.Select(attrs={'class': 'form-control'}),
+#             'priority': forms.Select(attrs={'class': 'form-select', 'id': 'priority'}),
+#             'satisfaction_level': forms.Select(attrs={'class': 'form-control'}),
+#             'risk_level': forms.Select(attrs={'class': 'form-control'}),
+#             'contribution_score': forms.Select(attrs={'class': 'form-select', 'id': 'contribution_score'}),
+#             'contact_info': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Email, Phone, or Contact'}),
+#         }
+#
+#     def __init__(self, *args, **kwargs):
+#         self.request = kwargs.pop('request', None)
+#         super().__init__(*args, **kwargs)
+#
+#         # Filter department based on user's organization
+#         if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
+#             org = self.request.user.organization_name
+#             self.fields['department'].queryset = Department.objects.filter(organization=org).order_by('department_name')
+#         else:
+#             self.fields['department'].queryset = Department.objects.none()
+#
+#         # Format help texts with inline CSS
+#         for field in self.fields.values():
+#             if field.help_text:
+#                 field.help_text = f'<span style="color: blue; font-style: italic;">{field.help_text}</span>'
+#
+#         # Add invalid bootstrap styling for error fields
+#         for field_name, field in self.fields.items():
+#             css_classes = field.widget.attrs.get('class', 'form-control')
+#             if field_name in self.errors:
+#                 css_classes += ' is-invalid'
+#             field.widget.attrs['class'] = css_classes
+#
+#     error_css_class = 'text-danger'
+#     required_css_class = 'font-weight-bold'
 
 class StakeholderForm(forms.ModelForm):
     class Meta:
         model = Stakeholder
-        # Exclude automatically set or relationship fields
-        exclude = [
-            'organization_name',
-        ]
-
+        exclude = ['organization_name']  # Exclude the organization field
         widgets = {
             'stakeholder_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Stakeholder Name'}),
             'stakeholder_type': forms.Select(attrs={'class': 'form-control'}),
-            'role': forms.Select(attrs={'class': 'form-control'}),
-            'department': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Department or Team'}),
+            'department': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Brief description'}),
             'impact_level': forms.Select(attrs={'class': 'form-control'}),
             'interest_level': forms.Select(attrs={'class': 'form-control'}),
-            'engagement_strategy': forms.Select(attrs={'class': 'form-control'}),
-            'influence_score': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Influence Score'}),
-            'priority': forms.Select(
-                attrs={ 'class': 'form-select',  'id': 'priority',}
-            ),
+            'influence_score': forms.Select(attrs={'class': 'form-control'}),
+            'priority': forms.Select(attrs={'class': 'form-select', 'id': 'priority'}),
             'satisfaction_level': forms.Select(attrs={'class': 'form-control'}),
             'risk_level': forms.Select(attrs={'class': 'form-control'}),
-            'contribution_score': forms.Select(
-                attrs={ 'class': 'form-select', 'id': 'contribution_score',}
-            ),
+            'contribution_score': forms.Select(attrs={'class': 'form-select', 'id': 'contribution_score'}),
             'contact_info': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Email, Phone, or Contact'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Additional notes'}),
         }
 
     def __init__(self, *args, **kwargs):
+        # Pop the request from kwargs
+        self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
 
-        # Format help texts with inline CSS
-        for field in self.fields.values():
-            if field.help_text:
-                field.help_text = f'<span style="color: blue; font-style: italic;">{field.help_text}</span>'
+        # Filter department dropdown based on the logged-in user's organization
+        if self.request and self.request.user.is_authenticated:
+            org = getattr(self.request.user, 'organization_name', None)
+            if org:
+                self.fields['department'].queryset = Department.objects.filter(organization_name=org)
+            else:
+                self.fields['department'].queryset = Department.objects.none()
+        else:
+            self.fields['department'].queryset = Department.objects.none()
 
         # Add 'is-invalid' class to fields with errors
         for field_name, field in self.fields.items():
+            css_classes = field.widget.attrs.get('class', 'form-control')
             if field_name in self.errors:
-                field.widget.attrs.update({'class': 'form-control is-invalid'})
-
-    error_css_class = 'text-danger'
-    required_css_class = 'font-weight-bold'
+                css_classes += ' is-invalid'
+            field.widget.attrs['class'] = css_classes
 
 
 class StrategicCycleForm(forms.ModelForm):

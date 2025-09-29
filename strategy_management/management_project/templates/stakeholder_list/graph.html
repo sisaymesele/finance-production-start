@@ -1,45 +1,159 @@
-{% extends "dashboard.html" %}
-{% load humanize %}
+{% extends 'dashboard.html' %}
+{% load static %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-4">Stakeholder Report</h2>
+<div class="container-fluid">
+    <h1 class="mb-4">Stakeholder Analysis Dashboard</h1>
 
-    {% comment %} Role-wise Stakeholders {% endcomment %}
-    {% if plot_html_role %}
-    <div class="mb-4">
-        <h4 class="mb-2">Stakeholders by Role</h4>
-        <div class="card shadow-sm p-3">
-            {{ plot_html_role|safe }}
+    <!-- Summary Boxes -->
+    <div class="row mb-4">
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="text-value-lg">{{ summary_data.total_stakeholders }}</div>
+                            <div>Total Stakeholders</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="text-value-lg">{{ summary_data.internal_count }}</div>
+                            <div>Internal</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-building fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="text-value-lg">{{ summary_data.external_count }}</div>
+                            <div>External</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-handshake fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="text-value-lg">{{ summary_data.avg_impact }}/5</div>
+                            <div>Avg Impact</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-bullseye fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="text-value-lg">{{ summary_data.high_risk_count }}</div>
+                            <div>High Risk</div>
+                            <small>{{ summary_data.high_risk_percentage }}% of total</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card bg-secondary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="text-value-lg">{{ summary_data.avg_satisfaction }}/5</div>
+                            <div>Avg Satisfaction</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-smile fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    {% endif %}
 
-    {% comment %} Department-wise Stakeholders {% endcomment %}
-    {% if plot_html_department %}
-    <div class="mb-4">
-        <h4 class="mb-2">Stakeholders by Department</h4>
-        <div class="card shadow-sm p-3">
-            {{ plot_html_department|safe }}
+    <!-- Charts Row 1: Basic Distribution -->
+    <div class="row mb-4">
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    {{ plot_html_role|safe }}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    {{ plot_html_department|safe }}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    {{ plot_html_type|safe }}
+                </div>
+            </div>
         </div>
     </div>
-    {% endif %}
 
-    {% comment %} Stakeholder Type Pie Chart {% endcomment %}
-    {% if plot_html_type %}
-    <div class="mb-4">
-        <h4 class="mb-2">Stakeholders by Type</h4>
-        <div class="card shadow-sm p-3">
-            {{ plot_html_type|safe }}
+    <!-- Charts Row 2: Impact & Satisfaction -->
+    <div class="row mb-4">
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    {{ plot_html_impact|safe }}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    {{ plot_html_satisfaction|safe }}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    {{ plot_html_engagement|safe }}
+                </div>
+            </div>
         </div>
     </div>
-    {% endif %}
 
-    {% comment %} Fallback if no data {% endcomment %}
-    {% if not plot_html_role and not plot_html_department and not plot_html_type %}
-    <div class="alert alert-warning" role="alert">
-        No stakeholder data available to display charts.
-    </div>
-    {% endif %}
 </div>
-{% endblock content %}
+{% endblock %}

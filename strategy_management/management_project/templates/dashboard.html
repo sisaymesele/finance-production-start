@@ -65,6 +65,47 @@
                     </a>
                 </li>
 
+                <li class="nav-item">
+                    <!-- Main Category Link (Collapsible Trigger) -->
+                    <a class="nav-link text-white bg-primary" data-bs-toggle="collapse" href="#swotAnalysisMenu"
+                       role="button"
+                       aria-expanded="false" aria-controls="swotAnalysisMenu" onclick="event.preventDefault();">
+                        <i class="bi bi-bar-chart"></i> SWOT Analysis
+                    </a>
+
+                    <!-- Collapsible Submenu -->
+                    <div class="collapse" id="swotAnalysisMenu">
+                        <ul class="nav flex-column ms-3">
+
+                            <!-- Manage SWOT Analysis -->
+                            <li class="nav-item">
+                                <a hx-get="{% url 'swot_analysis_list' %}"
+                                   hx-target="#full-page-container"
+                                   hx-swap="innerHTML"
+                                   hx-trigger="click"
+                                   hx-push-url="{% url 'swot_analysis_list' %}"
+                                   href="{% url 'swot_analysis_list' %}"
+                                   class="nav-link text-white">
+                                    <i class="bi bi-list-check"></i> Manage SWOT Analysis
+                                </a>
+                            </li>
+
+                            <!-- SWOT Charts & Reports -->
+                            <li class="nav-item">
+                                <a hx-get="{% url 'swot_analysis_report' %}"
+                                   hx-target="#full-page-container"
+                                   hx-swap="innerHTML"
+                                   hx-trigger="click"
+                                   hx-push-url="{% url 'swot_analysis_report' %}"
+                                   href="{% url 'swot_analysis_report' %}"
+                                   class="nav-link text-white">
+                                    <i class="bi bi-pie-chart"></i> SWOT Charts & Reports
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
 
                 <li class="nav-item">
                     <a hx-get="{% url 'vision_list' %}"
@@ -111,6 +152,18 @@
                        href="{% url 'strategy_hierarchy_list' %}"
                        class="nav-link text-white">
                         <i class="bi bi-list-check"></i> Strategy Hierarchy
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a hx-get="{% url 'department_list' %}"
+                       hx-target="#full-page-container"
+                       hx-swap="innerHTML"
+                       hx-trigger="click"
+                       hx-push-url="{% url 'department_list' %}"
+                       href="{% url 'department_list' %}"
+                       class="nav-link text-white">
+                        <i class="bi bi-building"></i> Department
                     </a>
                 </li>
 

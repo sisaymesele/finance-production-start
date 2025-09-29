@@ -13,7 +13,7 @@
 
     <h2 class="text-center">SWOT Analysis List</h2>
 
-    <!-- Header: Create, Export & Filters (Horizontal) -->
+    <!-- Header: Create, Export & Filters -->
     <div class="d-flex flex-wrap align-items-center mb-3 gap-2">
 
         <!-- Create Button -->
@@ -27,21 +27,23 @@
         </a>
 
         <!-- Export to Excel -->
-        <a href="?{% if selected_type %}swot_type={{ selected_type }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}export=excel"
-           class="btn btn-success">
-            Export to Excel
+        <a href="{% url 'export_swot_analysis_to_excel' %}?search={{ search_query }}&swot_type={{ selected_type }}"
+           class="btn btn-success mb-3">
+            Export Excel
         </a>
 
         <!-- Filters -->
         <div class="d-flex gap-2 ms-auto flex-wrap">
 
-            <!-- SWOT Type Filter (Separate Form) -->
+            <!-- Combined Search & Type Filter -->
             <form method="get"
                   hx-get="{% url 'swot_analysis_list' %}"
                   hx-target="#full-page-container"
                   hx-include="this"
-                  hx-trigger="change"
-                  class="d-inline-block">
+                  hx-trigger="change, keyup delay:600ms from:input[name='search']"
+                  class="d-inline-flex gap-2">
+
+                <!-- SWOT Type Dropdown -->
                 <select name="swot_type" class="form-select" style="max-width: 220px;">
                     <option value="">All SWOT Types</option>
                     {% for type in swot_types %}
@@ -50,33 +52,26 @@
                         </option>
                     {% endfor %}
                 </select>
-            </form>
 
-            <!-- Search Input (Separate Form) -->
-            <form method="get"
-                  hx-get="{% url 'swot_analysis_list' %}"
-                  hx-target="#full-page-container"
-                  hx-include="this"
-                  hx-trigger="keyup changed delay:600ms from:input[name='search']"
-                  class="d-inline-block">
+                <!-- Search Input -->
                 <input type="text"
                        name="search"
                        class="form-control"
                        placeholder="Search SWOT..."
                        value="{{ search_query|default_if_none:'' }}"
                        style="max-width: 220px;">
-            </form>
 
-            <!-- Clear Filters -->
-            {% if selected_type or search_query %}
-                <a href="{% url 'swot_analysis_list' %}"
-                   class="btn btn-outline-secondary ms-2"
-                   hx-get="{% url 'swot_analysis_list' %}"
-                   hx-target="#full-page-container"
-                   hx-swap="innerHTML">
-                    Clear
-                </a>
-            {% endif %}
+                <!-- Clear Filters -->
+                {% if selected_type or search_query %}
+                    <a href="{% url 'swot_analysis_list' %}"
+                       class="btn btn-outline-secondary"
+                       hx-get="{% url 'swot_analysis_list' %}"
+                       hx-target="#full-page-container"
+                       hx-swap="innerHTML">
+                        Clear
+                    </a>
+                {% endif %}
+            </form>
         </div>
     </div>
 
@@ -130,9 +125,7 @@
                         <!-- Description -->
                         <td>
                             {% if s.description %}
-                                <span title="{{ s.description }}">
-                                    {{ s.description|truncatewords:12 }}
-                                </span>
+                                <span title="{{ s.description }}">{{ s.description|truncatewords:12 }}</span>
                             {% else %}
                                 <span class="text-muted">—</span>
                             {% endif %}

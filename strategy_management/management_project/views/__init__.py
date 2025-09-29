@@ -1,6 +1,17 @@
 # views/__init__.py
 from .dashboard import dashboard
 
+from .swot_analysis import swot_analysis_list, create_swot_analysis, update_swot_analysis, delete_swot_analysis, \
+    export_swot_analysis_to_excel, swot_analysis_chart
+
+from .vision import vision_list, create_vision, update_vision, delete_vision
+from .mission import mission_list, create_mission, update_mission, delete_mission
+from .values import values_list, create_values, update_values, delete_values
+
+from .strategy_hierarchy import strategy_hierarchy_list, create_strategy_hierarchy, update_strategy_hierarchy, delete_strategy_hierarchy
+
+from .department import department_list, create_department, update_department, delete_department
+
 from .stakeholder import  stakeholder_list, create_stakeholder, update_stakeholder, delete_stakeholder, \
     export_stakeholders_to_excel, stakeholder_graph_view
 
@@ -18,12 +29,7 @@ from .strategic_report import strategy_report_by_cycle_list, strategic_report_de
     create_strategic_report, update_strategic_report, delete_strategic_report, \
     export_strategic_report_to_excel, strategic_report_chart
 
-from .vision import vision_list, create_vision, update_vision, delete_vision
-from .mission import mission_list, create_mission, update_mission, delete_mission
-from .values import values_list, create_values, update_values, delete_values
-from .swot_analysis import swot_analysis_list, create_swot_analysis, update_swot_analysis, delete_swot_analysis
-from .strategy_hierarchy import strategy_hierarchy_list, create_strategy_hierarchy, update_strategy_hierarchy, delete_strategy_hierarchy
 
 from .swot_report import swot_report_by_cycle_list, swot_report_list, \
-    create_swot_report, update_swot_report, delete_swot_report
+    create_swot_report, update_swot_report, delete_swot_report, swot_report_chart
 

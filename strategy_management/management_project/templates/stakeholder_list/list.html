@@ -1,350 +1,301 @@
 {% extends "dashboard.html" %}
 {% load humanize %}
-{% block content %}
 
-<div class="container-fluid" id="stakeholder-container">
+{% block content %}
+<div class="container-fluid" id="full-page-container">
     <!-- Display Messages -->
     {% for message in messages %}
-    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
     {% endfor %}
 
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-1">Stakeholder Management</h1>
-            <p class="text-muted">Manage and analyze your organization's stakeholders</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{% url 'export_stakeholders_to_excel' %}?{{ request.GET.urlencode }}" class="btn btn-outline-success">
-                <i class="bi bi-download me-1"></i> Export to Excel
-            </a>
-            <a href="{% url 'create_stakeholder' %}" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-1"></i> Create Stakeholder
-            </a>
-        </div>
-    </div>
+    <h2 class="text-center">Stakeholder List</h2>
 
-    <!-- Search and Filters -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" action="{% url 'stakeholder_list' %}">
-                <div class="row g-3">
-                    <!-- Search -->
-                    <div class="col-md-4">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-search"></i></span>
-                            <input type="text"
-                                   name="search"
-                                   class="form-control"
-                                   placeholder="Search stakeholders..."
-                                   value="{{ search_query }}">
-                        </div>
-                    </div>
+    <!-- Header: Create, Export & Filters -->
+    <div class="d-flex flex-wrap align-items-center mb-3 gap-2">
 
-                    <!-- Stakeholder Type Filter -->
-                    <div class="col-md-2">
-                        <select name="type" class="form-select">
-                            <option value="">All Types</option>
-                            {% for value, label in STAKEHOLDER_TYPE_CHOICES %}
-                            <option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>
-                                {{ label }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+        <!-- Create Button -->
+        <a href="{% url 'create_stakeholder' %}"
+           class="btn btn-primary"
+           hx-get="{% url 'create_stakeholder' %}"
+           hx-target="#full-page-container"
+           hx-swap="innerHTML"
+           hx-push-url="true">
+            Create Stakeholder
+        </a>
 
-                    <!-- Role Filter -->
-                    <div class="col-md-3">
-                        <select name="role" class="form-select">
-                            <option value="">All Roles</option>
-                            {% for value, label in ROLE_CHOICES %}
-                            <option value="{{ value }}" {% if selected_role == value %}selected{% endif %}>
-                                {{ label }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+        <!-- Export to Excel -->
+        <a href="{% url 'export_stakeholders' %}?search={{ search_query }}&stakeholder_type={{ selected_type }}"
+           class="btn btn-success">
+            Export to Excel
+        </a>
 
-                    <!-- Priority Filter -->
-                    <div class="col-md-2">
-                        <select name="priority" class="form-select">
-                            <option value="">All Priorities</option>
-                            {% for value, label in PRIORITY_CHOICES %}
-                            <option value="{{ value }}" {% if selected_priority == value %}selected{% endif %}>
-                                {{ label }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <!-- Buttons -->
-                    <div class="col-md-1">
-                        <button type="submit" class="btn btn-primary w-100">Filter</button>
-                    </div>
-                </div>
-
-                <!-- Clear Filters -->
-                {% if search_query or selected_type or selected_role or selected_priority %}
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <a href="{% url 'stakeholder_list' %}" class="btn btn-outline-danger btn-sm">
-                            <i class="bi bi-x-circle me-1"></i> Clear Filters
-                        </a>
-                        <small class="text-muted ms-2">Showing {{ page_obj.paginator.count }} filtered stakeholders</small>
-                    </div>
-                </div>
-                {% endif %}
-            </form>
-        </div>
-    </div>
-
-    <!-- Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card border-start border-primary border-4">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-muted small">Total</div>
-                            <div class="h5 mb-0">{{ total_stakeholders }}</div>
-                        </div>
-                        <i class="bi bi-people text-primary fs-4"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card border-start border-warning border-4">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-muted small">High Priority</div>
-                            <div class="h5 mb-0">{{ high_priority_count }}</div>
-                        </div>
-                        <i class="bi bi-exclamation-triangle text-warning fs-4"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card border-start border-success border-4">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-muted small">High Satisfaction</div>
-                            <div class="h5 mb-0">{{ high_satisfaction_count }}</div>
-                        </div>
-                        <i class="bi bi-emoji-smile text-success fs-4"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card border-start border-danger border-4">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-muted small">High Risk</div>
-                            <div class="h5 mb-0">{{ high_risk_count }}</div>
-                        </div>
-                        <i class="bi bi-shield-exclamation text-danger fs-4"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Stakeholders Table -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0">Stakeholder List</h5>
-            <span class="badge bg-primary rounded-pill">{{ page_obj.paginator.count }} stakeholders</span>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover table-striped mb-0">
-                    <thead class="table-light">
-                    <tr>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Role</th>
-                        <th>Department</th>
-                        <th>Priority</th>
-                        <th>Impact</th>
-                        <th>Risk</th>
-                        <th>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for stakeholder in page_obj %}
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="flex-shrink-0">
-                                    <div class="avatar-sm">
-                                        <div class="avatar-title bg-light text-primary rounded-circle">
-                                            {{ stakeholder.stakeholder_name|first|upper }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="flex-grow-1 ms-2">
-                                    <a href="{% url 'update_stakeholder' stakeholder.pk %}" class="text-decoration-none fw-semibold">
-                                        {{ stakeholder.stakeholder_name }}
-                                    </a>
-                                    <div class="text-muted small">{{ stakeholder.contact_info|default:"No contact" }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge {% if stakeholder.stakeholder_type == 'internal' %}bg-primary{% else %}bg-secondary{% endif %}">
-                                {{ stakeholder.get_stakeholder_type_display }}
-                            </span>
-                        </td>
-                        <td>{{ stakeholder.get_role_display }}</td>
-                        <td>{{ stakeholder.department|default:"-" }}</td>
-                        <td>
-                            <span class="badge
-                                {% if stakeholder.priority == 'critical' %}bg-danger
-                                {% elif stakeholder.priority == 'high' %}bg-warning
-                                {% elif stakeholder.priority == 'medium' %}bg-info
-                                {% elif stakeholder.priority == 'low' %}bg-secondary
-                                {% else %}bg-light text-dark{% endif %}">
-                                {{ stakeholder.get_priority_display }}
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge
-                                {% if stakeholder.impact_level == 'critical' %}bg-danger
-                                {% elif stakeholder.impact_level == 'high' %}bg-warning
-                                {% elif stakeholder.impact_level == 'medium' %}bg-info
-                                {% else %}bg-light text-dark{% endif %}">
-                                {{ stakeholder.get_impact_level_display }}
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge
-                                {% if stakeholder.risk_level == 'critical' %}bg-danger
-                                {% elif stakeholder.risk_level == 'high' %}bg-warning
-                                {% elif stakeholder.risk_level == 'medium' %}bg-info
-                                {% else %}bg-light text-dark{% endif %}">
-                                {{ stakeholder.get_risk_level_display }}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <a href="{% url 'update_stakeholder' stakeholder.pk %}" class="btn btn-outline-primary" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <a href="{% url 'delete_stakeholder' stakeholder.pk %}" class="btn btn-outline-danger" title="Delete">
-                                    <i class="bi bi-trash"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="8" class="text-center py-4">
-                            <div class="text-muted">
-                                <i class="bi bi-people display-4 d-block mb-2"></i>
-                                No stakeholders found.
-                                {% if search_query or selected_type or selected_role or selected_priority %}
-                                Try adjusting your search criteria.
-                                {% else %}
-                                <a href="{% url 'create_stakeholder' %}">Create your first stakeholder</a>.
-                                {% endif %}
-                            </div>
-                        </td>
-                    </tr>
+        <!-- Filters -->
+        <div class="d-flex gap-2 ms-auto flex-wrap">
+            <!-- Stakeholder Type Filter -->
+            <form method="get"
+                  hx-get="{% url 'stakeholder_list' %}"
+                  hx-target="#full-page-container"
+                  hx-include="this"
+                  hx-trigger="change"
+                  class="d-inline-block">
+                <select name="stakeholder_type" class="form-select" style="max-width: 220px;">
+                    <option value="">All Stakeholder Types</option>
+                    {% for type in stakeholder_types %}
+                        <option value="{{ type }}" {% if type == selected_type %}selected{% endif %}>
+                            {{ type|capfirst }}
+                        </option>
                     {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                </select>
+            </form>
 
+            <!-- Search Input -->
+            <form method="get"
+                  hx-get="{% url 'stakeholder_list' %}"
+                  hx-target="#full-page-container"
+                  hx-include="this"
+                  hx-trigger="keyup changed delay:600ms from:input[name='search']"
+                  class="d-inline-block">
+                <input type="text"
+                       name="search"
+                       class="form-control"
+                       placeholder="Search stakeholders..."
+                       value="{{ search_query|default_if_none:'' }}"
+                       style="max-width: 220px;">
+            </form>
+
+            <!-- Clear Filters -->
+            {% if selected_type or search_query %}
+                <a href="{% url 'stakeholder_list' %}"
+                   class="btn btn-outline-secondary ms-2"
+                   hx-get="{% url 'stakeholder_list' %}"
+                   hx-target="#full-page-container"
+                   hx-swap="innerHTML">
+                    Clear
+                </a>
+            {% endif %}
+        </div>
     </div>
 
-    <!-- Analytics Section -->
-    <div class="row mt-4">
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Stakeholders by Role</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Role</th>
-                                    <th>Count</th>
-                                    <th>Percentage</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            {% for entry in count_by_role %}
-                            <tr>
-                                <td>{{ entry.role_display }}</td>
-                                <td>{{ entry.role_count }}</td>
-                                <td>{{ entry.percentage|floatformat:1 }}%</td>
-                            </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+    <!-- Filter Summary -->
+    {% if selected_type or search_query %}
+        <div class="alert alert-info mb-3">
+            <strong>Filtered by:</strong>
+            {% if selected_type %}Type: {{ selected_type|capfirst }}{% endif %}
+            {% if search_query %} | Search: "{{ search_query }}"{% endif %}
         </div>
+    {% endif %}
 
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Stakeholders by Department</h5>
+    <!-- Stakeholder Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-sm align-middle">
+            <thead class="table-light sticky-top">
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Role</th>
+                    <th>Department</th>
+                    <th>Priority</th>
+                    <th>Impact</th>
+                    <th>Interest</th>
+                    <th>Engagement</th>
+                    <th>Influence</th>
+                    <th>Satisfaction</th>
+                    <th>Risk</th>
+                    <th>Contribution</th>
+                    <th>Contact</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+    {% for s in page_obj %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ s.stakeholder_name }}</td>
+
+            <!-- Type -->
+            <td>
+                <span class="badge {% if s.stakeholder_type == 'internal' %}bg-info{% else %}bg-secondary{% endif %}">
+                    {{ s.get_stakeholder_type_display }}
+                </span>
+            </td>
+
+            <!-- Role -->
+            <td>
+                <span class="badge bg-light text-dark border">
+                    {{ s.get_role_display }}
+                </span>
+            </td>
+
+            <td>{{ s.department|default:"—" }}</td>
+
+            <!-- Priority -->
+            <td>
+                <span class="badge
+                    {% if s.priority == 'critical' %}bg-danger
+                    {% elif s.priority == 'high' %}bg-warning text-dark
+                    {% elif s.priority == 'medium' %}bg-primary
+                    {% elif s.priority == 'low' %}bg-success
+                    {% else %}bg-secondary{% endif %}">
+                    {{ s.get_priority_display }}
+                </span>
+            </td>
+
+            <!-- Impact -->
+            <td>
+                <span class="badge
+                    {% if s.impact_level == 'critical' %}bg-danger
+                    {% elif s.impact_level == 'high' %}bg-warning text-dark
+                    {% elif s.impact_level == 'medium' %}bg-primary
+                    {% elif s.impact_level == 'low' %}bg-success
+                    {% else %}bg-secondary{% endif %}">
+                    {{ s.get_impact_level_display }}
+                </span>
+            </td>
+
+            <!-- Interest -->
+            <td>
+                <span class="badge
+                    {% if s.interest_level == 'very_high' %}bg-danger
+                    {% elif s.interest_level == 'high' %}bg-warning text-dark
+                    {% elif s.interest_level == 'medium' %}bg-primary
+                    {% elif s.interest_level == 'low' %}bg-success
+                    {% else %}bg-secondary{% endif %}">
+                    {{ s.get_interest_level_display }}
+                </span>
+            </td>
+
+            <!-- Engagement -->
+            <td>
+                <span class="badge bg-dark">
+                    {{ s.get_engagement_strategy_display }}
+                </span>
+            </td>
+
+            <!-- Influence -->
+            <td>
+                <span class="badge
+                    {% if s.influence_score == 'critical' %}bg-danger
+                    {% elif s.influence_score == 'high' %}bg-warning text-dark
+                    {% elif s.influence_score == 'medium' %}bg-primary
+                    {% elif s.influence_score == 'low' %}bg-success
+                    {% else %}bg-secondary{% endif %}">
+                    {{ s.get_influence_score_display }}
+                </span>
+            </td>
+
+            <!-- Satisfaction -->
+            <td>
+                <span class="badge
+                    {% if s.satisfaction_level == 'very_high' %}bg-success
+                    {% elif s.satisfaction_level == 'high' %}bg-primary
+                    {% elif s.satisfaction_level == 'medium' %}bg-warning text-dark
+                    {% elif s.satisfaction_level == 'low' %}bg-danger
+                    {% else %}bg-secondary{% endif %}">
+                    {{ s.get_satisfaction_level_display }}
+                </span>
+            </td>
+
+            <!-- Risk -->
+            <td>
+                <span class="badge
+                    {% if s.risk_level == 'critical' %}bg-danger
+                    {% elif s.risk_level == 'high' %}bg-warning text-dark
+                    {% elif s.risk_level == 'medium' %}bg-primary
+                    {% elif s.risk_level == 'low' %}bg-success
+                    {% else %}bg-secondary{% endif %}">
+                    {{ s.get_risk_level_display }}
+                </span>
+            </td>
+
+            <!-- Contribution -->
+            <td>
+                <span class="badge
+                    {% if s.contribution_score == 'very_high' %}bg-success
+                    {% elif s.contribution_score == 'high' %}bg-primary
+                    {% elif s.contribution_score == 'medium' %}bg-warning text-dark
+                    {% elif s.contribution_score == 'low' %}bg-danger
+                    {% else %}bg-secondary{% endif %}">
+                    {{ s.get_contribution_score_display }}
+                </span>
+            </td>
+
+            <!-- Contact -->
+            <td>{{ s.contact_info|default:"—" }}</td>
+
+            <!-- Actions -->
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <a class="btn btn-outline-warning"
+                       hx-get="{% url 'update_stakeholder' s.pk %}"
+                       hx-target="#full-page-container"
+                       hx-swap="innerHTML"
+                       hx-push-url="true"
+                       title="Edit">
+                        ✏️
+                    </a>
+                    <a class="btn btn-outline-danger"
+                       hx-get="{% url 'delete_stakeholder' s.pk %}"
+                       hx-target="#full-page-container"
+                       hx-swap="innerHTML"
+                       hx-push-url="true"
+                       title="Delete">
+                        🗑️
+                    </a>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Department</th>
-                                    <th>Count</th>
-                                    <th>Percentage</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            {% for entry in count_by_department %}
-                            <tr>
-                                <td>{{ entry.department|default:"Not Assigned" }}</td>
-                                <td>{{ entry.department_count }}</td>
-                                <td>{{ entry.percentage|floatformat:1 }}%</td>
-                            </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            </td>
+        </tr>
+    {% empty %}
+        <tr>
+            <td colspan="15" class="text-center py-4">
+                {% if selected_type or search_query %}
+                    No stakeholders found matching your filters.
+                    <a href="{% url 'stakeholder_list' %}"
+                       hx-get="{% url 'stakeholder_list' %}"
+                       hx-target="#full-page-container"
+                       hx-swap="innerHTML"
+                       class="btn btn-sm btn-outline-primary mt-2">
+                        Clear filters
+                    </a>
+                {% else %}
+                    No stakeholders found.
+                    <a href="{% url 'create_stakeholder' %}"
+                       hx-get="{% url 'create_stakeholder' %}"
+                       hx-target="#full-page-container"
+                       hx-swap="innerHTML"
+                       hx-push-url="true"
+                       class="btn btn-sm btn-primary mt-2">
+                        Create your first Stakeholder
+                    </a>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+</tbody>
+
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="card-footer">
+        <div id="pagination">
+            {% include 'pagination.html' %}
         </div>
+    </div>
+
+    <!-- Results Count -->
+    <div class="mt-3 text-muted">
+        Showing {{ page_obj.paginator.count }} stakeholder{{ page_obj.paginator.count|pluralize }}
     </div>
 </div>
 
 <style>
-    .avatar-sm {
-        width: 32px;
-        height: 32px;
-    }
-    .avatar-title {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        font-weight: 600;
-    }
-    .badge {
-        font-size: 0.75rem;
-    }
+    .badge { font-size: 0.8em; padding: 0.45em 0.65em; }
+    .table td { vertical-align: middle; }
+    .btn-group { white-space: nowrap; }
+    thead.sticky-top th { background: #f8f9fa; z-index: 2; }
 </style>
-
 {% endblock content %}
