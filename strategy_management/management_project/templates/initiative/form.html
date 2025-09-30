@@ -1,0 +1,104 @@
+{% extends 'dashboard.html' %}
+
+{% block content %}
+<div id="full-page-container">
+    <form method="post" class="row g-3"
+          hx-post="{% if form.instance.pk %}{% url 'update_initiative' form.instance.pk %}{% else %}{% url 'create_initiative' %}{% endif %}"
+          hx-target="#full-page-container"
+          hx-swap="innerHTML"
+          hx-push-url="true">
+        {% csrf_token %}
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Focus Area -->
+        <div class="col-md-4">
+            <label>Focus Area</label>
+            <select name="initiative_focus_area" class="form-select"
+                    hx-post="{% if form.instance.pk %}{% url 'update_initiative' form.instance.pk %}{% else %}{% url 'create_initiative' %}{% endif %}"
+                    hx-target="#full-page-container"
+                    hx-swap="innerHTML">
+                <option value="">Select Focus Area</option>
+                {% for value, label in form.fields.initiative_focus_area.choices %}
+                    <option value="{{ value }}"
+                        {% if value|stringformat:"s" == form.data.initiative_focus_area|stringformat:"s"|default:form.instance.initiative_focus_area|stringformat:"s" %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Dimension -->
+        <div class="col-md-4">
+            <label>Dimension</label>
+            <select name="initiative_dimension" class="form-select"
+                    hx-post="{% if form.instance.pk %}{% url 'update_initiative' form.instance.pk %}{% else %}{% url 'create_initiative' %}{% endif %}"
+                    hx-target="#full-page-container"
+                    hx-swap="innerHTML">
+                <option value="">Select Dimension</option>
+                {% for value, label in form.fields.initiative_dimension.choices %}
+                    <option value="{{ value }}"
+                        {% if value|stringformat:"s" == form.data.initiative_dimension|stringformat:"s"|default:form.instance.initiative_dimension|stringformat:"s" %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Initiative Name -->
+        <div class="col-md-4">
+            <label>Initiative Name</label>
+            <input type="text" name="initiative_name" class="form-control"
+                   value="{{ form.data.initiative_name|default:form.instance.initiative_name }}">
+        </div>
+
+        <!-- Priority / Impact / Likelihood -->
+        <div class="col-md-4">
+            {{ form.priority.label_tag }}
+            {{ form.priority }}
+        </div>
+        <div class="col-md-4">
+            {{ form.impact.label_tag }}
+            {{ form.impact }}
+        </div>
+        <div class="col-md-4">
+            {{ form.likelihood.label_tag }}
+            {{ form.likelihood }}
+        </div>
+
+        <!-- Risk Level / Status -->
+        <div class="col-md-6">
+            {{ form.risk_level.label_tag }}
+            {{ form.risk_level }}
+        </div>
+        <div class="col-md-6">
+            {{ form.status.label_tag }}
+            {{ form.status }}
+        </div>
+
+        <!-- Description -->
+        <div class="col-12">
+            {{ form.description.label_tag }}
+            {{ form.description }}
+        </div>
+
+        <!-- Save / Cancel -->
+        <div class="col-12 mt-3">
+            <button type="submit" name="save" class="btn btn-success">Save</button>
+            <a href="{% url 'initiative_list' %}" class="btn btn-secondary"
+               hx-get="{% url 'initiative_list' %}"
+               hx-target="#full-page-container"
+               hx-swap="innerHTML"
+               hx-push-url="true">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

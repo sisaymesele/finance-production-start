@@ -1,0 +1,158 @@
+{% extends "dashboard.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid" id="full-page-container">
+    <!-- Display Messages -->
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+
+    <h2 class="text-center">Initiative Resources</h2>
+
+    <!-- Header: Create & Filters -->
+    <div class="d-flex flex-wrap align-items-center mb-3 gap-2">
+        <a href="{% url 'create_initiative_resource' %}"
+           class="btn btn-primary"
+           hx-get="{% url 'create_initiative_resource' %}"
+           hx-target="#full-page-container"
+           hx-swap="innerHTML"
+           hx-push-url="true">
+            Create Resource
+        </a>
+
+        <div class="d-flex gap-2 ms-auto flex-wrap">
+            <form method="get"
+                  hx-get="{% url 'initiative_resource_list' %}"
+                  hx-target="#full-page-container"
+                  hx-include="this"
+                  hx-trigger="change, keyup delay:600ms from:input[name='search']"
+                  class="d-inline-flex gap-2">
+
+                <!-- Initiative Dropdown -->
+                <select name="initiative" class="form-select" style="max-width: 220px;">
+                    <option value="">All Initiatives</option>
+                    {% for ini in initiatives %}
+                    <option value="{{ ini.pk }}" {% if ini.pk|stringformat:"s" == selected_initiative %}selected{% endif %}>
+                        {{ ini.initiative_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+
+                <!-- Search Input -->
+                <input type="text"
+                       name="search"
+                       class="form-control"
+                       placeholder="Search Resource..."
+                       value="{{ search_query|default_if_none:'' }}"
+                       style="max-width: 220px;">
+
+                <!-- Clear Filters -->
+                {% if selected_initiative or search_query %}
+                <a href="{% url 'initiative_resource_list' %}"
+                   class="btn btn-outline-secondary"
+                   hx-get="{% url 'initiative_resource_list' %}"
+                   hx-target="#full-page-container"
+                   hx-swap="innerHTML">
+                    Clear
+                </a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- Filter Summary -->
+    {% if selected_initiative or search_query %}
+    <div class="alert alert-info mb-3">
+        <strong>Filtered by:</strong>
+        {% if selected_initiative %}Initiative: {{ selected_initiative_name }}{% endif %}
+        {% if search_query %} | Search: "{{ search_query }}"{% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Resource Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-sm align-middle">
+            <thead class="table-light sticky-top">
+                <tr>
+                    <th>#</th>
+                    <th>Initiative</th>
+                    <th>Resource Type</th>
+                    <th>Required</th>
+                    <th>Used</th>
+                    <th>Remaining</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in page_obj %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ r.initiative.initiative_name }}</td>
+                    <td>{{ r.resource_type }}</td>
+                    <td>{{ r.resource_required|floatformat:2 }}</td>
+                    <td>{{ r.resource_used|floatformat:2 }}</td>
+                    <td>{{ r.resource_remaining|floatformat:2 }}</td>
+                   <td>
+    <div class="btn-group btn-group-sm">
+        <!-- Edit button -->
+        <a class="btn btn-outline-warning"
+           hx-get="{% url 'update_initiative_resource' r.pk %}"
+           hx-target="#full-page-container"
+           hx-swap="innerHTML"
+           hx-push-url="true"
+           title="Edit">✏️</a>
+
+        <!-- Delete button now goes to confirmation page -->
+        <a class="btn btn-outline-danger"
+           href="{% url 'delete_initiative_resource' r.pk %}"
+           hx-get="{% url 'delete_initiative_resource' r.pk %}"
+           hx-target="#full-page-container"
+           hx-swap="innerHTML"
+           hx-push-url="true"
+           title="Delete">🗑️</a>
+    </div>
+</td>
+
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4">
+                        No resources found.
+                        <a href="{% url 'create_initiative_resource' %}"
+                           hx-get="{% url 'create_initiative_resource' %}"
+                           hx-target="#full-page-container"
+                           hx-swap="innerHTML"
+                           hx-push-url="true"
+                           class="btn btn-sm btn-primary mt-2">
+                            Create Resource
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="card-footer">
+        <div id="pagination">
+            {% include 'pagination.html' %}
+        </div>
+    </div>
+
+    <!-- Results Count -->
+    <div class="mt-3 text-muted">
+        Showing {{ page_obj.paginator.count }} Resource{{ page_obj.paginator.count|pluralize }}
+    </div>
+</div>
+
+<style>
+    .table td { vertical-align: middle; }
+    .btn-group { white-space: nowrap; }
+    thead.sticky-top th { background: #f8f9fa; z-index: 2; }
+</style>
+{% endblock content %}

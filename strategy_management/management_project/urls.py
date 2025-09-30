@@ -114,10 +114,36 @@ urlpatterns = [
     # # List all cycles (entry point)
     path('swot-report-by-cycle/', views.swot_report_by_cycle_list, name='swot_report_by_cycle_list'),
     #
-    # path('swot/<slug:cycle_slug>/', views.swot_report_list, name='swot_report_list'),
-    # path('swot/<slug:cycle_slug>/create/', views.create_swot_report, name='create_swot_report'),
-    # path('swot/<slug:cycle_slug>/<int:pk>/update/', views.update_swot_report, name='update_swot_report'),
-    # path('swot/<slug:cycle_slug>/<int:pk>/delete/', views.delete_swot_report, name='delete_swot_report'),
+    # Initiative
+    path('initiative/', views.initiative_list, name='initiative_list'),
+    path('initiative/create/', views.create_initiative, name='create_initiative'),
+    path('initiative/update/<int:pk>/', views.update_initiative, name='update_initiative'),
+    path('initiative/delete/<int:pk>/', views.delete_initiative, name='delete_initiative'),
+
+    # ✅ Export to Excel
+    path('initiative/export/', views.export_initiative_to_excel, name='export_initiative_to_excel'),
+
+    # Initiative Chart / Dashboard
+    path('initiative-chart/', views.initiative_chart, name='initiative_report'),
+
+    # Initiative Timeline
+    path('initiative-timeline/', views.initiative_timeline_list, name='initiative_timeline_list'),
+    path('initiative-timeline/create/', views.create_initiative_timeline, name='create_initiative_timeline'),
+    path('initiative-timeline/update/<int:pk>/', views.update_initiative_timeline, name='update_initiative_timeline'),
+    path('initiative-timeline/delete/<int:pk>/', views.delete_initiative_timeline, name='delete_initiative_timeline'),
+
+     # Initiative Budget
+    path('initiative-budget/', views.initiative_budget_list, name='initiative_budget_list'),
+    path('initiative-budget/create/', views.create_initiative_budget, name='create_initiative_budget'),
+    path('initiative-budget/update/<int:pk>/', views.update_initiative_budget, name='update_initiative_budget'),
+    path('initiative-budget/delete/<int:pk>/', views.delete_initiative_budget, name='delete_initiative_budget'),
+    #intiative resource
+    path('initiative-resource/', views.initiative_resource_list, name='initiative_resource_list'),
+    path('initiative-resource/create/', views.create_initiative_resource, name='create_initiative_resource'),
+    path('initiative-resource/update/<int:pk>/', views.update_initiative_resource, name='update_initiative_resource'),
+    path('initiative-resource/delete/<int:pk>/', views.delete_initiative_resource, name='delete_initiative_resource'),
+
+
 
 
 

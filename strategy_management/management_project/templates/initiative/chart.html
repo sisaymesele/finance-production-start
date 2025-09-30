@@ -1,0 +1,117 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+  <!-- ------------------ Summary Cards ------------------ -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-2">
+      <div class="card shadow-sm border-0 rounded">
+        <div class="card-body text-center">
+          <h5>Total Initiatives</h5>
+          <h3>{{ summary_data.total_initiatives }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card shadow-sm border-0 rounded">
+        <div class="card-body text-center">
+          <h5>High Priority</h5>
+          <h3>{{ summary_data.high_priority_count }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card shadow-sm border-0 rounded">
+        <div class="card-body text-center">
+          <h5>High Impact</h5>
+          <h3>{{ summary_data.impact_high_count }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card shadow-sm border-0 rounded">
+        <div class="card-body text-center">
+          <h5>High Likelihood</h5>
+          <h3>{{ summary_data.likelihood_high_count }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card shadow-sm border-0 rounded">
+        <div class="card-body text-center">
+          <h5>Critical Risk</h5>
+          <h3>{{ summary_data.risk_critical_count }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card shadow-sm border-0 rounded">
+        <div class="card-body text-center">
+          <h5>In Progress</h5>
+          <h3>{{ summary_data.status_inprogress_count }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ------------------ Charts ------------------ -->
+  <div class="row g-4">
+
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm border-0 rounded">
+        <div class="card-body">
+          <h5 class="card-title">Priority Distribution</h5>
+          {{ plot_html_priority|safe }}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm border-0 rounded">
+        <div class="card-body">
+          <h5 class="card-title">Impact Distribution</h5>
+          {{ plot_html_impact|safe }}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm border-0 rounded">
+        <div class="card-body">
+          <h5 class="card-title">Likelihood Distribution</h5>
+          {{ plot_html_likelihood|safe }}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm border-0 rounded">
+        <div class="card-body">
+          <h5 class="card-title">Risk Level Distribution</h5>
+          {{ plot_html_risk|safe }}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm border-0 rounded">
+        <div class="card-body">
+          <h5 class="card-title">Status Distribution</h5>
+          {{ plot_html_status|safe }}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm border-0 rounded">
+        <div class="card-body">
+          <h5 class="card-title">Dimension Analysis</h5>
+          {{ plot_html_dimension|safe }}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

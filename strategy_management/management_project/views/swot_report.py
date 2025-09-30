@@ -1,7 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
 import calendar
 from django.core.paginator import Paginator
 from django.urls import reverse
@@ -13,6 +12,8 @@ from django.http import HttpResponse
 import openpyxl
 from openpyxl.utils import get_column_letter
 
+from django.db.models import Count, Q
+import plotly.graph_objects as go
 
 
 @login_required
@@ -278,11 +279,6 @@ def swot_report_list(request):
     })
 
 
-
-from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
-from django.shortcuts import render
-import plotly.graph_objects as go
 
 @login_required
 def swot_report_chart(request):

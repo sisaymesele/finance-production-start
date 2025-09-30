@@ -4,13 +4,14 @@ from django.core.exceptions import ValidationError
 import re
 # choices
 from .choices.country_code_choices import COUNTRY_CODE_CHOICES
-from .choices.payroll_month_choices import YEAR_CHOICES, MONTH_CHOICES
 # date and utils
 from django.utils.text import slugify
 from django.db.models import Sum
 # stakeholder_list info
 from decimal import Decimal, ROUND_HALF_UP
 from django.core.validators import MinValueValidator
+from datetime import date
+
 # services
 
 from .services.values import ValuesService
@@ -717,3 +718,115 @@ class SwotReport(models.Model):
 
     def __str__(self):
         return f"{self.swot_type} → {self.swot_pillar} → {self.swot_factor[:50]}"
+
+
+
+class Initiative(models.Model):
+    PRIORITY_CHOICES = [
+        ('Very High', 'Very High'),
+        ('High', 'High'),
+        ('Medium', 'Medium'),
+        ('Low', 'Low'),
+        ('Very Low', 'Very Low'),
+    ]
+
+    IMPACT_CHOICES = [
+        ('Very High', 'Very High'),
+        ('High', 'High'),
+        ('Medium', 'Medium'),
+        ('Low', 'Low'),
+        ('Very Low', 'Very Low'),
+    ]
+
+    LIKELIHOOD_CHOICES = [
+        ('Very High', 'Very High'),
+        ('High', 'High'),
+        ('Medium', 'Medium'),
+        ('Low', 'Low'),
+        ('Very Low', 'Very Low'),
+    ]
+
+    RISK_LEVEL_CHOICES = [
+        ('Critical', 'Critical'),
+        ('High', 'High'),
+        ('Medium', 'Medium'),
+        ('Low', 'Low'),
+        ('Very Low', 'Very Low'),
+    ]
+
+    STATUS_CHOICES = [
+        ('Not Started', 'Not Started'),
+        ('In Progress', 'In Progress'),
+        ('On Hold', 'On Hold'),
+        ('Completed', 'Completed'),
+        ('Cancelled', 'Cancelled'),
+    ]
+
+    organization_name = models.ForeignKey(
+        OrganizationalProfile, on_delete=models.PROTECT
+    )
+    initiative_focus_area = models.CharField(max_length=100)
+    initiative_dimension = models.CharField(max_length=100)
+    initiative_name = models.CharField(max_length=100)
+    description = models.TextField(max_length=100)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='Medium')
+    impact = models.CharField(max_length=10, choices=IMPACT_CHOICES, default='Medium')
+    likelihood = models.CharField(max_length=10, choices=LIKELIHOOD_CHOICES, default='Medium')
+    risk_level = models.CharField(max_length=10, choices=RISK_LEVEL_CHOICES, default='Medium')
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Not Started')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.initiative_focus_area} → {self.initiative_dimension} → {self.initiative_name}"
+
+
+class InitiativeTimeline(models.Model):
+    organization_name = models.ForeignKey(
+        OrganizationalProfile, on_delete=models.PROTECT
+    )
+    initiative = models.OneToOneField(Initiative, on_delete=models.CASCADE, related_name='timeline')
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
+
+    @property
+    def remaining_days(self):
+        if self.end_date:
+            today = date.today()
+            return (self.end_date - today).days
+        return None
+
+    @property
+    def remaining_months(self):
+        if self.end_date and self.start_date:
+            today = date.today()
+            total_days = (self.end_date - today).days
+            return total_days // 30 if total_days > 0 else 0
+        return None
+
+
+class InitiativeBudget(models.Model):
+    organization_name = models.ForeignKey(
+        OrganizationalProfile, on_delete=models.PROTECT
+    )
+    initiative = models.ForeignKey(Initiative, on_delete=models.CASCADE, related_name='budgets')
+    budget_plan = models.DecimalField(max_digits=12, decimal_places=2)
+    budget_used = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    @property
+    def budget_remaining(self):
+        return self.budget_plan - self.budget_used
+
+
+class InitiativeResource(models.Model):
+    organization_name = models.ForeignKey(
+        OrganizationalProfile, on_delete=models.PROTECT
+    )
+    initiative = models.ForeignKey(Initiative, on_delete=models.CASCADE, related_name='resources')
+    resource_type = models.CharField(max_length=50, help_text="e.g., Person-hours, Equipment")
+    resource_required = models.DecimalField(max_digits=12, decimal_places=2)
+    resource_used = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    @property
+    def resource_remaining(self):
+        return self.resource_required - self.resource_used

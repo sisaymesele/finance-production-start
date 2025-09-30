@@ -323,8 +323,6 @@ def export_strategic_report_to_excel(request, cycle_slug):
     return response
 
 
-# views.py
-
 def strategic_report_chart(request):
     user = request.user  # logged-in user
 
@@ -390,7 +388,7 @@ def strategic_report_chart(request):
         .order_by("action_plan__strategic_cycle__end_date")
     )
     cycle_dates = [
-        c["action_plan__strategic_cycle__end_date"].strftime("%B %Y") if c["action_plan__strategic_cycle__end_date"] else "N/A"
+        c["action_plan__strategic_cycle__end_date"].strftime("%b %Y") if c["action_plan__strategic_cycle__end_date"] else "N/A"
         for c in cycle_data
     ]
     cycle_fig = go.Figure()
@@ -418,12 +416,67 @@ def strategic_report_chart(request):
         xaxis_title="Cycle Months",
         yaxis_title="Value",
         xaxis_tickangle=-45,
-        template="plotly_white"
+        template="plotly_white",
+        height=500,
+        margin=dict(l=80, r=50, t=80, b=100),
+        xaxis=dict(showline=True, linewidth=1, linecolor='black', mirror=True),
+        yaxis=dict(showline=True, linewidth=1, linecolor='black', mirror=True)
     )
     cycle_plot = plot(cycle_fig, output_type="div", config={"displayModeBar": False})
 
-    # ---------------- 4. Body + Cycle Metrics ----------------
+    # ---------------- 5. Objective Growth by Cycle ----------------
+    objective_data = reports.values(
+        "action_plan__strategy_hierarchy__objective",
+        "action_plan__strategic_cycle__end_date",
+        "achievement"
+    ).order_by("action_plan__strategic_cycle__end_date")
 
+    objective_names = sorted({
+        r["action_plan__strategy_hierarchy__objective"]
+        for r in objective_data if r["action_plan__strategy_hierarchy__objective"]
+    })
+    obj_cycle_dates_set = sorted({
+        r["action_plan__strategic_cycle__end_date"]
+        for r in objective_data if r["action_plan__strategic_cycle__end_date"]
+    })
+    obj_cycle_labels = [d.strftime("%b %Y") for d in obj_cycle_dates_set]
+
+    objective_matrix = defaultdict(lambda: {d: 0 for d in obj_cycle_dates_set})
+    for r in objective_data:
+        obj = r["action_plan__strategy_hierarchy__objective"]
+        date = r["action_plan__strategic_cycle__end_date"]
+        if obj and date:
+            objective_matrix[obj][date] = r["achievement"] or 0
+
+    objective_fig = go.Figure()
+    palette = qualitative.Pastel1
+    for i, obj in enumerate(objective_names):
+        y_vals = [objective_matrix[obj][d] for d in obj_cycle_dates_set]
+        objective_fig.add_trace(go.Scatter(
+            x=obj_cycle_labels,
+            y=y_vals,
+            name=obj,
+            mode="lines+markers",
+            line=dict(color=palette[i % len(palette)], width=3),
+            marker=dict(size=10),
+            hovertemplate=f"Objective: {obj}<br>Date: %{{x}}<br>Achievement: %{{y}}<extra></extra>"
+        ))
+
+    objective_fig.update_layout(
+        title="Objective Growth by Cycle",
+        xaxis_title="Cycle Months",
+        yaxis_title="Achievement",
+        xaxis_tickangle=-45,
+        template="plotly_white",
+        height=600,
+        margin=dict(l=100, r=50, t=80, b=100),
+        xaxis=dict(showline=True, linewidth=1, linecolor='black', mirror=True),
+        yaxis=dict(showline=True, linewidth=1, linecolor='black', mirror=True),
+        legend_title_text="Objectives"
+    )
+    objective_plot = plot(objective_fig, output_type="div", config={"displayModeBar": False})
+
+    # ---------------- 6. KPI Growth by Cycle (Line Chart) ----------------
     kpi_data = reports.values(
         "action_plan__strategy_hierarchy__kpi",
         "action_plan__strategic_cycle__end_date",
@@ -445,27 +498,27 @@ def strategic_report_chart(request):
     palette = qualitative.Set2
     for i, kpi in enumerate(kpi_names):
         y_vals = [kpi_matrix[kpi][d] for d in cycle_dates_set]
-        kpi_fig.add_trace(go.Bar(
+        kpi_fig.add_trace(go.Scatter(
             x=cycle_labels,
             y=y_vals,
             name=kpi,
-            marker_color=palette[i % len(palette)],
-            text=y_vals,
-            textposition="auto",
+            mode="lines+markers",
+            line=dict(color=palette[i % len(palette)], width=3),
+            marker=dict(size=10),
             hovertemplate=f"KPI: {kpi}<br>Date: %{{x}}<br>Achievement: %{{y}}<extra></extra>"
         ))
 
     kpi_fig.update_layout(
-        title="KPI Achievement by Cycle",
+        title="KPI Achievement Growth by Cycle",
         xaxis_title="Cycle Months",
         yaxis_title="Achievement",
-        yaxis=dict(type="category", categoryorder="array", categoryarray=kpi_names[::-1]),
-        barmode="group",
-        height=600,
-        legend_title_text="KPIs",
         xaxis_tickangle=-45,
         template="plotly_white",
-        margin=dict(l=150, r=50, t=80, b=100)
+        height=600,
+        margin=dict(l=100, r=50, t=80, b=100),
+        xaxis=dict(showline=True, linewidth=1, linecolor='black', mirror=True),
+        yaxis=dict(showline=True, linewidth=1, linecolor='black', mirror=True),#mirror=True if want 4 side visible
+        legend_title_text="KPIs"
     )
     kpi_plot = plot(kpi_fig, output_type="div", config={"displayModeBar": False})
 
@@ -477,16 +530,17 @@ def strategic_report_chart(request):
         "avg_weighted_score": avg_weighted_score,
         "status_plot": status_plot,
         "cycle_plot": cycle_plot,
+        "objective_plot": objective_plot,
         "kpi_plot": kpi_plot,
         "strategic_cycles": StrategicCycle.objects.all(),
         "responsible_bodies": sorted({
             b.stakeholder_name
-            for r in StrategicReport.objects.filter(organization_name=request.user.organization_name).prefetch_related("action_plan__responsible_bodies")
+            for r in reports.prefetch_related("action_plan__responsible_bodies")
             for b in r.action_plan.responsible_bodies.all()
         }),
         "time_horizons": sorted({
             r.action_plan.strategic_cycle.time_horizon_type
-            for r in StrategicReport.objects.filter(organization_name=request.user.organization_name).select_related("action_plan__strategic_cycle")
+            for r in reports.select_related("action_plan__strategic_cycle")
             if r.action_plan.strategic_cycle and r.action_plan.strategic_cycle.time_horizon_type
         }),
         "selected_cycle": cycle_filter,
@@ -496,9 +550,6 @@ def strategic_report_chart(request):
     }
 
     return render(request, "strategic_report/chart.html", context)
-
-
-
 
 
 

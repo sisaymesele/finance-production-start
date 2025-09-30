@@ -1,14 +1,17 @@
 from django import forms
 from management_project.models import (
     OrganizationalProfile, SwotAnalysis, Vision, Mission, Values, StrategyHierarchy, Department,
-    Stakeholder, StrategicCycle, StrategicActionPlan, StrategicReport, SwotReport,
+    Stakeholder, StrategicCycle, StrategicActionPlan, StrategicReport, SwotReport, Initiative,
+    InitiativeTimeline, InitiativeBudget, InitiativeResource
 )
 from management_project.services.vision import VisionService
 from management_project.services.mission import MissionService
 from .services.swot import SwotChoicesService
 from .services.strategy_hierarchy import StrategyHierarchyChoicesService
 from .services.values import ValuesService
+from .services.initiative import InitiativeChoicesService
 from multiselectfield import MultiSelectFormField
+
 
 
 class OrganizationalProfileForm(forms.ModelForm):
@@ -515,13 +518,11 @@ class StrategicReportForm(forms.ModelForm):
 
         self.fields['action_plan'].queryset = qs
 
-# #
-# #
 
-# #
+
 class SwotReportForm(forms.ModelForm):
     strategic_report_period = forms.ModelChoiceField(
-        queryset=StrategicReport.objects.none(),  # initially empty
+        queryset=StrategicReport.objects.none(),
         label="Strategic Report Period",
         widget=forms.Select(attrs={'class': 'form-control'}),
         empty_label="Select Strategic Report"
@@ -547,13 +548,21 @@ class SwotReportForm(forms.ModelForm):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
 
-        # ---------------- Filter by organization ----------------
+        # ---------------- Filter unique by action_plan ----------------
         if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
             org = self.request.user.organization_name
-            self.fields['strategic_report_period'].queryset = StrategicReport.objects.filter(organization_name=org)
+            reports = StrategicReport.objects.filter(organization_name=org).order_by('action_plan', '-id')
+
+            unique_ids = []
+            seen = set()
+            for report in reports:
+                if report.action_plan_id not in seen:
+                    seen.add(report.action_plan_id)
+                    unique_ids.append(report.id)
+
+            self.fields['strategic_report_period'].queryset = StrategicReport.objects.filter(id__in=unique_ids)
         else:
             self.fields['strategic_report_period'].queryset = StrategicReport.objects.none()
-
 
         # ---------------- Cascade dropdown logic ----------------
         swot_type = self.data.get('swot_type') or getattr(self.instance, 'swot_type', None)
@@ -578,4 +587,141 @@ class SwotReportForm(forms.ModelForm):
             self.fields['swot_factor'].choices = [('', '--- Select Pillar First ---')]
             self.fields['swot_factor'].widget.attrs['disabled'] = True
 
-#
+
+
+class InitiativeForm(forms.ModelForm):
+    class Meta:
+        model = Initiative
+        fields = ['initiative_focus_area', 'initiative_dimension', 'initiative_name', 'description',
+                  'priority', 'impact', 'likelihood', 'risk_level', 'status',
+                  ]
+        widgets = {
+            'initiative_focus_area': forms.Select(attrs={'class': 'form-select'}),
+            'initiative_dimension': forms.Select(attrs={'class': 'form-select'}),
+            'initiative_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter initiative name'}),
+            'description': forms.Textarea(
+                attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter description'}),
+            'priority': forms.Select(attrs={'class': 'form-select'}),
+            'impact': forms.Select(attrs={'class': 'form-select'}),
+            'likelihood': forms.Select(attrs={'class': 'form-select'}),
+            'risk_level': forms.Select(attrs={'class': 'form-select'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Current selections
+        initiative_focus_area = self.data.get('initiative_focus_area') or getattr(self.instance, 'initiative_focus_area', None)
+
+        # --- Pillar dropdown ---
+        self.fields['initiative_focus_area'].choices = [('', '--- Select Pillar ---')] + \
+            InitiativeChoicesService.get_initiative_focus_area_choices()
+
+        # --- Area dropdown ---
+        if initiative_focus_area:
+            self.fields['initiative_dimension'].choices = [('', '--- Select Area ---')] + \
+                InitiativeChoicesService.get_area_choices(initiative_focus_area)
+            self.fields['initiative_dimension'].widget.attrs.pop('disabled', None)
+        else:
+            self.fields['initiative_dimension'].choices = [('', '--- Select Pillar First ---')]
+            self.fields['initiative_dimension'].widget.attrs['disabled'] = True
+
+
+
+class InitiativeTimelineForm(forms.ModelForm):
+    class Meta:
+        model = InitiativeTimeline
+        exclude = ['organization_name']  # organization set automatically
+        widgets = {
+            'initiative': forms.Select(attrs={'class': 'form-control'}),
+            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+
+        # Organization-specific filtering
+        if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
+            org = self.request.user.organization_name
+            self.fields['initiative'].queryset = Initiative.objects.filter(organization_name=org)
+        else:
+            self.fields['initiative'].queryset = Initiative.objects.none()
+
+        # Add invalid bootstrap styling for error fields
+        for field_name, field in self.fields.items():
+            css_classes = field.widget.attrs.get('class', 'form-control')
+            if field_name in self.errors:
+                css_classes += ' is-invalid'
+            field.widget.attrs['class'] = css_classes
+
+    error_css_class = 'text-danger'
+    required_css_class = 'font-weight-bold'
+
+
+
+class InitiativeBudgetForm(forms.ModelForm):
+    class Meta:
+        model = InitiativeBudget
+        exclude = ['organization_name']  # organization set automatically
+        widgets = {
+            'initiative': forms.Select(attrs={'class': 'form-control'}),
+            'budget_plan': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Planned Budget'}),
+            'budget_used': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Used Budget'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+
+        # Organization-specific filtering for initiative choices
+        if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
+            org = self.request.user.organization_name
+            self.fields['initiative'].queryset = Initiative.objects.filter(organization_name=org)
+        else:
+            self.fields['initiative'].queryset = Initiative.objects.none()
+
+        # Add invalid bootstrap styling for error fields
+        for field_name, field in self.fields.items():
+            css_classes = field.widget.attrs.get('class', 'form-control')
+            if field_name in self.errors:
+                css_classes += ' is-invalid'
+            field.widget.attrs['class'] = css_classes
+
+    error_css_class = 'text-danger'
+    required_css_class = 'font-weight-bold'
+
+
+class InitiativeResourceForm(forms.ModelForm):
+    class Meta:
+        model = InitiativeResource
+        exclude = ['organization_name']  # organization set automatically
+        widgets = {
+            'initiative': forms.Select(attrs={'class': 'form-control'}),
+            'resource_type': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Person-hours, Equipment'}),
+            'resource_required': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Required Quantity'}),
+            'resource_used': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Used Quantity'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+
+        # Organization-specific filtering for initiative choices
+        if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
+            org = self.request.user.organization_name
+            self.fields['initiative'].queryset = Initiative.objects.filter(organization_name=org)
+        else:
+            self.fields['initiative'].queryset = Initiative.objects.none()
+
+        # Add invalid bootstrap styling for error fields
+        for field_name, field in self.fields.items():
+            css_classes = field.widget.attrs.get('class', 'form-control')
+            if field_name in self.errors:
+                css_classes += ' is-invalid'
+            field.widget.attrs['class'] = css_classes
+
+    error_css_class = 'text-danger'
+    required_css_class = 'font-weight-bold'

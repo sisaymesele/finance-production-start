@@ -11,7 +11,6 @@ from .forms import (
     StakeholderForm, StrategicCycleForm
 )
 # config/admin.py
-import management_project.config.admin
 
 
 # Register your models here.
