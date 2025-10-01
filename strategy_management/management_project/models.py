@@ -191,19 +191,6 @@ class StrategyHierarchy(models.Model):
         return f"{self.strategic_perspective} → {self.focus_area} → {self.objective} → {self.kpi}"
 
 
-class Department(models.Model):
-    organization_name = models.ForeignKey(
-        OrganizationalProfile, on_delete=models.PROTECT
-    )
-    department_name = models.CharField(max_length=100)
-
-    def __str__(self):
-        return f"{self.department_name}"
-
-
-    class Meta:
-        unique_together = ('organization_name', 'department_name')
-
 
 class Stakeholder(models.Model):
     # ------------------ Choices ------------------
@@ -217,6 +204,9 @@ class Stakeholder(models.Model):
         ('owner', 'Owner'),
         ('executive', 'Executive'),
         ('manager', 'Manager'),
+        ('department', 'Department'),
+        ('Section', 'Section'),
+        ('team', 'Team'),
         ('team_lead', 'Team Lead'),
         ('employee', 'Employee'),
 
@@ -337,9 +327,6 @@ class Stakeholder(models.Model):
         max_length=500,
         default='employee',
         help_text="Select one or more roles"
-    )
-    department = models.ForeignKey( Department, on_delete=models.SET_NULL, blank=True, null=True,
-                                    related_name='stakeholders', help_text='Optional department or team'
     )
     # ------------------ Analysis ------------------
     impact_level = models.CharField(max_length=20, choices=IMPACT_LEVEL_CHOICES, default='medium')
@@ -810,8 +797,15 @@ class InitiativeBudget(models.Model):
         OrganizationalProfile, on_delete=models.PROTECT
     )
     initiative = models.ForeignKey(Initiative, on_delete=models.CASCADE, related_name='budgets')
+    budget_type = models.CharField(max_length=40, blank=True)
+    budget_name = models.CharField(max_length=40, blank=True)
+    budget_source = models.CharField(max_length=40, blank=True)
+    currency = models.CharField(max_length=10, blank=True)
+
     budget_plan = models.DecimalField(max_digits=12, decimal_places=2)
     budget_used = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     @property
     def budget_remaining(self):
@@ -824,8 +818,12 @@ class InitiativeResource(models.Model):
     )
     initiative = models.ForeignKey(Initiative, on_delete=models.CASCADE, related_name='resources')
     resource_type = models.CharField(max_length=50, help_text="e.g., Person-hours, Equipment")
+    resource_name = models.CharField(max_length=50, help_text="e.g., Person-hours, Equipment")
     resource_required = models.DecimalField(max_digits=12, decimal_places=2)
     resource_used = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     @property
     def resource_remaining(self):

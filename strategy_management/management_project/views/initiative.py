@@ -62,17 +62,48 @@ def initiative_list(request):
 # -------------------- CREATE INITIATIVE --------------------
 @login_required
 def create_initiative(request):
+    next_url = request.GET.get("next") or request.POST.get("next")  # URL to return to child
+
     if request.method == 'POST':
         form = InitiativeForm(request.POST)
-        if 'save' in request.POST and form.is_valid():
+        if form.is_valid():
             initiative = form.save(commit=False)
             initiative.organization_name = request.user.organization_name
             initiative.save()
             messages.success(request, "Initiative created successfully!")
-            return redirect('initiative_list')
+
+            # Redirect back to child form with new initiative preselected
+            if next_url:
+                separator = '&' if '?' in next_url else '?'
+                return redirect(f"{next_url}{separator}initiative={initiative.pk}")
+
+            return redirect('initiative_list')  # fallback to parent list
     else:
         form = InitiativeForm()
-    return render(request, 'initiative/form.html', {'form': form})
+
+    return render(request, 'initiative/form.html', {
+        'form': form,
+        'next': next_url
+    })
+
+
+
+
+
+
+# @login_required
+# def create_initiative(request):
+#     if request.method == 'POST':
+#         form = InitiativeForm(request.POST)
+#         if 'save' in request.POST and form.is_valid():
+#             initiative = form.save(commit=False)
+#             initiative.organization_name = request.user.organization_name
+#             initiative.save()
+#             messages.success(request, "Initiative created successfully!")
+#             return redirect('initiative_list')
+#     else:
+#         form = InitiativeForm()
+#     return render(request, 'initiative/form.html', {'form': form})
 
 
 # -------------------- UPDATE INITIATIVE --------------------

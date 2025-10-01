@@ -39,9 +39,12 @@
                 <select name="initiative" class="form-select" style="max-width: 220px;">
                     <option value="">All Initiatives</option>
                     {% for ini in initiatives %}
-                        <option value="{{ ini.pk }}" {% if ini.pk|stringformat:"s" == selected_initiative %}selected{% endif %}>
-                            {{ ini.initiative_name }}
-                        </option>
+                    <option value="{{ ini.pk }}"
+                            {% if ini.pk|stringformat:"s" == selected_initiative %}selected{% endif %}>
+                    {{ ini.initiative_name }}
+                    </option>
+
+
                     {% endfor %}
                 </select>
 
@@ -82,6 +85,8 @@
             <thead class="table-light sticky-top">
             <tr>
                 <th>#</th>
+                <th>Initiative Focus Area</th>
+                <th>Initiative Dimension</th>
                 <th>Initiative</th>
                 <th>Start Date</th>
                 <th>End Date</th>
@@ -94,6 +99,8 @@
             {% for t in page_obj %}
             <tr>
                 <td>{{ forloop.counter }}</td>
+                <td>{{ t.initiative.initiative_focus_area }}</td>
+                <td>{{ t.initiative.initiative_dimension }}</td>
                 <td>{{ t.initiative.initiative_name }}</td>
                 <td>{{ t.start_date|date:"F j, Y" }}</td>
                 <td>{{ t.end_date|date:"F j, Y" }}</td>

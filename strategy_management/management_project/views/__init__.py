@@ -10,8 +10,6 @@ from .values import values_list, create_values, update_values, delete_values
 
 from .strategy_hierarchy import strategy_hierarchy_list, create_strategy_hierarchy, update_strategy_hierarchy, delete_strategy_hierarchy
 
-from .department import department_list, create_department, update_department, delete_department
-
 from .stakeholder import  stakeholder_list, create_stakeholder, update_stakeholder, delete_stakeholder, \
     export_stakeholders_to_excel, stakeholder_graph_view
 

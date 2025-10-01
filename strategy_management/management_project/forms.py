@@ -1,6 +1,6 @@
 from django import forms
 from management_project.models import (
-    OrganizationalProfile, SwotAnalysis, Vision, Mission, Values, StrategyHierarchy, Department,
+    OrganizationalProfile, SwotAnalysis, Vision, Mission, Values, StrategyHierarchy,
     Stakeholder, StrategicCycle, StrategicActionPlan, StrategicReport, SwotReport, Initiative,
     InitiativeTimeline, InitiativeBudget, InitiativeResource
 )
@@ -286,65 +286,6 @@ class StrategyHierarchyForm(forms.ModelForm):
         else:
             self.fields['formula'].initial = "Select a KPI to see the formula"
 
-class DepartmentForm(forms.ModelForm):
-    class Meta:
-        model = Department
-        fields = ['department_name']
-        widgets = {
-            'department_name': forms.TextInput(
-                attrs={'class': 'form-control', 'placeholder': 'Enter department name'}
-            ),
-        }
-
-
-#
-# class StakeholderForm(forms.ModelForm):
-#
-#     class Meta:
-#         model = Stakeholder
-#         exclude = ['organization_name']  # Exclude the organization field
-#         widgets = {
-#             'stakeholder_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Stakeholder Name'}),
-#             'stakeholder_type': forms.Select(attrs={'class': 'form-control'}),
-#             # 'role': forms.CheckboxSelectMultiple(),
-#             'department': forms.Select(attrs={'class': 'form-control'}),
-#             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Brief description'}),
-#             'impact_level': forms.Select(attrs={'class': 'form-control'}),
-#             'interest_level': forms.Select(attrs={'class': 'form-control'}),
-#             # 'engagement_strategy': forms.CheckboxSelectMultiple(),
-#             'influence_score': forms.Select(attrs={'class': 'form-control'}),
-#             'priority': forms.Select(attrs={'class': 'form-select', 'id': 'priority'}),
-#             'satisfaction_level': forms.Select(attrs={'class': 'form-control'}),
-#             'risk_level': forms.Select(attrs={'class': 'form-control'}),
-#             'contribution_score': forms.Select(attrs={'class': 'form-select', 'id': 'contribution_score'}),
-#             'contact_info': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Email, Phone, or Contact'}),
-#         }
-#
-#     def __init__(self, *args, **kwargs):
-#         self.request = kwargs.pop('request', None)
-#         super().__init__(*args, **kwargs)
-#
-#         # Filter department based on user's organization
-#         if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
-#             org = self.request.user.organization_name
-#             self.fields['department'].queryset = Department.objects.filter(organization=org).order_by('department_name')
-#         else:
-#             self.fields['department'].queryset = Department.objects.none()
-#
-#         # Format help texts with inline CSS
-#         for field in self.fields.values():
-#             if field.help_text:
-#                 field.help_text = f'<span style="color: blue; font-style: italic;">{field.help_text}</span>'
-#
-#         # Add invalid bootstrap styling for error fields
-#         for field_name, field in self.fields.items():
-#             css_classes = field.widget.attrs.get('class', 'form-control')
-#             if field_name in self.errors:
-#                 css_classes += ' is-invalid'
-#             field.widget.attrs['class'] = css_classes
-#
-#     error_css_class = 'text-danger'
-#     required_css_class = 'font-weight-bold'
 
 class StakeholderForm(forms.ModelForm):
     class Meta:
@@ -413,30 +354,32 @@ class StrategicCycleForm(forms.ModelForm):
                 field.help_text = f'<span style="color: blue; font-style: italic;">{field.help_text}</span>'
 
 
+
 class StrategicActionPlanForm(forms.ModelForm):
 
     class Meta:
         model = StrategicActionPlan
         exclude = ['organization_name', 'improvement_needed',]
         widgets = {
-            # Foreign keys
             'strategic_cycle': forms.Select(attrs={'class': 'form-control'}),
             'strategy_hierarchy': forms.Select(attrs={'class': 'form-control'}),
-            'responsible_bodies': forms.SelectMultiple(attrs={'class': 'form-control'}),
-
-            # KPI & Measurement
+            # 'responsible_bodies': forms.SelectMultiple(
+            #     attrs={'class': 'form-control', 'size': 8}  # ✅ scrollable
+            # ),
+            'responsible_bodies': forms.CheckboxSelectMultiple(),  # ✅ use checkboxes
             'indicator_type': forms.Select(attrs={'class': 'form-control'}),
             'direction_of_change': forms.Select(attrs={'class': 'form-control'}),
             'baseline': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter baseline value'}),
             'target': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter target value'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'weight': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Weight'}),
-            'budget': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Weight'}),
-
+            'budget': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Budget'}),
         }
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
+        # preselected_stakeholders = kwargs.pop('preselected_stakeholders', None)
+
         super().__init__(*args, **kwargs)
 
         # Organization-specific filtering
@@ -450,12 +393,12 @@ class StrategicActionPlanForm(forms.ModelForm):
             self.fields['strategy_hierarchy'].queryset = StrategyHierarchy.objects.none()
             self.fields['responsible_bodies'].queryset = Stakeholder.objects.none()
 
-        # Add invalid bootstrap styling for error fields
-        for field_name, field in self.fields.items():
-            css_classes = field.widget.attrs.get('class', 'form-control')
-            if field_name in self.errors:
-                css_classes += ' is-invalid'
-            field.widget.attrs['class'] = css_classes
+            # Add invalid bootstrap styling for error fields
+            for field_name, field in self.fields.items():
+                css_classes = field.widget.attrs.get('class', 'form-control')
+                if field_name in self.errors:
+                    css_classes += ' is-invalid'
+                field.widget.attrs['class'] = css_classes
 
     error_css_class = 'text-danger'
     required_css_class = 'font-weight-bold'
@@ -641,6 +584,7 @@ class InitiativeTimelineForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
+
         super().__init__(*args, **kwargs)
 
         # Organization-specific filtering
@@ -662,14 +606,25 @@ class InitiativeTimelineForm(forms.ModelForm):
 
 
 
+
+
 class InitiativeBudgetForm(forms.ModelForm):
     class Meta:
         model = InitiativeBudget
         exclude = ['organization_name']  # organization set automatically
         widgets = {
             'initiative': forms.Select(attrs={'class': 'form-control'}),
-            'budget_plan': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Planned Budget'}),
-            'budget_used': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Used Budget'}),
+            'budget_type': forms.TextInput(
+                attrs={'class': 'form-control', 'placeholder': 'Budget Type (e.g., CapEx, OpEx)'}),
+            'budget_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Budget Name'}),
+            'budget_source': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Budget Source'}),
+            'currency': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Currency (e.g., USD)'}),
+            'budget_plan': forms.NumberInput(
+                attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Planned Budget'}),
+            'budget_used': forms.NumberInput(
+                attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Used Budget'}),
+            'created_at': forms.DateTimeInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'updated_at': forms.DateTimeInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -697,12 +652,19 @@ class InitiativeBudgetForm(forms.ModelForm):
 class InitiativeResourceForm(forms.ModelForm):
     class Meta:
         model = InitiativeResource
-        exclude = ['organization_name']  # organization set automatically
+        exclude = ['organization_name']
+
         widgets = {
             'initiative': forms.Select(attrs={'class': 'form-control'}),
-            'resource_type': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Person-hours, Equipment'}),
-            'resource_required': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Required Quantity'}),
-            'resource_used': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Used Quantity'}),
+            'resource_type': forms.TextInput(
+                attrs={'class': 'form-control', 'placeholder': 'e.g., Person-hours, Equipment'}),
+            'resource_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Resource Name'}),
+            'resource_required': forms.NumberInput(
+                attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Required Quantity'}),
+            'resource_used': forms.NumberInput(
+                attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Used Quantity'}),
+            'created_at': forms.DateTimeInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'updated_at': forms.DateTimeInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -725,3 +687,5 @@ class InitiativeResourceForm(forms.ModelForm):
 
     error_css_class = 'text-danger'
     required_css_class = 'font-weight-bold'
+
+

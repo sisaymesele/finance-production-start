@@ -7,15 +7,26 @@ from management_project.models import InitiativeBudget, Initiative
 from management_project.forms import InitiativeBudgetForm
 
 # -------------------- LIST BUDGETS --------------------
+
+# -------------------- LIST BUDGETS --------------------
 @login_required
 def initiative_budget_list(request):
     query = request.GET.get('search', '').strip()
+    selected_initiative = request.GET.get('initiative', '').strip()
     page_number = request.GET.get('page', 1)
 
-    # All budgets for initiatives in the user's organization
+    # Base queryset: all budgets for initiatives in the user's organization
     budgets = InitiativeBudget.objects.filter(
         organization_name=request.user.organization_name
     ).select_related('initiative')
+
+    # Initiative filter
+    selected_initiative_name = None
+    if selected_initiative:
+        budgets = budgets.filter(initiative_id=selected_initiative)
+        initiative_obj = Initiative.objects.filter(pk=selected_initiative).first()
+        if initiative_obj:
+            selected_initiative_name = initiative_obj.initiative_name
 
     # Search filter across initiative fields
     if query:
@@ -32,28 +43,61 @@ def initiative_budget_list(request):
     paginator = Paginator(budgets, 10)
     page_obj = paginator.get_page(page_number)
 
+    # Pass initiatives for dropdown filter
+    initiatives = Initiative.objects.filter(
+        organization_name=request.user.organization_name
+    ).order_by('initiative_name')
+
     return render(request, 'initiative_budget/list.html', {
         'budgets': page_obj,
         'page_obj': page_obj,
         'search_query': query,
+        'initiatives': initiatives,
+        'selected_initiative': selected_initiative,
+        'selected_initiative_name': selected_initiative_name,
     })
-
 
 # -------------------- CREATE BUDGET --------------------
 @login_required
 def create_initiative_budget(request):
+    selected_initiative = request.GET.get('initiative')  # Preselect if passed
     if request.method == 'POST':
         form = InitiativeBudgetForm(request.POST, request=request)
-        if 'save' in request.POST and form.is_valid():
+        if form.is_valid() and 'save' in request.POST:
             budget = form.save(commit=False)
             budget.organization_name = request.user.organization_name
             budget.save()
             messages.success(request, "Initiative budget created successfully!")
             return redirect('initiative_budget_list')
     else:
-        form = InitiativeBudgetForm(request=request)
+        initial_data = {}
+        if selected_initiative:
+            initial_data['initiative'] = selected_initiative
+        form = InitiativeBudgetForm(initial=initial_data, request=request)
 
-    return render(request, 'initiative_budget/form.html', {'form': form})
+    return render(request, 'initiative_budget/form.html', {
+        'form': form,
+        'next': None  # child form doesn't need next
+    })
+
+
+
+
+
+# @login_required
+# def create_initiative_budget(request):
+#     if request.method == 'POST':
+#         form = InitiativeBudgetForm(request.POST, request=request)
+#         if 'save' in request.POST and form.is_valid():
+#             budget = form.save(commit=False)
+#             budget.organization_name = request.user.organization_name
+#             budget.save()
+#             messages.success(request, "Initiative budget created successfully!")
+#             return redirect('initiative_budget_list')
+#     else:
+#         form = InitiativeBudgetForm(request=request)
+#
+#     return render(request, 'initiative_budget/form.html', {'form': form})
 
 
 # -------------------- UPDATE BUDGET --------------------

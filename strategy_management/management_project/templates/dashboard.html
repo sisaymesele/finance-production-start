@@ -54,18 +54,6 @@
                 </li>
 
                 <li class="nav-item">
-                    <a hx-get="{% url 'swot_analysis_list' %}"
-                       hx-target="#full-page-container"
-                       hx-swap="innerHTML"
-                       hx-trigger="click"
-                       hx-push-url="{% url 'swot_analysis_list' %}"
-                       href="{% url 'swot_analysis_list' %}"
-                       class="nav-link text-white">
-                        <i class="bi bi-list-check"></i> SWOT Analysis
-                    </a>
-                </li>
-
-                <li class="nav-item">
                     <!-- Main Category Link (Collapsible Trigger) -->
                     <a class="nav-link text-white bg-primary" data-bs-toggle="collapse" href="#swotAnalysisMenu"
                        role="button"
@@ -106,7 +94,6 @@
                     </div>
                 </li>
 
-
                 <li class="nav-item">
                     <a hx-get="{% url 'vision_list' %}"
                        hx-target="#full-page-container"
@@ -115,7 +102,7 @@
                        hx-push-url="{% url 'vision_list' %}"
                        href="{% url 'vision_list' %}"
                        class="nav-link text-white">
-                        <i class="bi bi-eye"></i> Vision
+                        <i class="bi bi-lightbulb"></i> Vision
                     </a>
                 </li>
 
@@ -127,7 +114,7 @@
                        hx-push-url="{% url 'mission_list' %}"
                        href="{% url 'mission_list' %}"
                        class="nav-link text-white">
-                        <i class="bi bi-eye"></i> Mission
+                        <i class="bi bi-flag"></i> Mission
                     </a>
                 </li>
 
@@ -139,7 +126,7 @@
                        hx-push-url="{% url 'values_list' %}"
                        href="{% url 'values_list' %}"
                        class="nav-link text-white">
-                        <i class="bi bi-eye"></i> Values
+                        <i class="bi bi-stars"></i> Values
                     </a>
                 </li>
 
@@ -154,19 +141,6 @@
                         <i class="bi bi-list-check"></i> Strategy Hierarchy
                     </a>
                 </li>
-
-                <li class="nav-item">
-                    <a hx-get="{% url 'department_list' %}"
-                       hx-target="#full-page-container"
-                       hx-swap="innerHTML"
-                       hx-trigger="click"
-                       hx-push-url="{% url 'department_list' %}"
-                       href="{% url 'department_list' %}"
-                       class="nav-link text-white">
-                        <i class="bi bi-building"></i> Department
-                    </a>
-                </li>
-
 
                 <li class="nav-item">
                     <!-- Category Header -->

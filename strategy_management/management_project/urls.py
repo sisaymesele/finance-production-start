@@ -44,13 +44,6 @@ urlpatterns = [
     path('strategy-hierarchy/<int:pk>/update/', views.update_strategy_hierarchy, name='update_strategy_hierarchy'),
     path('strategy-hierarchy/<int:pk>/delete/', views.delete_strategy_hierarchy, name='delete_strategy_hierarchy'),
 
-    # -------------------- DEPARTMENT --------------------
-    # Department
-    path('departments/', views.department_list, name='department_list'),
-    path('departments/create/', views.create_department, name='create_department'),
-    path('departments/update/<int:pk>/', views.update_department, name='update_department'),
-    path('departments/delete/<int:pk>/', views.delete_department, name='delete_department'),
-
     # View the stakeholder_list list
     # Stakeholder List & Search
     path('stakeholders/', views.stakeholder_list, name='stakeholder_list'),

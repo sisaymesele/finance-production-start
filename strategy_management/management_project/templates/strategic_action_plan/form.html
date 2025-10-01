@@ -1,66 +1,138 @@
-{% extends "dashboard.html" %}
+{% extends 'dashboard.html' %}
 
 {% block content %}
-<!-- Back Button -->
-<div class="mb-3">
-    <a href="{{ back_url }}"
-       class="btn btn-secondary"
-       hx-get="{{ back_url }}"
-       hx-target="#full-page-container"
-       hx-swap="innerHTML"
-       hx-push-url="true">
-        ← Back to Strategic Action Plan List
-    </a>
-</div>
-
-<!-- Centered Form Container -->
-<div class="d-flex justify-content-center">
-    <div class="p-2 border rounded shadow-lg bg-white" style="width: 80%;" id="form-container">
-
-        <!-- Title -->
-        <div class="mb-3 text-center">
-            <h4 class="mb-0">{{ form_title }}</h4>
+<div id="full-page-container" class="d-flex justify-content-center mt-5">
+    <div class="card shadow-sm border-0 rounded" style="width: 700px;">
+        <div class="card-header bg-primary text-white text-center">
+            <h6 class="mb-0">
+                {% if edit_strategic_action_plan %}Update Strategic Action Plan{% else %}
+                Create Strategic Action Plan
+                {% endif %}
+            </h6>
         </div>
+        <div class="card-body">
+            <form method="post"
+                  hx-post="{% if edit_strategic_action_plan %}{% url 'update_strategic_action_plan' strategy_by_cycle.slug edit_strategic_action_plan.pk %}{% else %}{% url 'create_strategic_action_plan' strategy_by_cycle.slug %}{% endif %}"
+                  hx-target="#full-page-container"
+                  hx-swap="innerHTML"
+                  hx-push-url="true"
+                  class="row g-3">
+                {% csrf_token %}
 
-        <!-- Form Errors -->
-        {% if form.errors %}
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                {% for field in form %}
-                    {% for error in field.errors %}
-                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                <!-- Strategy Hierarchy field with + button -->
+                <!-- Strategic Cycle field with + button -->
+                <div class="col-12 mb-3">
+                    <label>{{ form.strategic_cycle.label }}</label>
+                    <div class="input-group">
+                        <!-- Show select box -->
+                        {{ form.strategic_cycle }}
+
+                        <!-- + button to create new strategic cycle -->
+                        <a class="btn btn-outline-primary"
+                           hx-get="{% url 'create_strategic_cycle' %}?next={% url 'create_strategic_action_plan' strategy_by_cycle.slug %}"
+                           hx-target="#full-page-container"
+                           hx-swap="innerHTML">
+                            +
+                        </a>
+                    </div>
+
+                    <!-- Help text -->
+                    {% if form.strategic_cycle.help_text %}
+                    <small class="form-text text-muted">{{ form.strategic_cycle.help_text }}</small>
+                    {% endif %}
+
+                    <!-- Field errors -->
+                    {% for error in form.strategic_cycle.errors %}
+                    <div class="text-danger small">{{ error }}</div>
                     {% endfor %}
+                </div>
+
+
+                <!-- Strategy Hierarchy field with + button -->
+                <div class="col-12 mb-3">
+                    <label>{{ form.strategy_hierarchy.label }}</label>
+                    <div class="input-group">
+                        {{ form.strategy_hierarchy }}
+                        <a class="btn btn-outline-primary"
+                           hx-get="{% url 'create_strategy_hierarchy' %}?next={% url 'create_strategic_action_plan' strategy_by_cycle.slug %}"
+                           hx-target="#full-page-container"
+                           hx-swap="innerHTML">
+                            +
+                        </a>
+                    </div>
+
+                    {% if form.strategy_hierarchy.help_text %}
+                    <small class="form-text text-muted">{{ form.strategy_hierarchy.help_text }}</small>
+                    {% endif %}
+                    {% for error in form.strategy_hierarchy.errors %}
+                    <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+
+                <!-- Responsible Bodies (Stakeholders) with + button -->
+                <div class="col-12 mb-3">
+                    <label>{{ form.responsible_bodies.label }}</label>
+                    <div class="d-flex align-items-start gap-2">
+                        <!-- Scrollable checkbox container -->
+                        <div style="height: 150px; overflow-y: auto; border: 1px solid #ddd; padding: 5px; flex:1;">
+                            {% for checkbox in form.responsible_bodies %}
+                            <div class="form-check">
+                                {{ checkbox.tag }}
+                                <label class="form-check-label">{{ checkbox.choice_label }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Plus button on the right -->
+                        <a class="btn btn-outline-primary"
+                           hx-get="{% url 'create_stakeholder' %}?next={% url 'create_strategic_action_plan' strategy_by_cycle.slug %}"
+                           hx-target="#full-page-container"
+                           hx-swap="innerHTML">
+                            +
+                        </a>
+                    </div>
+
+                    {% if form.responsible_bodies.help_text %}
+                    <small class="form-text text-muted">{{ form.responsible_bodies.help_text }}</small>
+                    {% endif %}
+                    {% for error in form.responsible_bodies.errors %}
+                    <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+
+                <!-- Other fields -->
+                {% for field in form %}
+                {% if field.name not in 'strategic_cycle strategy_hierarchy responsible_bodies' %}
+                <div class="col-12 mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
                 {% endfor %}
-                {% for error in form.non_field_errors %}
-                    <li>{{ error }}</li>
-                {% endfor %}
-            </ul>
+
+
+                <!-- Buttons -->
+                <div class="col-12 d-flex justify-content-center gap-2 mt-3">
+                    <button type="submit" name="save" class="btn btn-success">Save</button>
+                    <a href="{{ back_url }}" class="btn btn-secondary"
+                       hx-get="{{ back_url }}"
+                       hx-target="#full-page-container"
+                       hx-swap="innerHTML"
+                       hx-push-url="true">
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
         </div>
-        {% endif %}
-
-        <!-- Form -->
-        <form method="POST"
-              {% if edit_strategic_action_plan %}
-              hx-post="{% url 'update_strategic_action_plan' strategy_by_cycle.slug edit_strategic_action_plan.pk %}"
-              {% else %}
-              hx-post="{% url 'create_strategic_action_plan' strategy_by_cycle.slug %}"
-              {% endif %}
-              hx-target="#full-page-container"
-              hx-swap="innerHTML"
-              hx-push-url="true">
-
-            {% csrf_token %}
-
-            <div class="mb-3">
-                {{ form.as_p }}
-            </div>
-
-            <div class="text-end">
-                <button class="btn btn-dark" type="submit">
-                    {{ submit_button_text|default:"Submit" }}
-                </button>
-            </div>
-        </form>
     </div>
 </div>
 {% endblock %}

@@ -3,6 +3,7 @@ from management_project.models import StrategyHierarchy
 from management_project.forms import StrategyHierarchyForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.contrib import messages
 
 
 @login_required
@@ -31,22 +32,76 @@ def strategy_hierarchy_list(request):
     })
 
 
+# @login_required
+# def create_strategy_hierarchy(request):
+#     """
+#     Create a new strategy hierarchy entry for the current user's organization.
+#     """
+#     if request.method == 'POST':
+#         form = StrategyHierarchyForm(request.POST)
+#         if 'save' in request.POST and form.is_valid():
+#             strategy = form.save(commit=False)
+#             strategy.organization_name = request.user.organization_name
+#             strategy.save()
+#             return redirect('strategy_hierarchy_list')
+#     else:
+#         form = StrategyHierarchyForm()
+#
+#     return render(request, 'strategy_hierarchy/form.html', {'form': form})
+
+# @login_required
+# def create_strategy_hierarchy(request):
+#     """
+#     Create a new strategy hierarchy entry for the current user's organization.
+#     Supports optional 'next' redirect back to Strategic Action Plan page.
+#     """
+#     next_url = request.GET.get('next') or request.POST.get('next')  # check GET and POST
+#
+#     if request.method == 'POST':
+#         form = StrategyHierarchyForm(request.POST)
+#         if 'save' in request.POST and form.is_valid():
+#             strategy = form.save(commit=False)
+#             strategy.organization_name = request.user.organization_name
+#             strategy.save()
+#             # Redirect to 'next' if provided, otherwise to hierarchy list
+#             return redirect(next_url or 'strategy_hierarchy_list')
+#     else:
+#         form = StrategyHierarchyForm()
+#
+#     return render(request, 'strategy_hierarchy/form.html', {
+#         'form': form,
+#         'next': next_url,
+#     })
+
 @login_required
 def create_strategy_hierarchy(request):
     """
     Create a new strategy hierarchy entry for the current user's organization.
+    Supports optional 'next' redirect back to Strategic Action Plan page with preselected value.
     """
+    next_url = request.GET.get('next') or request.POST.get('next')  # URL to return to child
+
     if request.method == 'POST':
         form = StrategyHierarchyForm(request.POST)
         if 'save' in request.POST and form.is_valid():
             strategy = form.save(commit=False)
             strategy.organization_name = request.user.organization_name
             strategy.save()
-            return redirect('strategy_hierarchy_list')
+            messages.success(request, "Strategy hierarchy created successfully!")
+
+            # Redirect back to child form with new hierarchy preselected
+            if next_url:
+                separator = '&' if '?' in next_url else '?'
+                return redirect(f"{next_url}{separator}strategy_hierarchy={strategy.pk}")
+
+            return redirect('strategy_hierarchy_list')  # fallback to parent list
     else:
         form = StrategyHierarchyForm()
 
-    return render(request, 'strategy_hierarchy/form.html', {'form': form})
+    return render(request, 'strategy_hierarchy/form.html', {
+        'form': form,
+        'next': next_url,
+    })
 
 
 @login_required

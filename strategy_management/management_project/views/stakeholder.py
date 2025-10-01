@@ -18,7 +18,7 @@ from openpyxl.utils import get_column_letter
 
 # Local project imports
 from management_project.forms import StakeholderForm
-from management_project.models import Department, Stakeholder
+from management_project.models import Stakeholder
 
 
 #
@@ -69,25 +69,36 @@ def stakeholder_list(request):
 
 @login_required
 def create_stakeholder(request):
-    next_url = request.GET.get('next')
-    if request.method == 'POST':
-        form = StakeholderForm(request.POST, request=request)  # Pass request
+    """
+    Create a new stakeholder entry for the current user's organization.
+    Redirects back to the child form if 'next' is provided,
+    optionally preselecting the newly created stakeholder.
+    """
+    next_url = request.GET.get("next") or request.POST.get("next")  # URL to return to child
+
+    if request.method == "POST":
+        form = StakeholderForm(request.POST, request=request)
         if form.is_valid():
             stakeholder = form.save(commit=False)
             stakeholder.organization_name = request.user.organization_name
             stakeholder.save()
+            form.save_m2m()
             messages.success(request, "Stakeholder created successfully!")
-            return redirect(next_url or 'stakeholder_list')
-    else:
-        form = StakeholderForm(request=request)  # Pass request
 
-    context = {
-        'form': form,
-        'form_title': 'Create Stakeholder',
-        'submit_button_text': 'Create Stakeholder',
-        'back_url': next_url or reverse('stakeholder_list'),
-    }
-    return render(request, 'stakeholder_list/form.html', context)
+            # Redirect back to child form with new stakeholder preselected
+            if next_url:
+                separator = '&' if '?' in next_url else '?'
+                return redirect(f"{next_url}{separator}stakeholder={stakeholder.pk}")
+
+            return redirect("stakeholder_list")  # fallback to parent list
+
+    else:
+        form = StakeholderForm(request=request)
+
+    return render(request, "stakeholder_list/form.html", {
+        "form": form,
+        "next": next_url,
+    })
 
 
 @login_required

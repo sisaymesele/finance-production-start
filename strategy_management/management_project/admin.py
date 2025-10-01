@@ -1,22 +1,23 @@
 from django.contrib import admin
-from .forms import *
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from .models import (
-    OrganizationalProfile, SwotAnalysis, Vision, Mission, Values,
-    StrategyHierarchy, Stakeholder, StrategicCycle, StrategicActionPlan, StrategicReport
+from .forms import *
+from management_project.models import (
+    OrganizationalProfile, SwotAnalysis, Vision, Mission, Values, StrategyHierarchy,
+    Stakeholder, StrategicCycle, StrategicActionPlan, StrategicReport, SwotReport, Initiative,
+    InitiativeTimeline, InitiativeBudget, InitiativeResource
 )
-from .forms import (
-    SwotAnalysisForm, VisionForm, MissionForm, ValuesForm, StrategyHierarchyForm,
-    StakeholderForm, StrategicCycleForm
+from management_project.forms import (
+    OrganizationalProfileForm, SwotAnalysisForm, VisionForm, MissionForm, ValuesForm,
+    StrategyHierarchyForm, StakeholderForm, StrategicCycleForm, StrategicActionPlanForm,
+    StrategicReportForm, SwotReportForm, InitiativeForm, InitiativeTimelineForm,
+    InitiativeBudgetForm, InitiativeResourceForm
 )
-# config/admin.py
-
 
 # Register your models here.
 @admin.register(OrganizationalProfile)
 class OrganizationalProfileAdmin(admin.ModelAdmin):
-    # form = OrganizationalProfileForm
+    form = OrganizationalProfileForm
     list_display = (
         'organization_name', 'organization_type', 'organization_address', 'employer_tin',
         'sector_name', 'contact_personnel',
@@ -177,8 +178,8 @@ class StakeholderAdmin(admin.ModelAdmin):
 
     # Fields to display in the list view
     list_display = (
-        'organization_name', 'stakeholder_name', 'role', 'department',
-        'stakeholder_type', 'impact_level', 'interest_level', 'engagement_strategy',
+        'organization_name', 'stakeholder_name', 'role', 'stakeholder_type',
+        'impact_level', 'interest_level', 'engagement_strategy',
         'priority', 'satisfaction_level', 'risk_level', 'influence_score'
     )
 
@@ -209,7 +210,6 @@ class StakeholderAdmin(admin.ModelAdmin):
         return qs.none()
 
 
-
 @admin.register(StrategicCycle)
 class StrategicCycleAdmin(admin.ModelAdmin):
     form = StrategicCycleForm
@@ -220,27 +220,20 @@ class StrategicCycleAdmin(admin.ModelAdmin):
         'start_date', 'end_date', 'duration_days', 'slug'
     ]
 
-    # Filters based on model fields
+    # Filters
     list_filter = ['organization_name', 'time_horizon_type', 'time_horizon']
+    search_fields = ['time_horizon', 'slug']
+    ordering = ['-start_date']
 
-    # Explicitly get the form to ensure custom widgets are used
-    def get_form(self, request, obj=None, **kwargs):
-        kwargs['form'] = StrategicCycleForm
-        return super().get_form(request, obj, **kwargs)
+    readonly_fields = ['slug']
 
-    # Restrict foreign key based on user's organization
+    # Restrict foreign keys based on user's organization
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if not request.user.is_superuser and hasattr(request.user, 'organization_name'):
-            org = request.user.organization_name
-            if db_field.name == 'organization_name':
-                kwargs["queryset"] = OrganizationalProfile.objects.filter(pk=org.pk)
+        if db_field.name == 'organization_name' and not request.user.is_superuser:
+            if hasattr(request.user, 'organization_name'):
+                org = request.user.organization_name
+                kwargs['queryset'] = OrganizationalProfile.objects.filter(pk=org.pk)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-    # Pass request to form
-    def get_form_kwargs(self, request, obj=None, **kwargs):
-        form_kwargs = super().get_form_kwargs(request, obj, **kwargs)
-        form_kwargs["request"] = request
-        return form_kwargs
 
     # Restrict queryset to user's organization
     def get_queryset(self, request):
@@ -254,6 +247,7 @@ class StrategicCycleAdmin(admin.ModelAdmin):
 # #
 @admin.register(StrategicActionPlan)
 class StrategicActionPlanAdmin(admin.ModelAdmin):
+    form = StrategicActionPlanForm
     list_display = ['organization_name', 'get_perspective', 'get_pillar', 'get_objective', 'get_kpi', 'get_formula',
                     'indicator_type', 'direction_of_change', 'baseline', 'target', 'improvement_needed', 'get_time_horizon',
                     'get_time_horizon_type', 'get_start_date', 'get_end_date', 'get_duration_days',
@@ -352,6 +346,7 @@ class StrategicActionPlanAdmin(admin.ModelAdmin):
 
 @admin.register(StrategicReport)
 class StrategicReportAdmin(admin.ModelAdmin):
+    form = StrategicReportForm
     list_display = (
         'organization_name', 'action_plan', 'achievement', 'percent_achieved', 'variance', 'weighted_score',
         'data_source', 'data_collector', 'progress_summary', 'performance_summary',
@@ -362,13 +357,7 @@ class StrategicReportAdmin(admin.ModelAdmin):
     search_fields = ('action_plan__strategy_hierarchy__key_performance_indicator', 'responsible_body', 'organization_name__organization_name')
     ordering = ('-created_at',)
 
-    readonly_fields = (
-        'percent_achieved',
-        'variance',
-        'weighted_score',
-        'created_at',
-        'updated_at',
-    )
+    readonly_fields = ( 'percent_achieved', 'variance', 'weighted_score', 'created_at', 'updated_at',)
 
     # Filter foreign keys based on user organization
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -412,27 +401,28 @@ class SwotReportAdmin(admin.ModelAdmin):
         'swot_factor', 'description'
     )
     ordering = ('-strategic_report_period__created_at',)
-
     readonly_fields = ('created_at', 'updated_at')
 
-    # Filter foreign keys by user's organization
+    # Pass request to the form
+    def get_form_kwargs(self, request, obj=None, **kwargs):
+        form_kwargs = super().get_form_kwargs(request, obj, **kwargs)
+        form_kwargs['request'] = request  # Pass request to the form for filtering
+        return form_kwargs
+
+    # Filter foreign key dropdowns by user's organization
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'strategic_report_period':
-            if not request.user.is_superuser and hasattr(request.user, 'organization_name'):
-                org = request.user.organization_name
-                kwargs["queryset"] = kwargs.get("queryset", StrategicReport.objects.all()).filter(
-                    organization_name=org
-                )
-            else:
-                kwargs["queryset"] = kwargs.get("queryset", StrategicReport.objects.all())
-        if db_field.name == 'organization_name':
-            if not request.user.is_superuser and hasattr(request.user, 'organization_name'):
-                org = request.user.organization_name
-                kwargs["queryset"] = kwargs.get("queryset", SwotReport.objects.all()).filter(
-                    id=org.id
-                )
+        if not request.user.is_superuser and hasattr(request.user, 'organization_name'):
+            org = request.user.organization_name
+
+            if db_field.name == 'strategic_report_period':
+                kwargs['queryset'] = StrategicReport.objects.filter(organization_name=org)
+
+            elif db_field.name == 'organization_name':
+                kwargs['queryset'] = OrganizationalProfile.objects.filter(pk=org.pk)
+
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+    # Filter admin list view by user's organization
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
@@ -440,3 +430,157 @@ class SwotReportAdmin(admin.ModelAdmin):
         if hasattr(request.user, 'organization_name') and request.user.organization_name:
             return qs.filter(organization_name=request.user.organization_name)
         return qs.none()
+
+
+@admin.register(Initiative)
+class InitiativeAdmin(admin.ModelAdmin):
+    form = InitiativeForm
+    list_display = ('initiative_focus_area', 'initiative_dimension', 'initiative_name', 'priority',
+                    'impact', 'likelihood', 'risk_level', 'status', 'organization_name', 'created_at')
+    list_filter = ('initiative_focus_area', 'initiative_dimension', 'priority', 'status', 'organization_name')
+    search_fields = ('initiative_name', 'description')
+    ordering = ('-created_at',)
+
+    # Restrict organization for non-superusers
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'organization_name' and not request.user.is_superuser:
+            if hasattr(request.user, 'organization_name'):
+                kwargs['queryset'] = OrganizationalProfile.objects.filter(
+                    pk=request.user.organization_name.pk
+                )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    # Filter queryset for non-superusers
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        if hasattr(request.user, 'organization_name') and request.user.organization_name:
+            return qs.filter(organization_name=request.user.organization_name)
+        return qs.none()
+
+
+@admin.register(InitiativeTimeline)
+class InitiativeTimelineAdmin(admin.ModelAdmin):
+    form = InitiativeTimelineForm
+
+    # Fields to display in the admin list view
+    list_display = ['organization_name', 'initiative', 'start_date', 'end_date', 'remaining_days', 'remaining_months']
+    list_filter = ['organization_name', 'initiative']
+    search_fields = ['initiative__initiative_name']
+    ordering = ['-start_date']
+
+    readonly_fields = ['remaining_days', 'remaining_months']
+
+    # Filter foreign keys by logged-in user's organization
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'initiative' and not request.user.is_superuser:
+            if hasattr(request.user, 'organization_name'):
+                org = request.user.organization_name
+                kwargs['queryset'] = Initiative.objects.filter(organization_name=org)
+        if db_field.name == 'organization_name' and not request.user.is_superuser:
+            if hasattr(request.user, 'organization_name'):
+                org = request.user.organization_name
+                kwargs['queryset'] = OrganizationalProfile.objects.filter(pk=org.pk)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    # Restrict queryset to user's organization
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        if hasattr(request.user, 'organization_name') and request.user.organization_name:
+            return qs.filter(organization_name=request.user.organization_name)
+        return qs.none()
+
+    # Pass request to form
+    def get_form_kwargs(self, request, obj=None, **kwargs):
+        form_kwargs = super().get_form_kwargs(request, obj, **kwargs)
+        form_kwargs['request'] = request
+        return form_kwargs
+
+
+@admin.register(InitiativeBudget)
+class InitiativeBudgetAdmin(admin.ModelAdmin):
+    form = InitiativeBudgetForm
+
+    # Fields to display in admin list view
+    list_display = [
+        'organization_name', 'initiative', 'budget_type', 'budget_name',
+        'budget_source', 'currency', 'budget_plan', 'budget_used', 'created_at', 'updated_at'
+    ]
+
+    list_filter = ['organization_name', 'initiative', 'budget_type', 'currency']
+    search_fields = ['budget_name', 'budget_source', 'initiative__initiative_name']
+    ordering = ['-created_at']
+
+    readonly_fields = ['created_at', 'updated_at']
+
+    # Filter foreign keys by logged-in user's organization
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'initiative' and not request.user.is_superuser:
+            if hasattr(request.user, 'organization_name'):
+                org = request.user.organization_name
+                kwargs['queryset'] = Initiative.objects.filter(organization_name=org)
+        if db_field.name == 'organization_name' and not request.user.is_superuser:
+            if hasattr(request.user, 'organization_name'):
+                org = request.user.organization_name
+                kwargs['queryset'] = OrganizationalProfile.objects.filter(pk=org.pk)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    # Restrict queryset to user's organization
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        if hasattr(request.user, 'organization_name') and request.user.organization_name:
+            return qs.filter(organization_name=request.user.organization_name)
+        return qs.none()
+
+    # Pass request to form for filtering initiative dropdown
+    def get_form_kwargs(self, request, obj=None, **kwargs):
+        form_kwargs = super().get_form_kwargs(request, obj, **kwargs)
+        form_kwargs['request'] = request
+        return form_kwargs
+
+
+@admin.register(InitiativeResource)
+class InitiativeResourceAdmin(admin.ModelAdmin):
+    form = InitiativeResourceForm
+
+    # Fields to display in the admin list view
+    list_display = [
+        'organization_name', 'initiative', 'resource_type', 'resource_name',
+        'resource_required', 'resource_used', 'resource_remaining', 'created_at', 'updated_at'
+    ]
+
+    list_filter = ['organization_name', 'initiative', 'resource_type']
+    search_fields = ['resource_name', 'resource_type', 'initiative__initiative_name']
+    ordering = ['-created_at']
+
+    readonly_fields = ['created_at', 'updated_at', 'resource_remaining']
+
+    # Filter foreign keys by logged-in user's organization
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if not request.user.is_superuser and hasattr(request.user, 'organization_name'):
+            org = request.user.organization_name
+            if db_field.name == 'initiative':
+                kwargs['queryset'] = Initiative.objects.filter(organization_name=org)
+            if db_field.name == 'organization_name':
+                kwargs['queryset'] = OrganizationalProfile.objects.filter(pk=org.pk)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    # Restrict queryset to user's organization
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        if hasattr(request.user, 'organization_name') and request.user.organization_name:
+            return qs.filter(organization_name=request.user.organization_name)
+        return qs.none()
+
+    # Pass request to form for filtering initiative dropdown
+    def get_form_kwargs(self, request, obj=None, **kwargs):
+        form_kwargs = super().get_form_kwargs(request, obj, **kwargs)
+        form_kwargs['request'] = request
+        return form_kwargs

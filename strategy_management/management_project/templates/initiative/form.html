@@ -9,6 +9,10 @@
           hx-push-url="true">
         {% csrf_token %}
 
+        {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
+
         {% if messages %}
             {% for message in messages %}
                 <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">

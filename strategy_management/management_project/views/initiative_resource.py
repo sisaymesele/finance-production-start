@@ -6,18 +6,28 @@ from django.db.models import Q
 from management_project.models import InitiativeResource, Initiative
 from management_project.forms import InitiativeResourceForm
 
+# # -------------------- LIST RESOURCES --------------------
 # -------------------- LIST RESOURCES --------------------
 @login_required
 def initiative_resource_list(request):
     query = request.GET.get('search', '').strip()
+    selected_initiative = request.GET.get('initiative', '').strip()
     page_number = request.GET.get('page', 1)
 
-    # All resources for initiatives in the user's organization
+    # Base queryset: all resources for initiatives in the user's organization
     resources = InitiativeResource.objects.filter(
         organization_name=request.user.organization_name
     ).select_related('initiative')
 
-    # Search filter across initiative fields
+    # Initiative filter
+    selected_initiative_name = None
+    if selected_initiative:
+        resources = resources.filter(initiative_id=selected_initiative)
+        initiative_obj = Initiative.objects.filter(pk=selected_initiative).first()
+        if initiative_obj:
+            selected_initiative_name = initiative_obj.initiative_name
+
+    # Search filter across initiative fields + resource_type
     if query:
         resources = resources.filter(
             Q(initiative__initiative_name__icontains=query) |
@@ -26,36 +36,65 @@ def initiative_resource_list(request):
             Q(resource_type__icontains=query)
         )
 
-    # Ordering by initiative name
+    # Ordering
     resources = resources.order_by('initiative__initiative_name', 'resource_type')
 
     # Pagination
     paginator = Paginator(resources, 10)
     page_obj = paginator.get_page(page_number)
 
+    # Initiatives for dropdown
+    initiatives = Initiative.objects.filter(
+        organization_name=request.user.organization_name
+    ).order_by('initiative_name')
+
     return render(request, 'initiative_resource/list.html', {
         'resources': page_obj,
         'page_obj': page_obj,
         'search_query': query,
+        'initiatives': initiatives,
+        'selected_initiative': selected_initiative,
+        'selected_initiative_name': selected_initiative_name,
     })
 
 
 # -------------------- CREATE RESOURCE --------------------
+# @login_required
+# def create_initiative_resource(request):
+#     if request.method == 'POST':
+#         form = InitiativeResourceForm(request.POST, request=request)
+#         if 'save' in request.POST and form.is_valid():
+#             resource = form.save(commit=False)
+#             resource.organization_name = request.user.organization_name
+#             resource.save()
+#             messages.success(request, "Initiative resource created successfully!")
+#             return redirect('initiative_resource_list')
+#     else:
+#         form = InitiativeResourceForm(request=request)
+#
+#     return render(request, 'initiative_resource/form.html', {'form': form})
+
 @login_required
 def create_initiative_resource(request):
+    selected_initiative = request.GET.get('initiative')  # Preselect if passed
     if request.method == 'POST':
         form = InitiativeResourceForm(request.POST, request=request)
-        if 'save' in request.POST and form.is_valid():
+        if form.is_valid() and 'save' in request.POST:
             resource = form.save(commit=False)
             resource.organization_name = request.user.organization_name
             resource.save()
             messages.success(request, "Initiative resource created successfully!")
-            return redirect('initiative_resource_list')
+            return redirect('initiative_resource_list')  # or stay on child list
     else:
-        form = InitiativeResourceForm(request=request)
+        initial_data = {}
+        if selected_initiative:
+            initial_data['initiative'] = selected_initiative
+        form = InitiativeResourceForm(initial=initial_data, request=request)
 
-    return render(request, 'initiative_resource/form.html', {'form': form})
-
+    return render(request, 'initiative_resource/form.html', {
+        'form': form,
+        'next': None  # child form doesn't need next
+    })
 
 # -------------------- UPDATE RESOURCE --------------------
 @login_required

@@ -40,7 +40,7 @@
                     <option value="">All Initiatives</option>
                     {% for ini in initiatives %}
                     <option value="{{ ini.pk }}" {% if ini.pk|stringformat:"s" == selected_initiative %}selected{% endif %}>
-                        {{ ini.initiative_name }}
+                    {{ ini.initiative_name }}
                     </option>
                     {% endfor %}
                 </select>
@@ -82,10 +82,18 @@
             <thead class="table-light sticky-top">
             <tr>
                 <th>#</th>
+                <th>Initiative Focus Area</th>
+                <th>Initiative Dimension</th>
                 <th>Initiative</th>
-                <th>Budget Plan</th>
-                <th>Budget Used</th>
-                <th>Budget Remaining</th>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Source</th>
+                <th>Currency</th>
+                <th>Planned</th>
+                <th>Used</th>
+                <th>Remaining</th>
+                <th>Created</th>
+                <th>Updated</th>
                 <th>Actions</th>
             </tr>
             </thead>
@@ -93,10 +101,18 @@
             {% for b in page_obj %}
             <tr>
                 <td>{{ forloop.counter }}</td>
+                <td>{{ b.initiative.initiative_focus_area }}</td>
+                <td>{{ b.initiative.initiative_dimension }}</td>
                 <td>{{ b.initiative.initiative_name }}</td>
+                <td>{{ b.budget_type|default:"-" }}</td>
+                <td>{{ b.budget_name|default:"-" }}</td>
+                <td>{{ b.budget_source|default:"-" }}</td>
+                <td>{{ b.currency|default:"USD" }}</td>
                 <td>{{ b.budget_plan|floatformat:2 }}</td>
                 <td>{{ b.budget_used|floatformat:2 }}</td>
                 <td>{{ b.budget_remaining|floatformat:2 }}</td>
+                <td>{{ b.created_at|naturaltime }}</td>
+                <td>{{ b.updated_at|naturaltime }}</td>
                 <td>
                     <div class="btn-group btn-group-sm">
                         <a class="btn btn-outline-warning"
@@ -120,7 +136,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" class="text-center py-4">
+                <td colspan="12" class="text-center py-4">
                     No budgets found.
                     <a href="{% url 'create_initiative_budget' %}"
                        hx-get="{% url 'create_initiative_budget' %}"
