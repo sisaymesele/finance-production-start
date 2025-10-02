@@ -53,49 +53,6 @@ class OrganizationalProfileForm(forms.ModelForm):
 
 
 
-
-class SwotAnalysisForm(forms.ModelForm):
-    class Meta:
-        model = SwotAnalysis
-        fields = [
-            'swot_type', 'swot_pillar', 'swot_factor',
-            'priority', 'impact', 'likelihood', 'description'
-        ]
-        widgets = {
-            'swot_type': forms.Select(attrs={'class': 'form-control'}),
-            'swot_pillar': forms.Select(attrs={'class': 'form-control'}),
-            'swot_factor': forms.Select(attrs={'class': 'form-control'}),
-            'priority': forms.Select(attrs={'class': 'form-control'}),
-            'impact': forms.Select(attrs={'class': 'form-control'}),
-            'likelihood': forms.Select(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        swot_type = self.data.get('swot_type') or getattr(self.instance, 'swot_type', None)
-        pillar = self.data.get('swot_pillar') or getattr(self.instance, 'swot_pillar', None)
-
-        # Level 1: SWOT Type
-        self.fields['swot_type'].choices = [('', '--- Select SWOT Type ---')] + SwotChoicesService.get_swot_type_choices()
-
-        # Level 2: Pillar
-        if swot_type:
-            self.fields['swot_pillar'].choices = [('', '--- Select Pillar ---')] + SwotChoicesService.get_pillar_choices(swot_type)
-            self.fields['swot_pillar'].widget.attrs.pop('disabled', None)
-        else:
-            self.fields['swot_pillar'].choices = [('', '--- Select Type First ---')]
-            self.fields['swot_pillar'].widget.attrs['disabled'] = True
-
-        # Level 3: Factor
-        if swot_type and pillar:
-            self.fields['swot_factor'].choices = [('', '--- Select Factor ---')] + SwotChoicesService.get_factor_choices(swot_type, pillar)
-            self.fields['swot_factor'].widget.attrs.pop('disabled', None)
-        else:
-            self.fields['swot_factor'].choices = [('', '--- Select Pillar First ---')]
-            self.fields['swot_factor'].widget.attrs['disabled'] = True
-
-
 class VisionForm(forms.ModelForm):
     class Meta:
         model = Vision
@@ -224,6 +181,51 @@ class ValuesForm(forms.ModelForm):
         self.fields['values'].choices = ValuesService.VALUE_CHOICES
 
 
+
+
+class SwotAnalysisForm(forms.ModelForm):
+    class Meta:
+        model = SwotAnalysis
+        fields = [
+            'swot_type', 'swot_pillar', 'swot_factor',
+            'priority', 'impact', 'likelihood', 'description'
+        ]
+        widgets = {
+            'swot_type': forms.Select(attrs={'class': 'form-control'}),
+            'swot_pillar': forms.Select(attrs={'class': 'form-control'}),
+            'swot_factor': forms.Select(attrs={'class': 'form-control'}),
+            'priority': forms.Select(attrs={'class': 'form-control'}),
+            'impact': forms.Select(attrs={'class': 'form-control'}),
+            'likelihood': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        swot_type = self.data.get('swot_type') or getattr(self.instance, 'swot_type', None)
+        pillar = self.data.get('swot_pillar') or getattr(self.instance, 'swot_pillar', None)
+
+        # Level 1: SWOT Type
+        self.fields['swot_type'].choices = [('', '--- Select SWOT Type ---')] + SwotChoicesService.get_swot_type_choices()
+
+        # Level 2: Pillar
+        if swot_type:
+            self.fields['swot_pillar'].choices = [('', '--- Select Pillar ---')] + SwotChoicesService.get_pillar_choices(swot_type)
+            self.fields['swot_pillar'].widget.attrs.pop('disabled', None)
+        else:
+            self.fields['swot_pillar'].choices = [('', '--- Select Type First ---')]
+            self.fields['swot_pillar'].widget.attrs['disabled'] = True
+
+        # Level 3: Factor
+        if swot_type and pillar:
+            self.fields['swot_factor'].choices = [('', '--- Select Factor ---')] + SwotChoicesService.get_factor_choices(swot_type, pillar)
+            self.fields['swot_factor'].widget.attrs.pop('disabled', None)
+        else:
+            self.fields['swot_factor'].choices = [('', '--- Select Pillar First ---')]
+            self.fields['swot_factor'].widget.attrs['disabled'] = True
+
+
+
 class StrategyHierarchyForm(forms.ModelForm):
     # Include formula in the form explicitly
     formula = forms.CharField(
@@ -285,43 +287,88 @@ class StrategyHierarchyForm(forms.ModelForm):
             self.fields['formula'].initial = service.get_formula(perspective, pillar, objective, kpi)
         else:
             self.fields['formula'].initial = "Select a KPI to see the formula"
-
+#
+#
+# class StakeholderForm(forms.ModelForm):
+#     class Meta:
+#         model = Stakeholder
+#         exclude = ['organization_name']  # Exclude the organization field
+#         widgets = {
+#             'stakeholder_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Stakeholder Name'}),
+#             'stakeholder_type': forms.Select(attrs={'class': 'form-control'}),
+#             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Brief description'}),
+#             'impact_level': forms.Select(attrs={'class': 'form-control'}),
+#             'interest_level': forms.Select(attrs={'class': 'form-control'}),
+#             'influence_score': forms.Select(attrs={'class': 'form-control'}),
+#             'priority': forms.Select(attrs={'class': 'form-select', 'id': 'priority'}),
+#             'satisfaction_level': forms.Select(attrs={'class': 'form-control'}),
+#             'risk_level': forms.Select(attrs={'class': 'form-control'}),
+#             'contribution_score': forms.Select(attrs={'class': 'form-select', 'id': 'contribution_score'}),
+#             'contact_info': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Email, Phone, or Contact'}),
+#         }
+#
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#
+#         # Add 'is-invalid' class to fields with errors
+#         for field_name, field in self.fields.items():
+#             css_classes = field.widget.attrs.get('class', 'form-control')
+#             if field_name in self.errors:
+#                 css_classes += ' is-invalid'
+#             field.widget.attrs['class'] = css_classes
 
 class StakeholderForm(forms.ModelForm):
+    role = MultiSelectFormField(
+        choices=Stakeholder.ROLE_CHOICES,
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        required=True,
+    )
+    engagement_strategy = MultiSelectFormField(
+        choices=Stakeholder.ENGAGEMENT_STRATEGY_CHOICES,
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        required=True,
+    )
+
     class Meta:
         model = Stakeholder
-        exclude = ['organization_name']  # Exclude the organization field
+        exclude = ['organization_name', 'stakeholder_code', 'slug', 'engagement_priority_score',
+                   'is_key_stakeholder', 'requires_attention', 'created_at', 'updated_at']
         widgets = {
             'stakeholder_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Stakeholder Name'}),
-            'stakeholder_type': forms.Select(attrs={'class': 'form-control'}),
-            'department': forms.Select(attrs={'class': 'form-control'}),
+            'stakeholder_type': forms.Select(attrs={'class': 'form-select'}),
+            'stakeholder_category': forms.Select(attrs={'class': 'form-select'}),
+            'primary_role': forms.Select(attrs={'class': 'form-select'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Brief description'}),
-            'impact_level': forms.Select(attrs={'class': 'form-control'}),
-            'interest_level': forms.Select(attrs={'class': 'form-control'}),
-            'influence_score': forms.Select(attrs={'class': 'form-control'}),
-            'priority': forms.Select(attrs={'class': 'form-select', 'id': 'priority'}),
-            'satisfaction_level': forms.Select(attrs={'class': 'form-control'}),
-            'risk_level': forms.Select(attrs={'class': 'form-control'}),
-            'contribution_score': forms.Select(attrs={'class': 'form-select', 'id': 'contribution_score'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Internal notes'}),
+            'impact_level': forms.Select(attrs={'class': 'form-select'}),
+            'interest_level': forms.Select(attrs={'class': 'form-select'}),
+            'influence_score': forms.Select(attrs={'class': 'form-select'}),
+            'priority': forms.Select(attrs={'class': 'form-select'}),
+            'satisfaction_level': forms.Select(attrs={'class': 'form-select'}),
+            'risk_level': forms.Select(attrs={'class': 'form-select'}),
+            'contribution_score': forms.Select(attrs={'class': 'form-select'}),
             'contact_info': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Email, Phone, or Contact'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email Address'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number'}),
+            'department': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Department'}),
+            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Location'}),
+            'relationship_status': forms.Select(attrs={'class': 'form-select'}),
+            'last_engagement_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'next_engagement_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }
 
     def __init__(self, *args, **kwargs):
-        # Pop the request from kwargs
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
 
-        # Filter department dropdown based on the logged-in user's organization
-        if self.request and self.request.user.is_authenticated:
-            org = getattr(self.request.user, 'organization_name', None)
-            if org:
-                self.fields['department'].queryset = Department.objects.filter(organization_name=org)
-            else:
-                self.fields['department'].queryset = Department.objects.none()
+        # Organization-specific filtering
+        if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
+            org = self.request.user.organization_name
+            self.fields['aligned_objectives'].queryset = StrategyHierarchy.objects.filter(organization_name=org)
         else:
-            self.fields['department'].queryset = Department.objects.none()
+            self.fields['aligned_objectives'].queryset = StrategyHierarchy.objects.none()
 
-        # Add 'is-invalid' class to fields with errors
+        # Add Bootstrap validation classes
         for field_name, field in self.fields.items():
             css_classes = field.widget.attrs.get('class', 'form-control')
             if field_name in self.errors:
@@ -402,134 +449,6 @@ class StrategicActionPlanForm(forms.ModelForm):
 
     error_css_class = 'text-danger'
     required_css_class = 'font-weight-bold'
-
-
-#strategy report
-
-class StrategicReportForm(forms.ModelForm):
-    action_plan = forms.ModelChoiceField(
-        queryset=StrategicActionPlan.objects.none(),  # initially empty
-        label="Action Plan",
-        widget=forms.Select(attrs={
-            'class': 'form-control',
-            'title': '',  # optional, will set via __init__
-        }),
-        empty_label="Select Action Plan"
-    )
-
-    class Meta:
-        model = StrategicReport
-        fields = [
-            'action_plan', 'achievement', 'data_source',
-            'data_collector', 'progress_summary', 'performance_summary',
-            'challenges', 'successes', 'lessons_learned', 'status',
-        ]
-        widgets = {
-            'achievement': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'data_source': forms.TextInput(attrs={'class': 'form-control'}),
-            'data_collector': forms.TextInput(attrs={'class': 'form-control'}),
-            'progress_summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'performance_summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'challenges': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'successes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'lessons_learned': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'status': forms.Select(attrs={'class': 'form-control'}),
-
-        }
-
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
-        self.cycle = kwargs.pop('cycle', None)
-        super().__init__(*args, **kwargs)
-
-        # Filter by user organization
-        if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
-            org = self.request.user.organization_name
-            qs = StrategicActionPlan.objects.filter(organization_name=org)
-        else:
-            qs = StrategicActionPlan.objects.none()
-
-        # Optionally filter further by cycle if you need it
-        if self.cycle:
-            qs = qs.filter(strategic_cycle=self.cycle)
-
-
-        # If we're editing and the instance has an action_plan, ensure it's included
-        instance_plan = getattr(self.instance, 'action_plan', None)
-        if instance_plan:
-            qs = (qs | StrategicActionPlan.objects.filter(pk=instance_plan.pk)).distinct()
-
-        self.fields['action_plan'].queryset = qs
-
-
-
-class SwotReportForm(forms.ModelForm):
-    strategic_report_period = forms.ModelChoiceField(
-        queryset=StrategicReport.objects.none(),
-        label="Strategic Report Period",
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        empty_label="Select Strategic Report"
-    )
-
-    class Meta:
-        model = SwotReport
-        fields = [
-            'strategic_report_period', 'swot_type', 'swot_pillar', 'swot_factor',
-            'priority', 'impact', 'likelihood', 'description'
-        ]
-        widgets = {
-            'swot_type': forms.Select(attrs={'class': 'form-control'}),
-            'swot_pillar': forms.Select(attrs={'class': 'form-control'}),
-            'swot_factor': forms.Select(attrs={'class': 'form-control'}),
-            'priority': forms.Select(attrs={'class': 'form-control'}),
-            'impact': forms.Select(attrs={'class': 'form-control'}),
-            'likelihood': forms.Select(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
-        super().__init__(*args, **kwargs)
-
-        # ---------------- Filter unique by action_plan ----------------
-        if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
-            org = self.request.user.organization_name
-            reports = StrategicReport.objects.filter(organization_name=org).order_by('action_plan', '-id')
-
-            unique_ids = []
-            seen = set()
-            for report in reports:
-                if report.action_plan_id not in seen:
-                    seen.add(report.action_plan_id)
-                    unique_ids.append(report.id)
-
-            self.fields['strategic_report_period'].queryset = StrategicReport.objects.filter(id__in=unique_ids)
-        else:
-            self.fields['strategic_report_period'].queryset = StrategicReport.objects.none()
-
-        # ---------------- Cascade dropdown logic ----------------
-        swot_type = self.data.get('swot_type') or getattr(self.instance, 'swot_type', None)
-        pillar = self.data.get('swot_pillar') or getattr(self.instance, 'swot_pillar', None)
-
-        # Level 1: SWOT Type
-        self.fields['swot_type'].choices = [('', '--- Select SWOT Type ---')] + SwotChoicesService.get_swot_type_choices()
-
-        # Level 2: Pillar
-        if swot_type:
-            self.fields['swot_pillar'].choices = [('', '--- Select Pillar ---')] + SwotChoicesService.get_pillar_choices(swot_type)
-            self.fields['swot_pillar'].widget.attrs.pop('disabled', None)
-        else:
-            self.fields['swot_pillar'].choices = [('', '--- Select Type First ---')]
-            self.fields['swot_pillar'].widget.attrs['disabled'] = True
-
-        # Level 3: Factor
-        if swot_type and pillar:
-            self.fields['swot_factor'].choices = [('', '--- Select Factor ---')] + SwotChoicesService.get_factor_choices(swot_type, pillar)
-            self.fields['swot_factor'].widget.attrs.pop('disabled', None)
-        else:
-            self.fields['swot_factor'].choices = [('', '--- Select Pillar First ---')]
-            self.fields['swot_factor'].widget.attrs['disabled'] = True
-
 
 
 class InitiativeForm(forms.ModelForm):
@@ -688,4 +607,131 @@ class InitiativeResourceForm(forms.ModelForm):
     error_css_class = 'text-danger'
     required_css_class = 'font-weight-bold'
 
+
+
+#strategy report
+
+class StrategicReportForm(forms.ModelForm):
+    action_plan = forms.ModelChoiceField(
+        queryset=StrategicActionPlan.objects.none(),  # initially empty
+        label="Action Plan",
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'title': '',  # optional, will set via __init__
+        }),
+        empty_label="Select Action Plan"
+    )
+
+    class Meta:
+        model = StrategicReport
+        fields = [
+            'action_plan', 'achievement', 'data_source',
+            'data_collector', 'progress_summary', 'performance_summary',
+            'challenges', 'successes', 'lessons_learned', 'status',
+        ]
+        widgets = {
+            'achievement': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'data_source': forms.TextInput(attrs={'class': 'form-control'}),
+            'data_collector': forms.TextInput(attrs={'class': 'form-control'}),
+            'progress_summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'performance_summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'challenges': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'successes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'lessons_learned': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        self.cycle = kwargs.pop('cycle', None)
+        super().__init__(*args, **kwargs)
+
+        # Filter by user organization
+        if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
+            org = self.request.user.organization_name
+            qs = StrategicActionPlan.objects.filter(organization_name=org)
+        else:
+            qs = StrategicActionPlan.objects.none()
+
+        # Optionally filter further by cycle if you need it
+        if self.cycle:
+            qs = qs.filter(strategic_cycle=self.cycle)
+
+
+        # If we're editing and the instance has an action_plan, ensure it's included
+        instance_plan = getattr(self.instance, 'action_plan', None)
+        if instance_plan:
+            qs = (qs | StrategicActionPlan.objects.filter(pk=instance_plan.pk)).distinct()
+
+        self.fields['action_plan'].queryset = qs
+
+
+
+class SwotReportForm(forms.ModelForm):
+    strategic_report_period = forms.ModelChoiceField(
+        queryset=StrategicReport.objects.none(),
+        label="Strategic Report Period",
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        empty_label="Select Strategic Report"
+    )
+
+    class Meta:
+        model = SwotReport
+        fields = [
+            'strategic_report_period', 'swot_type', 'swot_pillar', 'swot_factor',
+            'priority', 'impact', 'likelihood', 'description'
+        ]
+        widgets = {
+            'swot_type': forms.Select(attrs={'class': 'form-control'}),
+            'swot_pillar': forms.Select(attrs={'class': 'form-control'}),
+            'swot_factor': forms.Select(attrs={'class': 'form-control'}),
+            'priority': forms.Select(attrs={'class': 'form-control'}),
+            'impact': forms.Select(attrs={'class': 'form-control'}),
+            'likelihood': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+
+        # ---------------- Filter unique by action_plan ----------------
+        if self.request and self.request.user.is_authenticated and hasattr(self.request.user, 'organization_name'):
+            org = self.request.user.organization_name
+            reports = StrategicReport.objects.filter(organization_name=org).order_by('action_plan', '-id')
+
+            unique_ids = []
+            seen = set()
+            for report in reports:
+                if report.action_plan_id not in seen:
+                    seen.add(report.action_plan_id)
+                    unique_ids.append(report.id)
+
+            self.fields['strategic_report_period'].queryset = StrategicReport.objects.filter(id__in=unique_ids)
+        else:
+            self.fields['strategic_report_period'].queryset = StrategicReport.objects.none()
+
+        # ---------------- Cascade dropdown logic ----------------
+        swot_type = self.data.get('swot_type') or getattr(self.instance, 'swot_type', None)
+        pillar = self.data.get('swot_pillar') or getattr(self.instance, 'swot_pillar', None)
+
+        # Level 1: SWOT Type
+        self.fields['swot_type'].choices = [('', '--- Select SWOT Type ---')] + SwotChoicesService.get_swot_type_choices()
+
+        # Level 2: Pillar
+        if swot_type:
+            self.fields['swot_pillar'].choices = [('', '--- Select Pillar ---')] + SwotChoicesService.get_pillar_choices(swot_type)
+            self.fields['swot_pillar'].widget.attrs.pop('disabled', None)
+        else:
+            self.fields['swot_pillar'].choices = [('', '--- Select Type First ---')]
+            self.fields['swot_pillar'].widget.attrs['disabled'] = True
+
+        # Level 3: Factor
+        if swot_type and pillar:
+            self.fields['swot_factor'].choices = [('', '--- Select Factor ---')] + SwotChoicesService.get_factor_choices(swot_type, pillar)
+            self.fields['swot_factor'].widget.attrs.pop('disabled', None)
+        else:
+            self.fields['swot_factor'].choices = [('', '--- Select Pillar First ---')]
+            self.fields['swot_factor'].widget.attrs['disabled'] = True
 

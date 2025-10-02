@@ -74,6 +74,53 @@ def validate_phone_number(value):
         raise ValidationError("Enter a valid phone number (7-12 digits) without country code.")
 
 
+class Vision(models.Model):
+    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
+    vision_statement = models.CharField(max_length=500)
+
+    def __str__(self):
+        return f"{self.vision_statement} - {self.organization_name}"
+
+    @property
+    def display_vision_statement(self):
+        from management_project.services.vision import VisionService
+        return VisionService.get_display_statement(self.organization_name.organization_name, self.vision_statement)
+
+
+class Mission(models.Model):
+    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
+    mission_statement = models.CharField(max_length=500)
+
+    def __str__(self):
+        return f"{self.mission_statement} - {self.organization_name}"
+
+    @property
+    def display_mission_statement(self):
+        from management_project.services.mission import MissionService
+        return MissionService.get_display_statement(self.organization_name.organization_name, self.mission_statement)
+
+
+
+
+class Values(models.Model):
+    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
+
+    values = models.CharField(
+        max_length=50,
+        choices=[(key, label) for group in ValuesService.VALUE_CHOICES for key, label in group[1]],
+        unique=True
+    )
+
+    def get_category(self):
+        for group_name, group_values in ValuesService.VALUE_CHOICES:
+            for key, label in group_values:
+                if key == self.values:
+                    return group_name
+        return None
+
+    def __str__(self):
+        return self.get_values_display()
+
 
 
 class SwotAnalysis(models.Model):
@@ -129,54 +176,6 @@ class SwotAnalysis(models.Model):
 
 
 
-class Vision(models.Model):
-    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
-    vision_statement = models.CharField(max_length=500)
-
-    def __str__(self):
-        return f"{self.vision_statement} - {self.organization_name}"
-
-    @property
-    def display_vision_statement(self):
-        from management_project.services.vision import VisionService
-        return VisionService.get_display_statement(self.organization_name.organization_name, self.vision_statement)
-
-
-class Mission(models.Model):
-    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
-    mission_statement = models.CharField(max_length=500)
-
-    def __str__(self):
-        return f"{self.mission_statement} - {self.organization_name}"
-
-    @property
-    def display_mission_statement(self):
-        from management_project.services.mission import MissionService
-        return MissionService.get_display_statement(self.organization_name.organization_name, self.mission_statement)
-
-
-
-
-class Values(models.Model):
-    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
-
-    values = models.CharField(
-        max_length=50,
-        choices=[(key, label) for group in ValuesService.VALUE_CHOICES for key, label in group[1]],
-        unique=True
-    )
-
-    def get_category(self):
-        for group_name, group_values in ValuesService.VALUE_CHOICES:
-            for key, label in group_values:
-                if key == self.values:
-                    return group_name
-        return None
-
-    def __str__(self):
-        return self.get_values_display()
-
-
 class StrategyHierarchy(models.Model):
     organization_name = models.ForeignKey(
         OrganizationalProfile, on_delete=models.PROTECT
@@ -193,75 +192,79 @@ class StrategyHierarchy(models.Model):
 
 
 class Stakeholder(models.Model):
-    # ------------------ Choices ------------------
+    # ------------------ Enhanced Choices ------------------
     STAKEHOLDER_TYPE_CHOICES = [
         ('internal', 'Internal'),
         ('external', 'External'),
+        ('interface', 'Interface'),
+    ]
+
+    STAKEHOLDER_CATEGORY_CHOICES = [
+        ('strategic', 'Strategic'),
+        ('operational', 'Operational'),
+        ('tactical', 'Tactical'),
+        ('influencer', 'Influencer'),
+        ('beneficiary', 'Beneficiary'),
     ]
 
     ROLE_CHOICES = [
-        # Core organizational roles
+        # Leadership & Governance
         ('owner', 'Owner'),
+        ('board_member', 'Board Member'),
+        ('ceo', 'CEO'),
         ('executive', 'Executive'),
+        ('director', 'Director'),
+        # Management
+        ('senior_manager', 'Senior Manager'),
         ('manager', 'Manager'),
-        ('department', 'Department'),
-        ('Section', 'Section'),
-        ('team', 'Team'),
         ('team_lead', 'Team Lead'),
+        ('supervisor', 'Supervisor'),
+        ('department_head', 'Department Head'),
+        ('branch_manager', 'Branch Manager'),
+        # Operational
         ('employee', 'Employee'),
-
-        # Functional roles
+        ('contractor', 'Contractor'),
+        ('intern', 'Intern'),
+        ('volunteer', 'Volunteer'),
+        # Functional Specialists
+        ('finance', 'Finance'),
+        ('hr', 'Human Resources'),
+        ('it', 'IT Support'),
         ('developer', 'Developer'),
         ('designer', 'Designer'),
         ('qa', 'Quality Assurance'),
         ('sales', 'Sales'),
         ('marketing', 'Marketing'),
-        ('finance', 'Finance'),
-        ('hr', 'Human Resources'),
-        ('it', 'IT Support'),
         ('operations', 'Operations'),
         ('logistics', 'Logistics'),
-
-        # Product & project roles
+        ('legal', 'Legal Counsel'),
+        ('compliance', 'Compliance Officer'),
+        # Project & Product
+        ('project_manager', 'Project Manager'),
         ('product_owner', 'Product Owner'),
         ('scrum_master', 'Scrum Master'),
-        ('analyst', 'Business Analyst'),
+        ('business_analyst', 'Business Analyst'),
         ('trainer', 'Trainer'),
         ('mentor', 'Mentor'),
-        ('intern', 'Intern'),
-        ('contractor', 'Contractor'),
-
-        # External stakeholders
+        # External Stakeholders
         ('customer', 'Customer'),
-        ('partner', 'Partner'),
         ('supplier', 'Supplier'),
+        ('partner', 'Partner'),
         ('investor', 'Investor'),
         ('funder', 'Funder'),
         ('regulator', 'Regulator'),
-        ('community', 'Community'),
-        ('consultant', 'Consultant'),
-        ('advisor', 'Advisor'),
-        ('board_member', 'Board Member'),
-        ('volunteer', 'Volunteer'),
-        ('researcher', 'Researcher'),
-        ('media', 'Media'),
         ('government_official', 'Government Official'),
         ('auditor', 'Auditor'),
-        ('legal', 'Legal Counsel'),
-
+        ('consultant', 'Consultant'),
+        ('advisor', 'Advisor'),
+        ('researcher', 'Researcher'),
+        ('media', 'Media'),
+        ('community', 'Community'),
         # Catch-all
         ('other', 'Other'),
     ]
 
-    IMPACT_LEVEL_CHOICES = [
-        ('very_low', 'Very Low'),
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('critical', 'Critical'),
-    ]
-
-    INTEREST_LEVEL_CHOICES = [
+    LEVEL_CHOICES = [
         ('very_low', 'Very Low'),
         ('low', 'Low'),
         ('medium', 'Medium'),
@@ -270,118 +273,198 @@ class Stakeholder(models.Model):
     ]
 
     ENGAGEMENT_STRATEGY_CHOICES = [
+        ('monitor', 'Monitor'),
         ('inform', 'Inform'),
         ('consult', 'Consult'),
         ('involve', 'Involve'),
         ('collaborate', 'Collaborate'),
         ('empower', 'Empower'),
-        ('monitor', 'Monitor'),
     ]
 
-    SATISFACTION_LEVEL_CHOICES = [
-        ('very_low', 'Very Low'),
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('very_high', 'Very High'),
+    RELATIONSHIP_STATUS_CHOICES = [
+        ('new', 'New'),
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+        ('challenged', 'Challenged'),
+        ('terminated', 'Terminated'),
     ]
 
-    RISK_LEVEL_CHOICES = [
-        ('very_low', 'Very Low'),
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('critical', 'Critical'),
-    ]
-
-    PRIORITY_CHOICES = [
-        ('very_low', 'Very Low'),
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('critical', 'Critical'),
-    ]
-
-    INFLUENCE_SCORE_CHOICES = [
-        ('very_low', 'Very Low'),
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('critical', 'Critical'),
-    ]
-
-    CONTRIBUTION_CHOICES = [
-        ('very_low', 'Very Low'),
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('very_high', 'Very High'),
-    ]
-
-    # ------------------ Core Info ------------------
-    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
+    # ------------------ Core Information ------------------
+    organization_name = models.ForeignKey(
+        'OrganizationalProfile',
+        on_delete=models.PROTECT,
+        related_name='stakeholders'
+    )
+    # ------------------ Identification ------------------
+    stakeholder_code = models.CharField(max_length=50, unique=True, blank=True)
     stakeholder_name = models.CharField(max_length=200, help_text='Stakeholder name or organization')
     stakeholder_type = models.CharField(max_length=20, choices=STAKEHOLDER_TYPE_CHOICES)
+    stakeholder_category = models.CharField(max_length=20, choices=STAKEHOLDER_CATEGORY_CHOICES, default='operational')
+
     role = MultiSelectField(
         choices=ROLE_CHOICES,
         max_length=500,
-        default='employee',
+        default=['employee'],
         help_text="Select one or more roles"
     )
-    # ------------------ Analysis ------------------
-    impact_level = models.CharField(max_length=20, choices=IMPACT_LEVEL_CHOICES, default='medium')
-    interest_level = models.CharField(max_length=20, choices=INTEREST_LEVEL_CHOICES, default='medium')
+    primary_role = models.CharField(
+        max_length=50,
+        choices=ROLE_CHOICES,
+        blank=True,
+        null=True,
+        help_text="Primary role for reporting and analysis"
+    )
+
+    # ------------------ Stakeholder Analysis ------------------
+    impact_level = models.CharField(max_length=20, choices=LEVEL_CHOICES, default='medium')
+    interest_level = models.CharField(max_length=20, choices=LEVEL_CHOICES, default='medium')
+    influence_score = models.CharField(max_length=20, choices=LEVEL_CHOICES, default='medium')
+    risk_level = models.CharField(max_length=20, choices=LEVEL_CHOICES, default='medium')
+    contribution_score = models.CharField(max_length=20, choices=LEVEL_CHOICES, default='medium')
+    priority = models.CharField(max_length=20, choices=LEVEL_CHOICES, default='medium')
+    satisfaction_level = models.CharField(max_length=20, choices=LEVEL_CHOICES, default='medium')
+
     engagement_strategy = MultiSelectField(
         choices=ENGAGEMENT_STRATEGY_CHOICES,
         max_length=200,
-        default='inform',
+        default=['inform'],
         help_text="Select one or more engagement strategies"
     )
-    influence_score = models.CharField(max_length=20,
-        choices=INFLUENCE_SCORE_CHOICES,
-        default="medium",
-        help_text="Qualitative measure of influence"
+
+    # ------------------ Contact Information ------------------
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    contact_info = models.CharField(max_length=200, blank=True, null=True)
+    department = models.CharField(max_length=100, blank=True, null=True)
+    location = models.CharField(max_length=100, blank=True, null=True)
+
+    description = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+
+    # ------------------ Relationship Management ------------------
+    relationship_status = models.CharField(max_length=20, choices=RELATIONSHIP_STATUS_CHOICES, default='new')
+    last_engagement_date = models.DateField(blank=True, null=True)
+    next_engagement_date = models.DateField(blank=True, null=True)
+
+    aligned_objectives = models.ManyToManyField(
+        'StrategyHierarchy', blank=True, related_name='stakeholders'
     )
-    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium',
-                                help_text='Qualitative measure of priority')
-    satisfaction_level = models.CharField(max_length=20, choices=SATISFACTION_LEVEL_CHOICES, default='medium',
-                                          help_text='Stakeholder satisfaction with the project or SaaS')
-    risk_level = models.CharField(max_length=20, choices=RISK_LEVEL_CHOICES, default='medium',
-                                  help_text='Potential risk if stakeholder is disengaged')
-    contribution_score = models.CharField(max_length=10, choices=CONTRIBUTION_CHOICES, default='medium',
-                                          help_text='Estimated contribution to strategic objectives')
 
-    # ------------------ Contact ------------------
-    contact_info = models.CharField(max_length=200, blank=True, null=True,
-                                    help_text='Email, phone, or other contact details')
-    description = models.TextField(blank=True, null=True, help_text='Brief description of the stakeholder')
+    engagement_priority_score = models.DecimalField(max_digits=3, decimal_places=1, default=0.0)
+    is_key_stakeholder = models.BooleanField(default=False)
+    requires_attention = models.BooleanField(default=False)
 
+    # ------------------ Timestamps ------------------
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    slug = models.SlugField(max_length=100, unique=True, blank=True)
+
+    # ------------------ Meta ------------------
+    # ------------------ Meta ------------------
     class Meta:
-        ordering = ["-priority", "stakeholder_name"]
+        verbose_name = "Stakeholder"
+        verbose_name_plural = "Stakeholders"
+        ordering = ["-engagement_priority_score", "stakeholder_name"]
+        indexes = [
+            models.Index(fields=['stakeholder_type', 'engagement_priority_score']),
+            models.Index(fields=['organization_name', 'risk_level']),
+            models.Index(fields=['stakeholder_code']),
+        ]
 
     def __str__(self):
-        return f"{self.stakeholder_name} ({self.get_role_display()})"
+        return f"{self.stakeholder_name} ({self.get_primary_role_display()})"
 
-    # ------------------ Business Logic ------------------
+    # ------------------ Save Override ------------------
     def save(self, *args, **kwargs):
+        # Auto-generate stakeholder_code
+        if not self.stakeholder_code:
+            org_prefix = self.organization_name.organization_name[:3].upper()
+            base_code = f"STK-{org_prefix}-{self.stakeholder_name[:3].upper()}"
+            counter = 1
+            code = f"{base_code}-{counter:04d}"
+            while Stakeholder.objects.filter(stakeholder_code=code).exists():
+                counter += 1
+                code = f"{base_code}-{counter:04d}"
+            self.stakeholder_code = code
+
+        # Auto-generate slug
+        if not self.slug:
+            base_slug = slugify(f"{self.stakeholder_name}-{self.stakeholder_code}")
+            slug = base_slug
+            counter = 1
+            while Stakeholder.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+
+        # Set primary role
+        if not self.primary_role and self.role:
+            self.primary_role = self.role[0]
+
+        # Calculate engagement score & flags
+        self.calculate_engagement_priority()
+        self.is_key_stakeholder = self.engagement_priority_score >= Decimal('7.0')
+        self.requires_attention = (
+                self.engagement_priority_score >= Decimal('8.0') or
+                self.risk_level in ['high', 'very_high'] or
+                self.satisfaction_level in ['very_low', 'low']
+        )
 
         super().save(*args, **kwargs)
 
+    # ------------------ Engagement Priority Calculation ------------------
+    def calculate_engagement_priority(self):
+        """Calculate numerical engagement priority score"""
+        score_map = {
+            'very_low': 1,
+            'low': 2,
+            'medium': 3,
+            'high': 4,
+            'very_high': 5
+        }
+        weighted_score = (
+                score_map.get(self.impact_level, 3) * 0.3 +
+                score_map.get(self.influence_score, 3) * 0.25 +
+                score_map.get(self.interest_level, 3) * 0.2 +
+                score_map.get(self.risk_level, 3) * 0.25
+        )
+        self.engagement_priority_score = Decimal(round(weighted_score * 2, 1))
+
+    # ------------------ Properties ------------------
     @property
-    def is_key_stakeholder(self):
-        """High priority stakeholders who need close attention"""
-        return self.priority >= 6
+    def engagement_matrix_position(self):
+        if self.influence_score in ['high', 'very_high'] and self.interest_level in ['high', 'very_high']:
+            return 'manage_closely'
+        elif self.influence_score in ['high', 'very_high']:
+            return 'keep_satisfied'
+        elif self.interest_level in ['high', 'very_high']:
+            return 'keep_informed'
+        else:
+            return 'monitor'
 
     @property
-    def risk_score(self):
-        """Assign numerical risk based on risk_level"""
-        risk_map = {'low': 1, 'medium': 2, 'high': 3, 'critical': 4}
-        return risk_map.get(self.risk_level, 2)
+    def days_since_last_engagement(self):
+        if self.last_engagement_date:
+            return (date.today() - self.last_engagement_date).days
+        return None
 
     @property
-    def impact_interest_matrix(self):
-        """Quick reference for categorization"""
-        return f"Impact: {self.impact_level}, Interest: {self.interest_level}"
+    def is_engagement_overdue(self):
+        return self.days_since_last_engagement > 90 if self.days_since_last_engagement else False
+
+    # ------------------ Validation ------------------
+    def clean(self):
+        import re
+        errors = {}
+        if self.email and not re.match(r'^[^@]+@[^@]+\.[^@]+$', self.email):
+            errors['email'] = 'Enter a valid email address.'
+        if self.phone and not re.match(r'^\+?\d{9,15}$', self.phone):
+            errors['phone'] = 'Enter a valid phone number.'
+        if errors:
+            raise ValidationError(errors)
+
+
+
 
 
 class StrategicCycle(models.Model):
@@ -592,122 +675,6 @@ class StrategicActionPlan(models.Model):
         ]
 
 
-# strategic report
-class StrategicReport(models.Model):
-
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('in_progress', 'In Progress'),
-        ('completed', 'Completed'),
-        ('on_hold', 'On Hold'),
-        ('cancelled', 'Cancelled'),
-    ]
-
-    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
-    action_plan = models.ForeignKey(
-        StrategicActionPlan, on_delete=models.CASCADE, related_name="reports"
-    )
-    achievement = models.DecimalField(max_digits=22, decimal_places=2, default=0)
-    percent_achieved = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    variance = models.DecimalField(max_digits=22, decimal_places=2, default=0)
-    weighted_score = models.DecimalField(max_digits=22, decimal_places=2, default=0)
-    data_source = models.CharField(max_length=200, blank=True, null=True)
-    data_collector = models.CharField(max_length=200, blank=True, null=True)
-    progress_summary = models.TextField(blank=True, null=True)
-    performance_summary = models.TextField(blank=True, null=True)
-    # Optional qualitative fields
-    challenges = models.TextField(blank=True, null=True)
-    successes = models.TextField(blank=True, null=True)
-    lessons_learned = models.TextField(blank=True, null=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES,
-                              default='pending', help_text="Current status of the strategic plan"
-                              )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name = "Strategic Report"
-        verbose_name_plural = "Strategic Reports"
-
-    def save(self, *args, **kwargs):
-
-        plan = self.action_plan
-        # Ensure percent achieved and variance
-        baseline = plan.baseline or 0
-        target = plan.target or 0
-        actual = self.achievement
-        self.percent_achieved = ((actual - baseline) / (target - baseline) * 100) if target != baseline else 0
-        self.variance = target - actual
-        self.weighted_score = actual * (plan.weight / 100)
-        self.responsible_body = plan.responsible_bodies_display()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return (
-            f"{self.action_plan.strategic_cycle.time_horizon} | "
-            f"Start: {self.action_plan.strategic_cycle.start_date:%B %d, %Y} | "
-            f"End: {self.action_plan.strategic_cycle.end_date:%B %d, %Y}"
-        )
-
-
-class SwotReport(models.Model):
-    SWOT_TYPES = [
-        ('Strength', 'Strength'),
-        ('Weakness', 'Weakness'),
-        ('Opportunity', 'Opportunity'),
-        ('Threat', 'Threat'),
-    ]
-
-    PRIORITY_CHOICES = [
-        ('Very High', 'Very High'),
-        ('High', 'High'),
-        ('Medium', 'Medium'),
-        ('Low', 'Low'),
-        ('Very Low', 'Very Low'),
-    ]
-
-    IMPACT_CHOICES = [
-        ('Very High', 'Very High'),
-        ('High', 'High'),
-        ('Medium', 'Medium'),
-        ('Low', 'Low'),
-        ('Very Low', 'Very Low'),
-    ]
-
-    LIKELIHOOD_CHOICES = [
-        ('Almost Certain', 'Almost Certain'),
-        ('Likely', 'Likely'),
-        ('Possible', 'Possible'),
-        ('Unlikely', 'Unlikely'),
-        ('Rare', 'Rare'),
-    ]
-
-    organization_name = models.ForeignKey(
-        OrganizationalProfile, on_delete=models.PROTECT
-    )
-    strategic_report_period = models.ForeignKey(
-        StrategicReport, on_delete=models.CASCADE
-    )
-    swot_type = models.CharField(max_length=20, choices=SWOT_TYPES)
-    swot_pillar = models.CharField(max_length=100)
-    swot_factor = models.CharField(max_length=200)
-    description = models.TextField(blank=True, null=True)
-    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="Medium")
-    impact = models.CharField(max_length=20, choices=IMPACT_CHOICES, default="Medium")
-    likelihood = models.CharField(max_length=20, choices=LIKELIHOOD_CHOICES, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ["swot_type", "priority", "-created_at"]
-
-    def __str__(self):
-        return f"{self.swot_type} → {self.swot_pillar} → {self.swot_factor[:50]}"
-
-
-
 class Initiative(models.Model):
     PRIORITY_CHOICES = [
         ('Very High', 'Very High'),
@@ -828,3 +795,121 @@ class InitiativeResource(models.Model):
     @property
     def resource_remaining(self):
         return self.resource_required - self.resource_used
+
+
+
+# strategic report
+class StrategicReport(models.Model):
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('on_hold', 'On Hold'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    organization_name = models.ForeignKey(OrganizationalProfile, on_delete=models.PROTECT)
+    action_plan = models.ForeignKey(
+        StrategicActionPlan, on_delete=models.CASCADE, related_name="reports"
+    )
+    achievement = models.DecimalField(max_digits=22, decimal_places=2, default=0)
+    percent_achieved = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    variance = models.DecimalField(max_digits=22, decimal_places=2, default=0)
+    weighted_score = models.DecimalField(max_digits=22, decimal_places=2, default=0)
+    data_source = models.CharField(max_length=200, blank=True, null=True)
+    data_collector = models.CharField(max_length=200, blank=True, null=True)
+    progress_summary = models.TextField(blank=True, null=True)
+    performance_summary = models.TextField(blank=True, null=True)
+    # Optional qualitative fields
+    challenges = models.TextField(blank=True, null=True)
+    successes = models.TextField(blank=True, null=True)
+    lessons_learned = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES,
+                              default='pending', help_text="Current status of the strategic plan"
+                              )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Strategic Report"
+        verbose_name_plural = "Strategic Reports"
+
+    def save(self, *args, **kwargs):
+
+        plan = self.action_plan
+        # Ensure percent achieved and variance
+        baseline = plan.baseline or 0
+        target = plan.target or 0
+        actual = self.achievement
+        self.percent_achieved = ((actual - baseline) / (target - baseline) * 100) if target != baseline else 0
+        self.variance = target - actual
+        self.weighted_score = actual * (plan.weight / 100)
+        self.responsible_body = plan.responsible_bodies_display()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return (
+            f"{self.action_plan.strategic_cycle.time_horizon} | "
+            f"Start: {self.action_plan.strategic_cycle.start_date:%B %d, %Y} | "
+            f"End: {self.action_plan.strategic_cycle.end_date:%B %d, %Y}"
+        )
+
+
+class SwotReport(models.Model):
+    SWOT_TYPES = [
+        ('Strength', 'Strength'),
+        ('Weakness', 'Weakness'),
+        ('Opportunity', 'Opportunity'),
+        ('Threat', 'Threat'),
+    ]
+
+    PRIORITY_CHOICES = [
+        ('Very High', 'Very High'),
+        ('High', 'High'),
+        ('Medium', 'Medium'),
+        ('Low', 'Low'),
+        ('Very Low', 'Very Low'),
+    ]
+
+    IMPACT_CHOICES = [
+        ('Very High', 'Very High'),
+        ('High', 'High'),
+        ('Medium', 'Medium'),
+        ('Low', 'Low'),
+        ('Very Low', 'Very Low'),
+    ]
+
+    LIKELIHOOD_CHOICES = [
+        ('Almost Certain', 'Almost Certain'),
+        ('Likely', 'Likely'),
+        ('Possible', 'Possible'),
+        ('Unlikely', 'Unlikely'),
+        ('Rare', 'Rare'),
+    ]
+
+    organization_name = models.ForeignKey(
+        OrganizationalProfile, on_delete=models.PROTECT
+    )
+    strategic_report_period = models.ForeignKey(
+        StrategicReport, on_delete=models.CASCADE
+    )
+    swot_type = models.CharField(max_length=20, choices=SWOT_TYPES)
+    swot_pillar = models.CharField(max_length=100)
+    swot_factor = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="Medium")
+    impact = models.CharField(max_length=20, choices=IMPACT_CHOICES, default="Medium")
+    likelihood = models.CharField(max_length=20, choices=LIKELIHOOD_CHOICES, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["swot_type", "priority", "-created_at"]
+
+    def __str__(self):
+        return f"{self.swot_type} → {self.swot_pillar} → {self.swot_factor[:50]}"
+
+
